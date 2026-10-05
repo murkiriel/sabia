@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+# extrato do OpenStreetMap, malha do IBGE, bancos e pacotes do gerador: os pacotes vão para as releases, não para o git
+gerador/data/
+# dependências instaladas com pip --target (Pythons sem venv), ver gerador/README.md
+gerador/.pylib/
+# anotações de pesquisa anteriores ao repositório: ficam só na pasta local; o que vale para o projeto está em docs/
+PESQUISA.md
