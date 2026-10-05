@@ -1,0 +1,26 @@
+# Testes do gerador a cada push e pull request. Só os testes: nada de baixar o extrato do Brasil nem de publicar
+# aqui (isso é o workflow de geração). Os testes usam extratos pequenos escritos por eles mesmos.
+name: testes
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: gerador
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Dependências
+        run: pip install -r requirements.txt
+      - name: Testes
+        run: python -m unittest discover -s tests -t . -v

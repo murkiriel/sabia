@@ -1,0 +1,13 @@
+# Só a configuração das ferramentas de conferência (ruff e mypy), rodadas à mão: python -m ruff check . e
+# python -m mypy . (ver README.md). O gerador não é um pacote instalável.
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+exclude = ["^data/", "^\\.pylib/"]
