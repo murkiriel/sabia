@@ -11,9 +11,10 @@ validate (as travas), catalog. Depois, `python scripts/publish.py` publica.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -22,7 +23,7 @@ sys.path.insert(0, str(HERE))
 if (HERE / ".pylib").exists():
     sys.path.insert(0, str(HERE / ".pylib"))
 
-from sabia import config  # noqa: E402
+from sabia import config, sources  # noqa: E402
 
 STAGES = ["sources", "build", "validate", "catalog"]
 
@@ -47,6 +48,18 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
+def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
+    """Extrato do OpenStreetMap (o local, se pedido; senão o do Brasil, baixado se houver versão nova) e os arquivos
+    do IBGE. Os dados do extrato ficam em data/build/osm.json para as etapas seguintes."""
+    osm = sources.local_extract(osm_file) if osm_file else sources.osm_extract()
+    sources.municipal_mesh()
+    sources.municipality_names()
+    config.BUILD.mkdir(parents=True, exist_ok=True)
+    (config.BUILD / "osm.json").write_text(json.dumps(osm, indent=2), encoding="utf-8")
+    print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios do IBGE conferidos")
+    return osm
+
+
 def _utf8_output() -> None:
     # Log redirecionado para arquivo sai na codificação do Windows (cp1252) e os acentos quebram; UTF-8 sempre.
     for stream in (sys.stdout, sys.stderr):
@@ -59,7 +72,9 @@ def _utf8_output() -> None:
 def main() -> None:
     _utf8_output()
     args = build_parser().parse_args()
-    sys.exit(f"[gerar] etapas ainda não escritas; estados pedidos: {', '.join(args.states)}")
+    if STAGES.index(args.from_stage) <= STAGES.index("sources"):
+        sources_stage(args.osm_file)
+    sys.exit(f"[gerar] etapas seguintes ainda não escritas; estados pedidos: {', '.join(args.states)}")
 
 
 if __name__ == "__main__":

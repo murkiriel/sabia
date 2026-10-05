@@ -45,3 +45,19 @@ IBGE_STATE_CODES = {"11": "RO", "12": "AC", "13": "AM", "14": "RR", "15": "PA", 
                     "22": "PI", "23": "CE", "24": "RN", "25": "PB", "26": "PE", "27": "AL", "28": "SE", "29": "BA",
                     "31": "MG", "32": "ES", "33": "RJ", "35": "SP", "41": "PR", "42": "SC", "43": "RS", "50": "MS",
                     "51": "MT", "52": "GO", "53": "DF"}
+
+# Extrato do Brasil: o mesmo arquivo que os tiles de rota feitos do OpenStreetMap costumam usar, para a rota nunca
+# apontar para uma rua que a busca não conhece. O openstreetmap.fr recorta pelo polígono do país e publica a data e o
+# md5 ao lado. Trocado uma vez por dia (por volta de 01:00 UTC).
+OSM_PBF_URL = "https://download.openstreetmap.fr/extracts/south-america/brazil-latest.osm.pbf"
+OSM_STATE_URL = "https://download.openstreetmap.fr/extracts/south-america/brazil.state.txt"
+OSM_MD5_URL = "https://download.openstreetmap.fr/extracts/south-america/brazil.osm.pbf.md5"
+
+# Malha municipal do Brasil (API de malhas do IBGE, v3, qualidade intermediária, ~12 MB): o município de cada registro.
+IBGE_MESH_URL = ("https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR"
+                 "?formato=application/vnd.geo%2Bjson&intrarregiao=municipio&qualidade=intermediaria")
+# Nomes oficiais e UF de cada município (API de localidades do IBGE). É a lista dos municípios: em 2026-10-05 tinha
+# 5.571, um a mais que a malha (Boa Esperança do Norte, MT, criado em 2025, ainda sem polígono).
+IBGE_NAMES_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado"
+# Menos que isso na malha ou na lista é resposta quebrada da API, não o Brasil.
+MIN_MUNICIPALITIES = 5570
