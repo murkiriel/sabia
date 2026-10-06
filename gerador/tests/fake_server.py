@@ -16,7 +16,9 @@ class FakeServer:
     respostas desse caminho, manda o Content-Length inteiro mas fecha a conexão depois de n bytes (uma vez por item
     da lista). `no_range`: caminhos em que a resposta ignora o Range e sempre manda 200. `code[caminho]`: status fixo.
     `gzip_always`: caminhos que vão sempre comprimidos (Content-Encoding: gzip, 200, sem Range), mesmo sem o cliente
-    pedir, como o IBGE faz com o urllib nos executores do GitHub Actions."""
+    pedir, como o IBGE faz com o urllib nos executores do GitHub Actions. `content_type[caminho]`: o Content-Type
+    mandado. `codes[caminho]`: status das próximas respostas, um por item da lista (depois, o normal), com o
+    conteúdo de `files` como corpo, se houver: uma página de erro com status ruim."""
 
     def __init__(self) -> None:
         self.files: Dict[str, Content] = {}
@@ -24,6 +26,8 @@ class FakeServer:
         self.no_range: set = set()
         self.code: Dict[str, int] = {}
         self.gzip_always: set = set()
+        self.content_type: Dict[str, str] = {}
+        self.codes: Dict[str, List[int]] = {}
         self.requests: List[Tuple[str, Optional[str]]] = []
         server = self
 
@@ -39,6 +43,14 @@ class FakeServer:
                     self.end_headers()
                     return
                 content = server.files.get(self.path)
+                if server.codes.get(self.path):
+                    body = (content() if callable(content) else content) or b""
+                    self.send_response(server.codes[self.path].pop(0))
+                    self.send_header("Content-Type", server.content_type.get(self.path, "text/html"))
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
                 if content is None:
                     self.send_response(404)
                     self.send_header("Content-Length", "0")
@@ -49,6 +61,8 @@ class FakeServer:
                     body = gzip.compress(data)
                     self.send_response(200)
                     self.send_header("Content-Encoding", "gzip")
+                    if self.path in server.content_type:
+                        self.send_header("Content-Type", server.content_type[self.path])
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
                     self.wfile.write(body)
@@ -68,6 +82,8 @@ class FakeServer:
                 else:
                     self.send_response(200)
                 body = data[start:]
+                if self.path in server.content_type:
+                    self.send_header("Content-Type", server.content_type[self.path])
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 cuts = server.cut_after.get(self.path)

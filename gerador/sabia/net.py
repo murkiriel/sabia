@@ -9,7 +9,10 @@
 - Corpo comprimido (Content-Encoding gzip ou deflate) é descomprimido na hora de gravar. O urllib não pede
   compressão, mas há site que manda assim mesmo (o IBGE, para os executores do GitHub Actions).
 - Erro permanente (4xx, exceto 408 e 429) falha na hora, sem esperar. Os demais (5xx, conexão, tempo esgotado) são
-  retentados com espera crescente.
+  retentados com espera crescente. Cada tentativa que falha vai para o log; o erro de HTTP traz o status, o tipo e o
+  começo do corpo da resposta.
+- O download devolve o que o site respondeu (status, tipo, compressão, tamanho gravado), para quem confere o conteúdo
+  registrar quando ele vier errado.
 """
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ import time
 import urllib.error
 import urllib.request
 import zlib
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -25,6 +29,17 @@ from . import config
 from .util import CHUNK
 
 RETRYABLE_4XX = {408, 429}
+BODY_START = 300  # caracteres do começo do corpo que vão para o log quando a resposta vem errada
+
+
+@dataclass
+class Response:
+    """O que o site respondeu num download completo. Quem confere o conteúdo depois registra isso se ele vier errado
+    (uma API pode responder 200 com uma página de erro)."""
+    status: int
+    content_type: str
+    content_encoding: str
+    size: int  # bytes gravados, já descomprimidos
 
 
 class DownloadError(RuntimeError):
@@ -56,6 +71,23 @@ def _is_permanent(e: urllib.error.HTTPError) -> bool:
     return 400 <= e.code < 500 and e.code not in RETRYABLE_4XX
 
 
+def body_start(data: bytes, limit: int = BODY_START) -> str:
+    """O começo de um corpo, legível num log de uma linha."""
+    return repr(data[:limit].decode("utf-8", errors="replace"))
+
+
+def _http_error(e: urllib.error.HTTPError) -> str:
+    """Status, tipo e começo do corpo de uma resposta de erro: diz se foi uma página de bloqueio, de manutenção..."""
+    content_type = e.headers.get("Content-Type", "") if e.headers else ""
+    try:
+        data = e.read(BODY_START * 4) or b""
+        if (e.headers.get("Content-Encoding") or "").strip().lower() in ("gzip", "x-gzip"):
+            data = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(data)
+    except (OSError, http.client.HTTPException, zlib.error):
+        data = b""
+    return f"HTTP {e.code}, Content-Type {content_type or '(nenhum)'}, início do corpo: {body_start(data)}"
+
+
 def _origin_path(partial: Path) -> Path:
     return partial.with_name(partial.name + ".origem")
 
@@ -77,8 +109,8 @@ def fetch_text(url: str, attempts: int = 3, delay: float = 5) -> str:
             return body.decode("utf-8")
         except urllib.error.HTTPError as e:
             if _is_permanent(e):
-                raise PermanentError(f"{url}: HTTP {e.code}") from e
-            error: Exception = e
+                raise PermanentError(f"{url}: {_http_error(e)}") from e
+            error: Exception = DownloadError(_http_error(e))
         except (OSError, http.client.HTTPException) as e:
             error = e
         if attempt < attempts:
@@ -87,8 +119,8 @@ def fetch_text(url: str, attempts: int = 3, delay: float = 5) -> str:
 
 
 def download(url: str, dest: Path, identity: Optional[str] = None, attempts: int = 5, delay: float = 10,
-             timeout: float = 120) -> None:
-    """Baixa `url` para `dest`, retomando de onde parou entre tentativas."""
+             timeout: float = 120) -> Response:
+    """Baixa `url` para `dest`, retomando de onde parou entre tentativas. Cada tentativa que falha vai para o log."""
     partial = dest.with_name(dest.name + ".parcial")
     origin = _origin_path(partial)
     if partial.exists() and (identity is None or not origin.exists()
@@ -112,6 +144,8 @@ def download(url: str, dest: Path, identity: Optional[str] = None, attempts: int
                     mode, already_had = "ab", start
                 else:  # 200: começa do zero (inclusive quando o site ignorou o Range)
                     mode, already_had = "wb", 0
+                answer = Response(r.status, r.headers.get("Content-Type") or "",
+                                  (r.headers.get("Content-Encoding") or "identity").strip().lower(), 0)
                 expected = r.headers.get("Content-Length")
                 received = 0
                 with open(partial, mode) as f:
@@ -128,7 +162,8 @@ def download(url: str, dest: Path, identity: Optional[str] = None, attempts: int
             partial.replace(dest)
             if origin.exists():
                 origin.unlink()
-            return
+            answer.size = dest.stat().st_size
+            return answer
         except PermanentError:
             raise
         except urllib.error.HTTPError as e:
@@ -136,11 +171,13 @@ def download(url: str, dest: Path, identity: Optional[str] = None, attempts: int
                 partial.unlink(missing_ok=True)
                 error = e
             elif _is_permanent(e):
-                raise PermanentError(f"{url}: HTTP {e.code}") from e
+                raise PermanentError(f"{url}: {_http_error(e)}") from e
             else:
-                error = e
+                error = DownloadError(_http_error(e))
         except (OSError, http.client.HTTPException, DownloadError) as e:
             error = e
         if attempt < attempts:
+            print(f"[rede] {url}: tentativa {attempt} de {attempts} falhou ({error}); "
+                  f"de novo em {delay * attempt:g} s")
             time.sleep(delay * attempt)
     raise DownloadError(f"{url}: {attempts} tentativas falharam ({error})")

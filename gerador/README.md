@@ -40,9 +40,12 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Municípios do IBGE (API de localidades, ~2 MB) | `ibge_municipios.json` | Nome oficial e UF de cada município; é a lista dos municípios |
 
 Os dois arquivos do IBGE são conferidos no cache e no download (JSON, as 27 UFs, pelo menos 5.570 municípios): uma
-API pode responder 200 com uma página de erro. A lista de nomes tinha 5.571 municípios em 2026-10-05 e a malha 5.570:
-Boa Esperança do Norte (MT), criado em 2025, ainda não tem polígono; os registros do território dele caem nos
-municípios de onde ele saiu, até a malha trazer o polígono.
+API pode responder 200 com uma página de erro. Com resposta ruim (status de erro ou conteúdo que não passa), são até
+3 tentativas, com 60 s e depois 120 s de espera; cada uma vai para o log com o status, o `Content-Type`, o tamanho e
+o começo do corpo, e o corpo fica em `data/raw/<arquivo>.<tentativa>.invalido` (o workflow leva esses arquivos para o
+artefato). No Actions, os dois arquivos ficam no cache, um por mês. A lista de nomes tinha 5.571 municípios em
+2026-10-05 e a malha 5.570: Boa Esperança do Norte (MT), criado em 2025, ainda não tem polígono; os registros do
+território dele caem nos municípios de onde ele saiu, até a malha trazer o polígono.
 
 Os testes também rodam no GitHub Actions a cada push e pull request (`.github/workflows/testes.yml`), com as
 dependências do `requirements.txt` e sem dados baixados.

@@ -1,5 +1,7 @@
 """As fontes: o extrato do OpenStreetMap (baixado ou local) e os municípios do IBGE (malha e nomes)."""
+import contextlib
 import hashlib
+import io
 import json
 import sys
 import tempfile
@@ -13,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sabia import config, sources  # noqa: E402
 from tests.fake_server import FakeServer  # noqa: E402
 
+ERROR_PAGE = b"<html><body>Servico indisponivel</body></html>"
 A = b"extrato versao A " * 5000
 B = b"extrato versao B, mais nova " * 5000
 
@@ -151,7 +154,8 @@ class IbgeTest(unittest.TestCase):
                          mock.patch.object(config, "IBGE_MESH_URL", self.server.url("/malha")),
                          mock.patch.object(config, "IBGE_NAMES_URL", self.server.url("/nomes")),
                          mock.patch.object(config, "MIN_MUNICIPALITIES", 27),
-                         mock.patch.object(sources, "RETRY_DELAY", 0)]
+                         mock.patch.object(sources, "RETRY_DELAY", 0),
+                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
         for p in self._patches:
             p.start()
 
@@ -171,10 +175,59 @@ class IbgeTest(unittest.TestCase):
         self.assertEqual(27, len(json.loads(names.read_text(encoding="utf-8"))))
 
     def test_error_page_with_200_is_not_saved(self):
-        self.server.files["/malha"] = b"<html><body>Servico indisponivel</body></html>"
+        """Nunca com o nome final; o corpo de cada tentativa fica em <nome>.<tentativa>.invalido, para o artefato."""
+        self.server.files["/malha"] = ERROR_PAGE
         with self.assertRaises(RuntimeError):
             sources.municipal_mesh()
-        self.assertEqual([], list(self.raw.iterdir()))
+        self.assertFalse((self.raw / sources.MESH_FILE).exists())
+        self.assertEqual([f"{sources.MESH_FILE}.{i}.invalido" for i in (1, 2, 3)],
+                         sorted(p.name for p in self.raw.iterdir()))
+        self.assertEqual(ERROR_PAGE, (self.raw / f"{sources.MESH_FILE}.1.invalido").read_bytes())
+
+    def test_invalid_content_is_retried_until_valid(self):
+        answers = [ERROR_PAGE, fake_mesh()]
+        self.server.files["/malha"] = lambda: answers.pop(0) if len(answers) > 1 else answers[0]
+        mesh = sources.municipal_mesh()
+        self.assertEqual(2, self.downloads("/malha"))
+        self.assertIsNone(sources.mesh_problem(mesh))
+        self.assertEqual(ERROR_PAGE, (self.raw / f"{sources.MESH_FILE}.1.invalido").read_bytes())
+
+    def test_gives_up_after_three_attempts(self):
+        self.server.files["/nomes"] = b""
+        with self.assertRaises(RuntimeError) as ctx:
+            sources.municipality_names()
+        self.assertEqual(3, self.downloads("/nomes"))
+        self.assertIn("3 tentativas", str(ctx.exception))
+
+    def test_invalid_content_is_logged_with_status_type_and_body_start(self):
+        self.server.files["/malha"] = ERROR_PAGE
+        self.server.content_type["/malha"] = "text/html; charset=utf-8"
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), self.assertRaises(RuntimeError):
+            sources.municipal_mesh()
+        log = out.getvalue()
+        self.assertIn("HTTP 200", log)
+        self.assertIn("text/html; charset=utf-8", log)
+        self.assertIn(f"{len(ERROR_PAGE)} bytes", log)
+        self.assertIn("Servico indisponivel", log)
+        self.assertIn("tentativa 1 de 3", log)
+
+    def test_waits_longer_after_each_invalid_attempt(self):
+        self.server.files["/malha"] = ERROR_PAGE
+        with mock.patch.object(sources, "IBGE_RETRY_DELAY", 7), mock.patch.object(sources.time, "sleep") as sleep:
+            with self.assertRaises(RuntimeError):
+                sources.municipal_mesh()
+        self.assertEqual([mock.call(7), mock.call(14)], sleep.call_args_list)
+
+    def test_bad_status_is_retried_and_logged(self):
+        """Um 403 (o IBGE recusando o executor, por exemplo) também é tentado de novo, e o log diz o status."""
+        self.server.codes["/malha"] = [403]
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            mesh = sources.municipal_mesh()
+        self.assertIsNone(sources.mesh_problem(mesh))
+        self.assertEqual(2, self.downloads("/malha"))
+        self.assertIn("HTTP 403", out.getvalue())
 
     def test_mesh_missing_a_state_is_rejected(self):
         self.server.files["/malha"] = fake_mesh(exclude=("53",))
@@ -201,6 +254,8 @@ class IbgeTest(unittest.TestCase):
         (self.raw / "ibge_malha_municipios.json").write_text("<html>erro</html>", encoding="utf-8")
         sources.municipal_mesh()
         self.assertEqual(2, self.downloads("/malha"))
+        kept = self.raw / "ibge_malha_municipios.json.guardado.invalido"
+        self.assertEqual("<html>erro</html>", kept.read_text(encoding="utf-8"))
 
     def test_load_municipalities_joins_names_and_mesh(self):
         """O nome e a UF vêm da lista de nomes (a fonte dos municípios); o polígono, da malha. Município novo que a

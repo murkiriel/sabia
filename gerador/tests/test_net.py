@@ -1,4 +1,6 @@
+import contextlib
 import hashlib
+import io
 import sys
 import tempfile
 import time
@@ -79,6 +81,40 @@ class DownloadTest(unittest.TestCase):
             with self.assertRaises(net.DownloadError):
                 net.download(s.url("/a"), self.dest, attempts=3, delay=0)
             self.assertEqual(3, len(s.requests))
+
+    def test_download_tells_what_the_site_answered(self):
+        """Status, tipo, compressão e tamanho gravado: quem confere o conteúdo registra isso quando ele vem errado."""
+        with FakeServer() as s:
+            s.files["/a"] = SAMPLE_DATA
+            s.content_type["/a"] = "application/vnd.geo+json"
+            r = net.download(s.url("/a"), self.dest, delay=0)
+            self.assertEqual((200, "application/vnd.geo+json", "identity", len(SAMPLE_DATA)),
+                             (r.status, r.content_type, r.content_encoding, r.size))
+            s.gzip_always.add("/a")
+            r = net.download(s.url("/a"), self.dest, delay=0)
+            self.assertEqual(("gzip", len(SAMPLE_DATA)), (r.content_encoding, r.size))
+
+    def test_permanent_error_tells_status_type_and_body_start(self):
+        with FakeServer() as s:
+            s.files["/a"] = b"<html><body>Acesso negado pelo firewall</body></html>"
+            s.codes["/a"] = [403]
+            with self.assertRaises(net.PermanentError) as ctx:
+                net.download(s.url("/a"), self.dest, delay=0)
+            message = str(ctx.exception)
+            self.assertIn("HTTP 403", message)
+            self.assertIn("text/html", message)
+            self.assertIn("Acesso negado pelo firewall", message)
+
+    def test_failed_attempts_are_logged(self):
+        with FakeServer() as s:
+            s.files["/a"] = SAMPLE_DATA
+            s.codes["/a"] = [503]
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                net.download(s.url("/a"), self.dest, delay=0)
+            self.assertEqual(SAMPLE_DATA, self.dest.read_bytes())
+            self.assertIn("tentativa 1 de 5", out.getvalue())
+            self.assertIn("HTTP 503", out.getvalue())
 
     def test_partial_of_other_version_is_discarded(self):
         with FakeServer() as s:
