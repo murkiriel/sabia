@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
+from contextlib import closing
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -23,7 +25,7 @@ sys.path.insert(0, str(HERE))
 if (HERE / ".pylib").exists():
     sys.path.insert(0, str(HERE / ".pylib"))
 
-from sabia import build, config, sources  # noqa: E402
+from sabia import build, config, sources, sqlite_old, validation  # noqa: E402
 
 STAGES = ["sources", "build", "validate", "catalog"]
 
@@ -65,6 +67,38 @@ def build_stage(states: List[str], osm: Dict[str, object], today: Optional[str] 
     return build.run(states, osm, today)
 
 
+def validate_stage(states: List[str], packages: Dict[str, object]) -> List[str]:
+    """As travas (sabia/validation.py) sobre os bancos de data/build/; grava data/dist/relatorio.json. Devolve os
+    problemas (vazio = pode montar o catálogo)."""
+    municipalities = sources.load_municipalities(config.RAW / sources.MESH_FILE, config.RAW / sources.NAMES_FILE)
+    cases = validation.load_cases(config.SEARCH_CASES, states)
+    lib = sqlite_old.library_path()
+    problems: List[str] = []
+    searches: List[dict] = []
+    version = ""
+    for uf in states:
+        db_path = config.BUILD / f"sabia-{uf}.sqlite"
+        mine = [c for c in cases if c["uf"] == uf]
+        with closing(sqlite3.connect(db_path)) as db:
+            found, rows = validation.search_gate(db, mine)
+        problems += found
+        searches += rows
+        problems += validation.coverage_gate(db_path, municipalities, uf)
+        found, version = validation.old_sqlite_gate(db_path, mine, lib)
+        problems += found
+    found, version = validation.old_sqlite_gate(config.BUILD / "sabia-base.sqlite", [], lib)
+    problems += found
+    problems += validation.base_gate(packages["base"]["counts"], states)  # type: ignore[index]
+    suspects_file = config.BUILD / "ruas_suspeitas.json"
+    suspects = json.loads(suspects_file.read_text(encoding="utf-8")) if suspects_file.exists() else []
+    problems = list(dict.fromkeys(problems))
+    validation.write_report(config.DIST / "relatorio.json", suspects, searches, problems, version)
+    passed = sum(1 for s in searches if s["rank"] is not None and s["rank"] <= s["top"])
+    print(f"[validar] buscas: {passed} de {len(searches)}; ruas locais suspeitas: {len(suspects)}; "
+          f"SQLite {version or 'antigo ausente'}; {len(problems)} problemas (data/dist/relatorio.json)")
+    return problems
+
+
 def _utf8_output() -> None:
     # Log redirecionado para arquivo sai na codificação do Windows (cp1252) e os acentos quebram; UTF-8 sempre.
     for stream in (sys.stdout, sys.stderr):
@@ -83,8 +117,18 @@ def main() -> None:
     else:
         osm = json.loads((config.BUILD / "osm.json").read_text(encoding="utf-8"))
     if start <= STAGES.index("build"):
-        build_stage(args.states, osm)
-    sys.exit("[gerar] etapas validate e catalog ainda não escritas")
+        packages = build_stage(args.states, osm)
+    else:
+        packages = json.loads((config.DIST / "pacotes.json").read_text(encoding="utf-8"))
+    if start <= STAGES.index("validate"):
+        problems = validate_stage(sorted(packages["states"]), packages)  # type: ignore[call-overload]
+        if problems:
+            print()
+            print("[gerar] AS TRAVAS FALHARAM; o catálogo não foi montado:")
+            for p in problems:
+                print("  -", p)
+            raise SystemExit(1)
+    sys.exit("[gerar] etapa catalog ainda não escrita")
 
 
 if __name__ == "__main__":

@@ -64,13 +64,18 @@ CATEGORIES = {
     "drogaria": ["amenity=pharmacy"], "pedagio": ["barrier=toll_booth"],
     "hotel": ["tourism=hotel"], "pousada": ["tourism=guest_house"], "motel": ["tourism=motel"],
     "camping": ["tourism=camp_site"], "restaurante": ["amenity=restaurant"], "lanchonete": ["amenity=fast_food"],
-    "padaria": ["shop=bakery"], "mercado": ["shop=supermarket", "shop=convenience"],
+    "padaria": ["shop=bakery"], "mercado": ["shop=supermarket", "shop=convenience", "amenity=marketplace"],
     "supermercado": ["shop=supermarket"], "banco": ["amenity=bank"], "policia": ["amenity=police"],
     "delegacia": ["amenity=police"], "bombeiros": ["amenity=fire_station"], "rodoviaria": ["amenity=bus_station"],
     "aeroporto": ["aeroway=aerodrome"], "estacionamento": ["amenity=parking"],
     "igreja": ["amenity=place_of_worship"], "escola": ["amenity=school"], "banheiro": ["amenity=toilets"],
     "recarga": ["amenity=charging_station"], "cachoeira": ["natural=waterfall", "waterway=waterfall"],
     "mirante": ["tourism=viewpoint"], "descanso": ["highway=rest_area", "highway=services"],
+    "estadio": ["leisure=stadium"], "shopping": ["shop=mall"], "parque": ["leisure=park"],
+    "museu": ["tourism=museum"], "universidade": ["amenity=university"],
+    "faculdade": ["amenity=college", "amenity=university"], "teatro": ["amenity=theatre"],
+    "cinema": ["amenity=cinema"], "zoologico": ["tourism=zoo"], "feira": ["amenity=marketplace"],
+    "praia": ["natural=beach"],
 }
 
 

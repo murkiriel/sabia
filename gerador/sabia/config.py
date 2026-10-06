@@ -63,3 +63,4 @@ IBGE_NAMES_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios
 MIN_MUNICIPALITIES = 5570
 
 ATTRIBUTION = "© colaboradores do OpenStreetMap (ODbL 1.0); municípios e limites municipais: IBGE"
+SEARCH_CASES = GENERATOR_DIR / "buscas.json"

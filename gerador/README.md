@@ -16,8 +16,10 @@ OpenStreetMap e dos municípios do IBGE.
 Da pasta `gerador/`:
 
 ```
+python scripts/install_sqlite.py        # uma vez: o SQLite 3.22 da trava G7e, em data/tools/
 python generate.py                      # geração completa em data/dist/
 python generate.py --states DF,GO       # só esses estados
+python generate.py --from validate      # só as travas (e o catálogo) sobre os bancos já gerados
 python -m unittest discover -s tests -t .
 python -m ruff check .
 python -m mypy .
@@ -53,6 +55,7 @@ dependências do `requirements.txt` e sem dados baixados.
 | build | `sabia/street_lines.py` | O traçado de cada rua, simplificado a 10 m, para o "que rua é esta?" |
 | build | `sabia/database.py` | Os bancos SQLite (FTS4, tabelas de busca de `sabia/search_rules.py`, `meta`) e a compactação zstd 19; formato em [`docs/FORMATO.md`](../docs/FORMATO.md) |
 | build | `sabia/build.py` | A etapa inteira: lê o extrato uma vez, grava os bancos em `data/build/` e os pacotes e o `pacotes.json` em `data/dist/` |
+| validate | `sabia/validation.py` | As travas (abaixo) e o `data/dist/relatorio.json` |
 
 **Registros** (`sabia/records.py`, tipos em `sabia/kinds.py`):
 
@@ -99,6 +102,35 @@ Conferido com o extrato do Centro-Oeste de 2026-09-29: Goiás dá 92.131 registr
 rodovias, 12.933 pontos de interesse), os 246 municípios, e os casos medidos da regra de juntar ruas (Av. Anhanguera
 em Goiânia em 5 registros, Av. T-63 e Av. Goiás em 1, Av. Brasil em Anápolis em 7, 163 ruas locais suspeitas); o
 DF, 30.847. A leitura do extrato regional (206 MB) leva ~20 s.
+
+## Travas (G7)
+
+A etapa `validate` não deixa montar o catálogo se:
+
+- **(a) buscas de verdade:** algum caso de [`buscas.json`](buscas.json) não traz o resultado esperado até a posição
+  `top` (nome igual ou contido, município, bairro e/ou um ponto com raio), pela busca de referência
+  (`sabia/search.py`, as regras de [`docs/CONSUMO.md`](../docs/CONSUMO.md)). Hoje: 49 casos de Goiás (as 50 buscas da
+  medição, menos a PUC, escrita "universidadfe" no OpenStreetMap) e 20 do DF; outros estados entram quando houver
+  casos para eles;
+- **(b) cobertura:** falta no banco do estado algum município do IBGE com polígono, ou falta ponto na base para um
+  município de estado gerado;
+- **(e) SQLite antigo:** o esquema usa algo que o SQLite 3.22 (o do Android 10) não tem (FTS5, R-Tree, STRICT,
+  WITHOUT ROWID, coluna gerada), o banco não passa no `integrity_check` do 3.22, ou alguma busca dá outro resultado no
+  3.22 que no SQLite do Python. O 3.22 vem de `scripts/install_sqlite.py` (no Linux, compilado do código oficial só
+  com FTS3 e FTS4, como o Android; no Windows, a DLL oficial); sem ele, a trava falha.
+
+E registra no `relatorio.json`:
+
+- **(d) ruas locais longas:** as ruas só de vias locais juntadas com mais de 3 km de ponta a ponta, suspeitas de
+  junção errada (não travam; confira as que mudarem de uma geração para outra);
+- o resultado de cada busca e os problemas.
+
+A **(c) queda de registros** em relação à geração publicada (mais de 5% no total de um estado, ou numa classe com pelo
+menos 1.000 registros, ou um estado que sumiu) é conferida na publicação, contra o `catalogo.json` publicado
+(`validation.drops`).
+
+Medido aqui (DF e GO, extrato do Centro-Oeste de 2026-09-29): 69 de 69 buscas, 0 problemas, as buscas iguais no
+SQLite 3.22, 184 ruas locais suspeitas (163 em GO, 21 no DF); a etapa leva ~4 s.
 
 ## Convenções
 

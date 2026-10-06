@@ -12,7 +12,7 @@ from unittest import mock
 from shapely.geometry import mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sabia import config, database  # noqa: E402
+from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 
@@ -27,7 +27,9 @@ def write_ibge(raw: Path):
     (raw / "ibge_municipios.json").write_text(json.dumps(names, ensure_ascii=False), encoding="utf-8")
 
 
-class BuildStageTest(unittest.TestCase):
+class StageFixture(unittest.TestCase):
+    """Extrato de mentira, arquivos do IBGE de mentira e data/ numa pasta temporária."""
+
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         root = Path(self._tmp.name)
@@ -51,6 +53,8 @@ class BuildStageTest(unittest.TestCase):
             p.stop()
         self._tmp.cleanup()
 
+
+class BuildStageTest(StageFixture):
     def test_packages_and_counts(self):
         self.dist.mkdir(parents=True)
         (self.dist / "sabia-SP.sqlite.zst").write_bytes(b"sobra de outra geracao")
@@ -77,6 +81,43 @@ class BuildStageTest(unittest.TestCase):
         packages = self.script.build_stage(["DF"], self.osm, today="2026-09-30")
         self.assertEqual(3, packages["base"]["counts"]["municipality"])
         self.assertEqual(1, packages["states"]["DF"]["counts"]["street"])
+
+
+class ValidateStageTest(StageFixture):
+    """A etapa validate sobre os bancos da etapa build: as travas e o relatorio.json."""
+
+    def cases(self, *cases):
+        path = self.build.parent / "buscas.json"
+        path.write_text(json.dumps(list(cases), ensure_ascii=False), encoding="utf-8")
+        return mock.patch.object(config, "SEARCH_CASES", path)
+
+    def test_passing_generation(self):
+        if not sqlite_old.library_path().exists():
+            self.skipTest("SQLite 3.22 não instalado; rode python scripts/install_sqlite.py")
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        with self.cases({"uf": "GO", "query": "rua 10 goiania", "name": "Rua 10"},
+                        {"uf": "DF", "query": "eixo rodoviario", "name": "Eixo Rodoviário"}):
+            problems = self.script.validate_stage(["GO"], packages)
+        self.assertEqual([], problems)
+        report = json.loads((self.dist / "relatorio.json").read_text(encoding="utf-8"))
+        self.assertEqual({"passed": 1, "total": 1}, {k: report["searches"][k] for k in ("passed", "total")})
+        self.assertEqual("3.22.0", report["oldest_sqlite"])
+
+    def test_failing_search_blocks(self):
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        with self.cases({"uf": "GO", "query": "rua 10 goiania", "name": "Rua 11"}):
+            problems = self.script.validate_stage(["GO"], packages)
+        self.assertEqual(1, len(problems))
+        self.assertIn("rua 10 goiania", problems[0])
+        report = json.loads((self.dist / "relatorio.json").read_text(encoding="utf-8"))
+        self.assertEqual(problems, report["problems"])
+
+    def test_without_the_old_sqlite_it_blocks(self):
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        with self.cases(), mock.patch.dict("os.environ", {"SABIA_SQLITE_OLD": str(self.build / "nao-existe.dll")}):
+            problems = self.script.validate_stage(["GO"], packages)
+        self.assertTrue(problems)
+        self.assertTrue(all("3.22" in p for p in problems), problems)
 
 
 if __name__ == "__main__":

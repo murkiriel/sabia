@@ -22,5 +22,7 @@ jobs:
           python-version: "3.12"
       - name: Dependências
         run: pip install -r requirements.txt
+      - name: SQLite 3.22, o do Android 10 (compilado só com FTS3 e FTS4, sha256 conferido)
+        run: python scripts/install_sqlite.py
       - name: Testes
         run: python -m unittest discover -s tests -t . -v

@@ -40,6 +40,12 @@ class TestsWorkflowTest(unittest.TestCase):
     def test_runs_the_whole_suite(self):
         self.assertIn("python -m unittest discover -s tests -t . -v", self.text)
 
+    def test_old_sqlite_is_installed_before_the_tests(self):
+        """Sem o SQLite 3.22, o teste que abre o pacote nele seria pulado em silêncio."""
+        install = self.text.find("python scripts/install_sqlite.py")
+        self.assertGreater(install, 0)
+        self.assertLess(install, self.text.find("python -m unittest discover"))
+
 
 class RequirementsTest(unittest.TestCase):
     def test_versions_are_pinned(self):
