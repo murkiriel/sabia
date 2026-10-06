@@ -63,10 +63,16 @@ states             {UF: pacote}, um por estado
                    (street_line), municípios e o total (items)
 ```
 
-## Atualização (planejada)
+## Atualização
 
-Uma geração nova a cada 29 dias, com o extrato do Brasil mais recente do OpenStreetMap, pelo GitHub Actions; cada
-geração é uma release, e ficam no ar as 3 mais recentes.
+O conjunto é gerado de novo a cada 29 dias, com o extrato do Brasil mais recente do OpenStreetMap, pelo GitHub
+Actions (workflow [`gerar`](.github/workflows/gerar.yml)). Cada geração é uma release nova; o `catalogo.json` da raiz
+sempre aponta para a mais recente. Ficam no ar as **3 gerações mais recentes**: use sempre o `release_url` do
+`catalogo.json`, não um link fixo de release. Cada estado é independente: dá para atualizar um sem mexer nos outros.
+
+Uma geração só é publicada se passar nas travas: 69 buscas de verdade com o resultado esperado, todos os municípios do
+IBGE presentes, nenhuma queda grande de registros em relação à geração anterior, e o banco abrindo e respondendo igual
+no SQLite 3.22 (o do Android 10). Como é gerado: [`gerador/README.md`](gerador/README.md).
 
 ## Licença
 

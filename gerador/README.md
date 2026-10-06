@@ -22,6 +22,7 @@ python generate.py --states DF,GO       # só esses estados
 python generate.py --from validate      # só as travas (e o catálogo) sobre os bancos já gerados
 python scripts/publish.py               # confere a geração (não publica nada)
 python scripts/publish.py --release     # sobe os pacotes numa release e grava o catalogo.json na raiz
+python scripts/due.py                   # está na hora de gerar de novo? (só responde; não gera)
 python -m unittest discover -s tests -t .
 python -m ruff check .
 python -m mypy .
@@ -162,6 +163,24 @@ falta. Só depois o `catalogo.json` e a tabela "Baixar por estado" do README da 
 `--push`, as releases antigas são apagadas no fim (ficam 3 gerações, `SABIA_KEEP_GENERATIONS` muda;
 `python scripts/publish.py --prune --dry-run` mostra o que seria apagado). O repositório das releases é `SABIA_REPO`,
 senão o do Actions (`GITHUB_REPOSITORY`), senão `Murkiriel/sabia`.
+
+## Agendamento (G9)
+
+A geração inteira roda no Actions, no workflow `gerar` (`.github/workflows/gerar.yml`), **a cada 29 dias**: ele
+dispara todo dia às 03:47 e às 09:47 de Brasília, o job `interval` pergunta ao `scripts/due.py` (lógica em
+`sabia/schedule.py`) se a geração publicada (`built_at` do `catalogo.json`) já tem 29 dias, e só então a geração roda
+e publica. Se falhar, o disparo seguinte tenta de novo. Dois horários, fora da hora cheia, porque o GitHub atrasa ou
+pula disparos agendados sem avisar. Disparado à mão, gera na hora e só publica com `publish` marcado. **Num fork, o
+agendamento não gera** (`github.repository == 'Murkiriel/sabia'`).
+
+Para uma geração fora do intervalo sem disparar à mão, a variável `GENERATE_FROM` do job `interval` marca um dia
+(`AAAA-MM-DD`, UTC): a partir dele, o agendamento gera se a geração publicada for de antes desse dia.
+
+O job da geração liga 8 GB de swap, instala as dependências e o SQLite 3.22 (compilado), gera o Brasil inteiro (sem
+`--osm-file` nem `--states`), guarda como artefato os logs, o `relatorio.json` das travas, o `geracao.json` e as
+medições de memória, swap e disco a cada 30 s, e publica pelo `scripts/publish.py --release --commit --push`. O
+repositório das releases é o do próprio Actions (`GITHUB_REPOSITORY`). **Ainda não rodou no Actions** (fase V1, que
+precisa do repositório no GitHub).
 
 ## Convenções
 
