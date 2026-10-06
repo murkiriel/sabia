@@ -13,7 +13,38 @@ celular sem sinal. O nome vem do trocadilho: o Sabiá **sabia** onde fica.
 ## Baixar por estado
 
 <!-- downloads:start -->
-Nenhuma geração publicada ainda.
+Geração **2026-10-06-93a54bc6**: OpenStreetMap de 2026-10-05, formato 1. Baixe a base e os estados que quiser; confira o sha256 pelo [`catalogo.json`](catalogo.json).
+
+| Pacote | Arquivo | Tamanho |
+|---|---|---:|
+| **Base** (os municípios do Brasil e as rodovias federais) | [sabia-base.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-base.sqlite.zst) | 0,3 MB |
+| Acre (AC) | [sabia-AC.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-AC.sqlite.zst) | 0,8 MB |
+| Alagoas (AL) | [sabia-AL.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-AL.sqlite.zst) | 1,8 MB |
+| Amapá (AP) | [sabia-AP.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-AP.sqlite.zst) | 0,7 MB |
+| Amazonas (AM) | [sabia-AM.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-AM.sqlite.zst) | 2,9 MB |
+| Bahia (BA) | [sabia-BA.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-BA.sqlite.zst) | 12,1 MB |
+| Ceará (CE) | [sabia-CE.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-CE.sqlite.zst) | 5,3 MB |
+| Distrito Federal (DF) | [sabia-DF.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-DF.sqlite.zst) | 1,5 MB |
+| Espírito Santo (ES) | [sabia-ES.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-ES.sqlite.zst) | 4,6 MB |
+| Goiás (GO) | [sabia-GO.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-GO.sqlite.zst) | 6,2 MB |
+| Maranhão (MA) | [sabia-MA.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-MA.sqlite.zst) | 3,9 MB |
+| Mato Grosso (MT) | [sabia-MT.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-MT.sqlite.zst) | 3,8 MB |
+| Mato Grosso do Sul (MS) | [sabia-MS.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-MS.sqlite.zst) | 3,3 MB |
+| Minas Gerais (MG) | [sabia-MG.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-MG.sqlite.zst) | 22,3 MB |
+| Pará (PA) | [sabia-PA.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-PA.sqlite.zst) | 4,4 MB |
+| Paraíba (PB) | [sabia-PB.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-PB.sqlite.zst) | 3,6 MB |
+| Paraná (PR) | [sabia-PR.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-PR.sqlite.zst) | 9,8 MB |
+| Pernambuco (PE) | [sabia-PE.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-PE.sqlite.zst) | 6,1 MB |
+| Piauí (PI) | [sabia-PI.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-PI.sqlite.zst) | 3,1 MB |
+| Rio Grande do Norte (RN) | [sabia-RN.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-RN.sqlite.zst) | 2,9 MB |
+| Rio Grande do Sul (RS) | [sabia-RS.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-RS.sqlite.zst) | 14,4 MB |
+| Rio de Janeiro (RJ) | [sabia-RJ.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-RJ.sqlite.zst) | 9,8 MB |
+| Rondônia (RO) | [sabia-RO.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-RO.sqlite.zst) | 1,5 MB |
+| Roraima (RR) | [sabia-RR.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-RR.sqlite.zst) | 0,8 MB |
+| Santa Catarina (SC) | [sabia-SC.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-SC.sqlite.zst) | 10,6 MB |
+| São Paulo (SP) | [sabia-SP.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-SP.sqlite.zst) | 37,8 MB |
+| Sergipe (SE) | [sabia-SE.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-SE.sqlite.zst) | 2,0 MB |
+| Tocantins (TO) | [sabia-TO.sqlite.zst](https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/sabia-TO.sqlite.zst) | 1,6 MB |
 <!-- downloads:end -->
 
 ## O que resolve
