@@ -50,6 +50,7 @@ dependências do `requirements.txt` e sem dados baixados.
 | build | `sabia/osm_reader.py` | Uma passada pelo extrato (pyosmium): lugares, vias com nome ou `ref`, pontos de interesse (pontos, vias e relações); um filtro de chaves no C++ descarta antes do Python o que não interessa |
 | build | `sabia/records.py` | Os registros de cada estado, cada um no município cujo polígono contém o ponto dele (`sabia/municipalities.py`) |
 | build | `sabia/districts.py` | Os bairros de cada estado e o bairro de cada registro |
+| build | `sabia/street_lines.py` | O traçado de cada rua, simplificado a 10 m, para o "que rua é esta?" |
 
 **Registros** (`sabia/records.py`, tipos em `sabia/kinds.py`):
 
@@ -74,6 +75,11 @@ de distrito; no mesmo nível, o menor polígono); fora de todos, o ponto de bair
 município. Em Goiás: 3.323 bairros (2.869 com polígono); 63% das ruas e 60% dos pontos de interesse ficam com bairro
 (o resto é zona rural ou cidade sem bairro mapeado), e as 23 "Rua 10" de Goiânia ficam em 21 bairros diferentes. No
 DF: 622 bairros, 94% das ruas com bairro.
+
+**Traçados** (`sabia/street_lines.py`, G5, D6): cada trecho de rua com nome (e cada trecho sem nome de rodovia)
+simplificado a 10 m e cortado em pedaços de até 2 km, cada um com o quadrado do zoom 13 do meio dele. Em Goiás:
+142.696 pedaços, 7,2 MB no SQLite, e a medição de 4.000 pontos (meio de trechos de rua, até 12 m para o lado) refeita
+com este código acerta a rua de 99,0% deles, procurando só nos 9 quadrados em volta.
 
 Conferido com o extrato do Centro-Oeste de 2026-09-29: Goiás dá 92.131 registros (3.426 lugares, 74.809 ruas, 963
 rodovias, 12.933 pontos de interesse), os 246 municípios, e os casos medidos da regra de juntar ruas (Av. Anhanguera
