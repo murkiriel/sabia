@@ -42,6 +42,35 @@ municípios de onde ele saiu, até a malha trazer o polígono.
 Os testes também rodam no GitHub Actions a cada push e pull request (`.github/workflows/testes.yml`), com as
 dependências do `requirements.txt` e sem dados baixados.
 
+## Como funciona
+
+| Etapa | Módulo | O que faz |
+|---|---|---|
+| sources | `sabia/sources.py` | Extrato do OpenStreetMap e arquivos do IBGE (acima) |
+| build | `sabia/osm_reader.py` | Uma passada pelo extrato (pyosmium): lugares, vias com nome ou `ref`, pontos de interesse (pontos, vias e relações); um filtro de chaves no C++ descarta antes do Python o que não interessa |
+| build | `sabia/records.py` | Os registros de cada estado, cada um no município cujo polígono contém o ponto dele (`sabia/municipalities.py`) |
+
+**Registros** (`sabia/records.py`, tipos em `sabia/kinds.py`):
+
+- `place`: cada município do IBGE (`kind` `municipality`, com o nome oficial; a sede é o lugar do OpenStreetMap de
+  mesmo nome dentro dele, cidade antes de vila, senão um ponto dentro do polígono) e os lugares com nome (`place=`
+  cidade, vila, povoado, bairro, localidade, fazenda, ilha). Um lugar desenhado só como área entra pelo centro dela,
+  se não houver um ponto de mesmo nome a até 2 km no município.
+- `street` (D5): vias com nome, juntadas por município e nome quando se tocam (nó em comum) ou têm pontas a menos de
+  60 m, em cadeia. A posição é o meio do trecho mais central; o `kind` é o do trecho mais importante. Uma rua só de
+  vias locais com mais de 3 km de ponta a ponta fica marcada como suspeita de junção errada.
+- `road`: uma por `ref` e município, das vias motorway a tertiary (`BR 153` vira `BR-153`; `ref` que não é sigla e
+  número, como um CEP, fica de fora).
+- `poi` (D7): pontos, vias e relações com `amenity`, `shop`, `tourism`, `leisure`, `craft`, `office`, `healthcare`,
+  `emergency` ou `historic` e nome, mais aeroporto, cachoeira, pico, praia, caverna, autódromo, pedágio e áreas de
+  descanso; os de viagem (posto, hospital, clínica, polícia, farmácia, recarga, borracharia, oficina, pedágio)
+  entram sem nome, com a marca (`brand`) no lugar do nome quando houver.
+
+Conferido com o extrato do Centro-Oeste de 2026-09-29: Goiás dá 92.131 registros (3.426 lugares, 74.809 ruas, 963
+rodovias, 12.933 pontos de interesse), os 246 municípios, e os casos medidos da regra de juntar ruas (Av. Anhanguera
+em Goiânia em 5 registros, Av. T-63 e Av. Goiás em 1, Av. Brasil em Anápolis em 7, 163 ruas locais suspeitas); o
+DF, 30.847. A leitura do extrato regional (206 MB) leva ~20 s.
+
 ## Convenções
 
 Ver a seção "Convenções" do README da raiz: código, módulos, opções de linha de comando e formato dos dados em
