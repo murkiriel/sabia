@@ -46,6 +46,24 @@ IGNORED_POI_VALUES = {"bench", "waste_basket", "waste_disposal", "grit_bin", "pa
                       "bicycle_parking", "motorcycle_parking", "yes", "no"}
 
 
+# Bairros (G4): áreas e pontos de lugar destes tipos, e os limites administrativos de nível 10 (bairro) e 9 (distrito).
+# A ordem decide o bairro de um registro dentro de dois polígonos: o bairro antes da vizinhança dentro dele, e o
+# distrito (maior) por último; no mesmo nível, o menor polígono.
+DISTRICT_RANK = {"suburb": 0, "admin_level=10": 0, "quarter": 1, "neighbourhood": 2, "admin_level=9": 3}
+DISTRICT_PLACES = {"suburb", "quarter", "neighbourhood"}
+
+
+def district_kind(tags: Mapping[str, str]) -> Optional[str]:
+    """O tipo de bairro das etiquetas ("suburb", "admin_level=10"), ou None."""
+    place = tags.get("place")
+    if place in DISTRICT_PLACES:
+        return place
+    level = tags.get("admin_level")
+    if tags.get("boundary") == "administrative" and level in ("9", "10"):
+        return f"admin_level={level}"
+    return None
+
+
 def poi_kind(tags: Mapping[str, str]) -> Optional[str]:
     """O `kind` de ponto de interesse das etiquetas, ou None se o objeto não é um."""
     for key, value in EXTRA_POI_TAGS:

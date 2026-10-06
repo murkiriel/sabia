@@ -49,6 +49,7 @@ dependências do `requirements.txt` e sem dados baixados.
 | sources | `sabia/sources.py` | Extrato do OpenStreetMap e arquivos do IBGE (acima) |
 | build | `sabia/osm_reader.py` | Uma passada pelo extrato (pyosmium): lugares, vias com nome ou `ref`, pontos de interesse (pontos, vias e relações); um filtro de chaves no C++ descarta antes do Python o que não interessa |
 | build | `sabia/records.py` | Os registros de cada estado, cada um no município cujo polígono contém o ponto dele (`sabia/municipalities.py`) |
+| build | `sabia/districts.py` | Os bairros de cada estado e o bairro de cada registro |
 
 **Registros** (`sabia/records.py`, tipos em `sabia/kinds.py`):
 
@@ -65,6 +66,14 @@ dependências do `requirements.txt` e sem dados baixados.
   `emergency` ou `historic` e nome, mais aeroporto, cachoeira, pico, praia, caverna, autódromo, pedágio e áreas de
   descanso; os de viagem (posto, hospital, clínica, polícia, farmácia, recarga, borracharia, oficina, pedágio)
   entram sem nome, com a marca (`brand`) no lugar do nome quando houver.
+
+**Bairros** (`sabia/districts.py`, G4): as áreas de bairro (relações e vias fechadas com `place` suburb, quarter ou
+neighbourhood, e limites administrativos de nível 10, bairro, e 9, distrito) e os pontos de bairro sem área de mesmo
+nome no município. O bairro de um registro é o do polígono que o contém (bairro antes de vizinhança, vizinhança antes
+de distrito; no mesmo nível, o menor polígono); fora de todos, o ponto de bairro mais próximo até 3 km, no mesmo
+município. Em Goiás: 3.323 bairros (2.869 com polígono); 63% das ruas e 60% dos pontos de interesse ficam com bairro
+(o resto é zona rural ou cidade sem bairro mapeado), e as 23 "Rua 10" de Goiânia ficam em 21 bairros diferentes. No
+DF: 622 bairros, 94% das ruas com bairro.
 
 Conferido com o extrato do Centro-Oeste de 2026-09-29: Goiás dá 92.131 registros (3.426 lugares, 74.809 ruas, 963
 rodovias, 12.933 pontos de interesse), os 246 municípios, e os casos medidos da regra de juntar ruas (Av. Anhanguera

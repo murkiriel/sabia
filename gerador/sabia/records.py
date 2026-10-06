@@ -43,6 +43,7 @@ class Item:
     lat: float
     lng: float
     district: Optional[str] = None                     # nome do bairro (G4)
+    district_id: Optional[int] = None
     ways: List[int] = field(default_factory=list)      # índices em OsmData.ways: o traçado (G5)
     extent_m: float = 0.0
     suspect_long: bool = False

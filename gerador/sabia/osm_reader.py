@@ -12,6 +12,7 @@ from typing import List, Optional, Tuple
 
 import osmium
 import shapely.wkb
+from shapely.geometry.base import BaseGeometry
 
 from . import config, kinds
 
@@ -51,10 +52,19 @@ class Way:
 
 
 @dataclass
+class DistrictArea:
+    """Um bairro desenhado como área (relação ou via fechada)."""
+    name: str
+    kind: str          # kinds.district_kind: "suburb", "admin_level=10"...
+    geometry: BaseGeometry
+
+
+@dataclass
 class OsmData:
     places: List[Place] = field(default_factory=list)
     pois: List[Poi] = field(default_factory=list)
     ways: List[Way] = field(default_factory=list)
+    district_areas: List[DistrictArea] = field(default_factory=list)
 
 
 def _inside(bbox: Optional[BBox], lat: float, lng: float) -> bool:
@@ -123,16 +133,15 @@ class _Reader:
             self.data.ways.append(Way(name, highway, ref, ids, lats, lngs))
 
     def area(self, a) -> None:
-        # As vias fechadas já foram lidas como via; daqui só saem as relações.
-        if a.from_way():
-            return
         tags = a.tags
         name = _named(tags)
         if not name:
             return
         place = tags.get("place")
-        is_poi = kinds.poi_kind(tags) is not None
-        if place not in kinds.PLACE_KINDS and not is_poi:
+        district = kinds.district_kind(tags)
+        # ponto de interesse de via fechada já entrou como via; daqui só os das relações
+        is_poi = not a.from_way() and kinds.poi_kind(tags) is not None
+        if place not in kinds.PLACE_KINDS and not is_poi and district is None:
             return
         try:
             geometry = shapely.wkb.loads(self.wkb.create_multipolygon(a), hex=True)
@@ -142,9 +151,11 @@ class _Reader:
         lat, lng = point.y, point.x
         if not _inside(self.bbox, lat, lng):
             return
+        if district is not None:
+            self.data.district_areas.append(DistrictArea(name, district, geometry))
         if place in kinds.PLACE_KINDS:
             self.data.places.append(Place(name, place, lat, lng, from_area=True))
-        else:
+        elif is_poi:
             self._poi(tags, name, lat, lng)
 
 
