@@ -16,7 +16,7 @@ celular sem sinal. O nome vem do trocadilho: o Sabiá **sabia** onde fica.
 2. **Dizer "que rua é esta?"** a partir de uma coordenada (o traçado simplificado de cada rua vai no pacote).
 3. **Achar o mais perto** por categoria: "posto", "borracharia", "hospital".
 
-## O pacote (planejado)
+## O pacote
 
 ```
 sabia-base.sqlite.zst    os 5.570 municípios (nome, UF, ponto da sede, código do IBGE) e as rodovias federais
@@ -26,7 +26,10 @@ catalogo.json            o índice: tamanho, sha256, retângulo e contagens de c
 
 Cada pacote é um banco **SQLite com índice FTS4**, que o SQLite do Android (desde o 3.22) lê sem biblioteca a mais,
 compactado em **zstd** e descompactado uma vez, na instalação. Um estado não depende do vizinho: cada um pode ser
-instalado e atualizado sozinho.
+instalado e atualizado sozinho. Tabelas, colunas e codificações: [`docs/FORMATO.md`](docs/FORMATO.md).
+
+Tamanhos medidos (extrato de 2026-09-29): Goiás 23,8 MB (6,2 MB compactado), DF 7,4 MB (1,5 MB), a base 1,1 MB
+(0,3 MB).
 
 ## Atualização (planejada)
 

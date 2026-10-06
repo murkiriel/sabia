@@ -61,3 +61,5 @@ IBGE_MESH_URL = ("https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR"
 IBGE_NAMES_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado"
 # Menos que isso na malha ou na lista é resposta quebrada da API, não o Brasil.
 MIN_MUNICIPALITIES = 5570
+
+ATTRIBUTION = "© colaboradores do OpenStreetMap (ODbL 1.0); municípios e limites municipais: IBGE"

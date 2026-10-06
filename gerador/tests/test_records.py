@@ -185,6 +185,20 @@ class RoadsTest(unittest.TestCase):
         self.assertEqual([], [i for i in build(osm)["GO"] if i.cls == "road"])
 
 
+class ReaderBoxTest(unittest.TestCase):
+    def test_way_crossing_the_box_is_kept_whatever_its_middle_node(self):
+        """Com o retângulo dos estados pedidos, uma via que entra nele fica, mesmo com o nó do meio fora (o
+        município é decidido depois pelo meio do comprimento)."""
+        osm = OsmBuilder()
+        inside = (-16.0, -48.0)
+        outside = [(-16.0, -47.0 + k * 0.001) for k in range(10)]
+        osm.way([inside] + outside, highway="primary", name="Via Que Cruza")
+        osm.way(outside, highway="primary", name="Via De Fora")
+        with tempfile.TemporaryDirectory() as tmp:
+            data = osm_reader.read(osm.write(Path(tmp) / "x.osm.pbf"), bbox=(-16.5, -48.5, -15.5, -47.5))
+        self.assertEqual(["Via Que Cruza"], [w.name for w in data.ways])
+
+
 class PoisTest(unittest.TestCase):
     def pois(self, osm):
         return [i for i in build(osm)["GO"] if i.cls == "poi"]

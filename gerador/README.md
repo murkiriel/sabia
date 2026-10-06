@@ -51,6 +51,8 @@ dependências do `requirements.txt` e sem dados baixados.
 | build | `sabia/records.py` | Os registros de cada estado, cada um no município cujo polígono contém o ponto dele (`sabia/municipalities.py`) |
 | build | `sabia/districts.py` | Os bairros de cada estado e o bairro de cada registro |
 | build | `sabia/street_lines.py` | O traçado de cada rua, simplificado a 10 m, para o "que rua é esta?" |
+| build | `sabia/database.py` | Os bancos SQLite (FTS4, tabelas de busca de `sabia/search_rules.py`, `meta`) e a compactação zstd 19; formato em [`docs/FORMATO.md`](../docs/FORMATO.md) |
+| build | `sabia/build.py` | A etapa inteira: lê o extrato uma vez, grava os bancos em `data/build/` e os pacotes e o `pacotes.json` em `data/dist/` |
 
 **Registros** (`sabia/records.py`, tipos em `sabia/kinds.py`):
 
@@ -80,6 +82,18 @@ DF: 622 bairros, 94% das ruas com bairro.
 simplificado a 10 m e cortado em pedaços de até 2 km, cada um com o quadrado do zoom 13 do meio dele. Em Goiás:
 142.696 pedaços, 7,2 MB no SQLite, e a medição de 4.000 pontos (meio de trechos de rua, até 12 m para o lado) refeita
 com este código acerta a rua de 99,0% deles, procurando só nos 9 quadrados em volta.
+
+**Pacotes** (`sabia/database.py`, G6), gerados aqui com o extrato do Centro-Oeste em 2026-10-05 (`--states DF,GO`,
+51 s ao todo, 25 s de leitura):
+
+| Pacote | Registros | Banco | Compactado (zstd 19) |
+|---|---:|---:|---:|
+| DF | 30.934 | 7,4 MB | 1,5 MB |
+| GO | 92.760 | 23,8 MB | 6,2 MB |
+| Base (5.570 municípios, 23 rodovias federais de DF e GO) | 5.593 | 1,1 MB | 0,3 MB |
+
+O banco de Goiás inclui 142.696 pedaços de traçado e 3.323 bairros. Os pacotes são reproduzíveis: o mesmo extrato dá
+o mesmo arquivo, byte a byte (ordem fixa, compactação sem threads).
 
 Conferido com o extrato do Centro-Oeste de 2026-09-29: Goiás dá 92.131 registros (3.426 lugares, 74.809 ruas, 963
 rodovias, 12.933 pontos de interesse), os 246 municípios, e os casos medidos da regra de juntar ruas (Av. Anhanguera

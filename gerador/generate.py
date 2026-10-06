@@ -23,7 +23,7 @@ sys.path.insert(0, str(HERE))
 if (HERE / ".pylib").exists():
     sys.path.insert(0, str(HERE / ".pylib"))
 
-from sabia import config, sources  # noqa: E402
+from sabia import build, config, sources  # noqa: E402
 
 STAGES = ["sources", "build", "validate", "catalog"]
 
@@ -60,6 +60,11 @@ def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
     return osm
 
 
+def build_stage(states: List[str], osm: Dict[str, object], today: Optional[str] = None) -> Dict[str, object]:
+    """Lê o extrato e grava os bancos de cada estado e a base em data/build/, compactados em data/dist/."""
+    return build.run(states, osm, today)
+
+
 def _utf8_output() -> None:
     # Log redirecionado para arquivo sai na codificação do Windows (cp1252) e os acentos quebram; UTF-8 sempre.
     for stream in (sys.stdout, sys.stderr):
@@ -72,9 +77,14 @@ def _utf8_output() -> None:
 def main() -> None:
     _utf8_output()
     args = build_parser().parse_args()
-    if STAGES.index(args.from_stage) <= STAGES.index("sources"):
-        sources_stage(args.osm_file)
-    sys.exit(f"[gerar] etapas seguintes ainda não escritas; estados pedidos: {', '.join(args.states)}")
+    start = STAGES.index(args.from_stage)
+    if start <= STAGES.index("sources"):
+        osm = sources_stage(args.osm_file)
+    else:
+        osm = json.loads((config.BUILD / "osm.json").read_text(encoding="utf-8"))
+    if start <= STAGES.index("build"):
+        build_stage(args.states, osm)
+    sys.exit("[gerar] etapas validate e catalog ainda não escritas")
 
 
 if __name__ == "__main__":

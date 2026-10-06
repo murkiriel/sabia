@@ -71,6 +71,12 @@ def _inside(bbox: Optional[BBox], lat: float, lng: float) -> bool:
     return bbox is None or (bbox[0] <= lat <= bbox[2] and bbox[1] <= lng <= bbox[3])
 
 
+def _crosses(bbox: Optional[BBox], lats: array, lngs: array) -> bool:
+    """A via encosta no retângulo? (o município dela sai depois, do meio do comprimento)"""
+    return bbox is None or (min(lats) <= bbox[2] and max(lats) >= bbox[0] and min(lngs) <= bbox[3]
+                            and max(lngs) >= bbox[1])
+
+
 def _named(tags) -> str:
     return (tags.get("name") or "").strip()
 
@@ -124,12 +130,11 @@ class _Reader:
                 lngs.append(loc.lon)
         if not lats:
             return
-        lat, lng = lats[len(lats) // 2], lngs[len(lngs) // 2]
-        if not _inside(self.bbox, lat, lng):
-            return
         if poi:
-            self._poi(tags, name, sum(lats) / len(lats), sum(lngs) / len(lngs))
-        elif len(lats) >= 2:
+            lat, lng = sum(lats) / len(lats), sum(lngs) / len(lngs)
+            if _inside(self.bbox, lat, lng):
+                self._poi(tags, name, lat, lng)
+        elif len(lats) >= 2 and _crosses(self.bbox, lats, lngs):
             self.data.ways.append(Way(name, highway, ref, ids, lats, lngs))
 
     def area(self, a) -> None:

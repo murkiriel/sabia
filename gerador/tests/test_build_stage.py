@@ -1,0 +1,83 @@
+"""A etapa build do generate.py de ponta a ponta, com um extrato e arquivos do IBGE de mentira: os bancos, os
+pacotes .sqlite.zst e o pacotes.json com as contagens."""
+import json
+import sqlite3
+from contextlib import closing
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from shapely.geometry import mapping
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from sabia import config, database  # noqa: E402
+from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
+from tests.test_cli import load_script  # noqa: E402
+
+
+def write_ibge(raw: Path):
+    raw.mkdir(parents=True, exist_ok=True)
+    features = [{"type": "Feature", "properties": {"codarea": m.code}, "geometry": mapping(m.geometry)}
+                for m in MUNICIPALITIES]
+    mesh = {"type": "FeatureCollection", "features": features}
+    (raw / "ibge_malha_municipios.json").write_text(json.dumps(mesh), encoding="utf-8")
+    names = [{"municipio-id": int(m.code), "municipio-nome": m.name, "UF-sigla": m.uf} for m in MUNICIPALITIES]
+    (raw / "ibge_municipios.json").write_text(json.dumps(names, ensure_ascii=False), encoding="utf-8")
+
+
+class BuildStageTest(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        root = Path(self._tmp.name)
+        self.raw, self.build, self.dist = root / "raw", root / "build", root / "dist"
+        write_ibge(self.raw)
+        osm = OsmBuilder()
+        osm.street((-16.68, -49.26), 400, "Rua 10")
+        osm.node(-16.68, -49.25, amenity="fuel", name="Posto Cerrado")
+        osm.street((-15.79, -47.88), 400, "Eixo Rodoviário", highway="trunk")
+        self.pbf = osm.write(root / "x.osm.pbf")
+        self.osm = {"path": str(self.pbf), "url": "local", "timestamp": "2026-09-29T00:59:51Z",
+                    "md5": "0123456789abcdef", "size": 1}
+        self._patches = [mock.patch.object(config, "RAW", self.raw), mock.patch.object(config, "BUILD", self.build),
+                         mock.patch.object(config, "DIST", self.dist)]
+        for p in self._patches:
+            p.start()
+        self.script = load_script()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self._tmp.cleanup()
+
+    def test_packages_and_counts(self):
+        self.dist.mkdir(parents=True)
+        (self.dist / "sabia-SP.sqlite.zst").write_bytes(b"sobra de outra geracao")
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        self.assertEqual("2026-09-30-01234567", packages["build_id"])
+        self.assertEqual(["GO"], list(packages["states"]))
+        go = packages["states"]["GO"]
+        self.assertEqual("sabia-GO.sqlite.zst", go["file"])
+        self.assertEqual(1, go["counts"]["street"])
+        self.assertEqual(1, go["counts"]["poi"])
+        self.assertEqual(2, go["counts"]["municipality"])
+        self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
+        self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
+        saved = json.loads((self.dist / "pacotes.json").read_text(encoding="utf-8"))
+        self.assertEqual(packages, saved)
+        back = self.build / "conferido.sqlite"
+        database.decompress(self.dist / "sabia-GO.sqlite.zst", back)
+        self.assertEqual((self.build / "sabia-GO.sqlite").read_bytes(), back.read_bytes())
+        with closing(sqlite3.connect(back)) as db:
+            self.assertEqual("2026-09-30-01234567", dict(db.execute("SELECT key, value FROM meta"))["build_id"])
+        self.assertEqual(back.stat().st_size, go["bytes_db"])
+
+    def test_base_has_every_municipality_even_for_a_partial_run(self):
+        packages = self.script.build_stage(["DF"], self.osm, today="2026-09-30")
+        self.assertEqual(3, packages["base"]["counts"]["municipality"])
+        self.assertEqual(1, packages["states"]["DF"]["counts"]["street"])
+
+
+if __name__ == "__main__":
+    unittest.main()
