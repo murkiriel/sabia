@@ -15,6 +15,7 @@ import json
 import sqlite3
 import sys
 from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -25,7 +26,7 @@ sys.path.insert(0, str(HERE))
 if (HERE / ".pylib").exists():
     sys.path.insert(0, str(HERE / ".pylib"))
 
-from sabia import build, config, sources, sqlite_old, validation  # noqa: E402
+from sabia import build, catalog, config, run_record, sources, sqlite_old, validation  # noqa: E402
 
 STAGES = ["sources", "build", "validate", "catalog"]
 
@@ -99,6 +100,14 @@ def validate_stage(states: List[str], packages: Dict[str, object]) -> List[str]:
     return problems
 
 
+def catalog_stage(packages: Dict[str, object]) -> Dict[str, object]:
+    """O catalogo.json em data/dist/, a partir do pacotes.json e dos arquivos compactados."""
+    municipalities = sources.load_municipalities(config.RAW / sources.MESH_FILE, config.RAW / sources.NAMES_FILE)
+    cat = catalog.build_catalog(packages, municipalities)
+    catalog.save(cat, config.DIST / "catalogo.json")
+    return cat
+
+
 def _utf8_output() -> None:
     # Log redirecionado para arquivo sai na codificação do Windows (cp1252) e os acentos quebram; UTF-8 sempre.
     for stream in (sys.stdout, sys.stderr):
@@ -108,27 +117,59 @@ def _utf8_output() -> None:
             pass
 
 
-def main() -> None:
-    _utf8_output()
-    args = build_parser().parse_args()
+def _generate(args: argparse.Namespace, recorder: run_record.RunRecorder) -> str:
     start = STAGES.index(args.from_stage)
-    if start <= STAGES.index("sources"):
-        osm = sources_stage(args.osm_file)
-    else:
-        osm = json.loads((config.BUILD / "osm.json").read_text(encoding="utf-8"))
-    if start <= STAGES.index("build"):
-        packages = build_stage(args.states, osm)
-    else:
-        packages = json.loads((config.DIST / "pacotes.json").read_text(encoding="utf-8"))
+    with recorder.stage("sources"):
+        if start <= STAGES.index("sources"):
+            osm = sources_stage(args.osm_file)
+        else:
+            osm = json.loads((config.BUILD / "osm.json").read_text(encoding="utf-8"))
+    with recorder.stage("build"):
+        if start <= STAGES.index("build"):
+            packages = build_stage(args.states, osm)
+        else:
+            packages = json.loads((config.DIST / "pacotes.json").read_text(encoding="utf-8"))
+    states = sorted(packages["states"])  # type: ignore[call-overload]
     if start <= STAGES.index("validate"):
-        problems = validate_stage(sorted(packages["states"]), packages)  # type: ignore[call-overload]
+        with recorder.stage("validate"):
+            problems = validate_stage(states, packages)
         if problems:
             print()
             print("[gerar] AS TRAVAS FALHARAM; o catálogo não foi montado:")
             for p in problems:
                 print("  -", p)
             raise SystemExit(1)
-    sys.exit("[gerar] etapa catalog ainda não escrita")
+    else:
+        print("[gerar] AVISO: --from catalog não roda as travas; o catálogo sai sobre a validação anterior")
+    with recorder.stage("catalog"):
+        cat = catalog_stage(packages)
+    total = sum(e["bytes"] for e in [cat["base"], *cat["states"].values()])  # type: ignore[attr-defined]
+    return f"geração {cat['build_id']}: {len(states)} estados e a base, {total / 1e6:.1f} MB compactados"
+
+
+def main() -> None:
+    _utf8_output()
+    args = build_parser().parse_args()
+    config.DIST.mkdir(parents=True, exist_ok=True)
+    marker = config.DIST / config.IN_PROGRESS_MARKER
+    marker.write_text(datetime.now(timezone.utc).isoformat(), encoding="utf-8")
+    recorder = run_record.RunRecorder(config.DATA)
+    result = "failed"
+    try:
+        summary = _generate(args, recorder)
+        result = "ok"
+    except SystemExit:
+        result = "failed: validation"
+        raise
+    except BaseException as e:
+        result = f"failed: {e.__class__.__name__}: {e}"
+        raise
+    finally:
+        recorder.save(config.DIST / "geracao.json", result)
+    minutes = sum(e["minutes"] for e in recorder.stages)
+    print(f"[gerar] {summary}, em {minutes:.1f} min; pico de disco em data/: {recorder.peak / 1e9:.2f} GB "
+          f"(detalhes em data/dist/geracao.json)")
+    marker.unlink()
 
 
 if __name__ == "__main__":

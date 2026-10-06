@@ -64,3 +64,6 @@ MIN_MUNICIPALITIES = 5570
 
 ATTRIBUTION = "© colaboradores do OpenStreetMap (ODbL 1.0); municípios e limites municipais: IBGE"
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
+
+# O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.
+MAX_ASSET_BYTES = 1_900_000_000

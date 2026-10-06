@@ -20,6 +20,8 @@ python scripts/install_sqlite.py        # uma vez: o SQLite 3.22 da trava G7e, e
 python generate.py                      # geração completa em data/dist/
 python generate.py --states DF,GO       # só esses estados
 python generate.py --from validate      # só as travas (e o catálogo) sobre os bancos já gerados
+python scripts/publish.py               # confere a geração (não publica nada)
+python scripts/publish.py --release     # sobe os pacotes numa release e grava o catalogo.json na raiz
 python -m unittest discover -s tests -t .
 python -m ruff check .
 python -m mypy .
@@ -56,6 +58,12 @@ dependências do `requirements.txt` e sem dados baixados.
 | build | `sabia/database.py` | Os bancos SQLite (FTS4, tabelas de busca de `sabia/search_rules.py`, `meta`) e a compactação zstd 19; formato em [`docs/FORMATO.md`](../docs/FORMATO.md) |
 | build | `sabia/build.py` | A etapa inteira: lê o extrato uma vez, grava os bancos em `data/build/` e os pacotes e o `pacotes.json` em `data/dist/` |
 | validate | `sabia/validation.py` | As travas (abaixo) e o `data/dist/relatorio.json` |
+| catalog | `sabia/catalog.py` | O `data/dist/catalogo.json`: tamanho, sha256, retângulo e contagens de cada pacote |
+
+Cada geração grava `data/dist/geracao.json` (`sabia/run_record.py`): minutos de cada etapa, pico de disco em `data/`
+e o resultado. Enquanto roda, existe a marca `data/dist/GERACAO_EM_ANDAMENTO`; se ela sobrar, a geração caiu no meio e
+a publicação recusa. Geração completa aqui (DF e GO, extrato do Centro-Oeste, `--osm-file`): 0,8 min, pico de 0,26 GB
+em `data/`.
 
 **Registros** (`sabia/records.py`, tipos em `sabia/kinds.py`):
 
@@ -131,6 +139,29 @@ menos 1.000 registros, ou um estado que sumiu) é conferida na publicação, con
 
 Medido aqui (DF e GO, extrato do Centro-Oeste de 2026-09-29): 69 de 69 buscas, 0 problemas, as buscas iguais no
 SQLite 3.22, 184 ruas locais suspeitas (163 em GO, 21 no DF); a etapa leva ~4 s.
+
+## Publicação (G8)
+
+`scripts/publish.py` (a lógica em `sabia/publishing.py`, o mesmo molde de release com rascunho e retomada) não
+publica se:
+
+- a geração ainda roda ou caiu no meio (marca `GERACAO_EM_ANDAMENTO`),
+- o formato do catálogo não é o do gerador (`database.FORMAT_VERSION`),
+- a geração foi feita de um extrato local (`--osm-file`, `osm.url` = `local`),
+- a geração não passou nas travas (`data/dist/relatorio.json` com problemas, ou sem ele),
+- algum pacote falta, não bate o sha256 ou passa do limite do GitHub Releases,
+- algum estado sumiu ou perdeu mais de 5% dos registros em relação ao `catalogo.json` publicado, no total ou numa
+  classe com 1.000 registros ou mais (`--accept-drop` para passar),
+- a geração usa um OpenStreetMap mais antigo que o da publicada (`--accept-older`),
+- já existe uma release PUBLICADA com o mesmo `build_id`,
+- com `--commit`, o git do repositório não está com o e-mail anônimo do GitHub (`…@users.noreply.github.com`).
+
+A release sobe como rascunho, sem arquivos; cada pacote que ainda não está lá (ou está com outro tamanho) sobe; só
+com todos presentes e do tamanho certo ela é publicada. Se a subida cair no meio, rodar o mesmo comando retoma do que
+falta. Só depois o `catalogo.json` e a tabela "Baixar por estado" do README da raiz mudam, no mesmo commit; com
+`--push`, as releases antigas são apagadas no fim (ficam 3 gerações, `SABIA_KEEP_GENERATIONS` muda;
+`python scripts/publish.py --prune --dry-run` mostra o que seria apagado). O repositório das releases é `SABIA_REPO`,
+senão o do Actions (`GITHUB_REPOSITORY`), senão `Murkiriel/sabia`.
 
 ## Convenções
 

@@ -120,5 +120,16 @@ class ValidateStageTest(StageFixture):
         self.assertTrue(all("3.22" in p for p in problems), problems)
 
 
+class CatalogStageTest(StageFixture):
+    def test_catalog_in_dist(self):
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        cat = self.script.catalog_stage(packages)
+        saved = json.loads((self.dist / "catalogo.json").read_text(encoding="utf-8"))
+        self.assertEqual(cat, saved)
+        self.assertEqual(["GO"], list(saved["states"]))
+        self.assertEqual("2026-09-30-01234567", saved["build_id"])
+        self.assertEqual("local", saved["osm"]["url"])
+
+
 if __name__ == "__main__":
     unittest.main()

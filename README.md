@@ -10,6 +10,12 @@ celular sem sinal. O nome vem do trocadilho: o Sabiá **sabia** onde fica.
 
 > **Aviso.** Os dados vêm do OpenStreetMap e podem estar incompletos ou errados.
 
+## Baixar por estado
+
+<!-- downloads:start -->
+Nenhuma geração publicada ainda.
+<!-- downloads:end -->
+
 ## O que resolve
 
 1. **Buscar sem internet:** "Rua 10, Setor Oeste", "posto ipiranga anápolis", "br-153 anápolis".
@@ -30,6 +36,32 @@ instalado e atualizado sozinho. Tabelas, colunas e codificações: [`docs/FORMAT
 
 Tamanhos medidos (extrato de 2026-09-29): Goiás 23,8 MB (6,2 MB compactado), DF 7,4 MB (1,5 MB), a base 1,1 MB
 (0,3 MB).
+
+Como instalar, buscar, achar a rua de um ponto e o mais perto: [`docs/CONSUMO.md`](docs/CONSUMO.md).
+
+## `catalogo.json`
+
+```
+schema             versão deste formato de catálogo (1)
+format_version     versão do formato dos bancos (meta.format_version): recuse uma maior que a que você conhece
+build_id           a geração: data + 8 primeiros do md5 do extrato (ex.: 2026-10-05-93a54bc6), também o nome da release
+built_at           quando foi gerada (UTC)
+generator_commit   commit do gerador que produziu a geração
+osm                data (timestamp), md5 e endereço (url) do extrato do OpenStreetMap usado
+release_url        onde baixar os arquivos desta geração
+attribution        crédito obrigatório dos dados
+base               a base nacional (campos abaixo; counts: municipality, road)
+states             {UF: pacote}, um por estado
+  name             nome do estado (só em states)
+  file             nome do arquivo na release (.sqlite.zst)
+  bytes            tamanho do arquivo compactado
+  sha256           para conferir o download
+  bytes_db         tamanho do banco descompactado (o espaço no aparelho)
+  bbox             [lat mín, lon mín, lat máx, lon máx] dos municípios do estado (na base, o Brasil), arredondado
+                   para fora; use para escolher o que baixar
+  counts           registros por classe (place, street, road, poi), bairros (district), pedaços de traçado
+                   (street_line), municípios e o total (items)
+```
 
 ## Atualização (planejada)
 
