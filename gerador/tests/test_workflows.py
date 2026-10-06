@@ -128,6 +128,53 @@ class ScheduledGenerationTest(unittest.TestCase):
         self.assertNotIn("--osm-file", self.generate)
         self.assertNotIn("--states", self.generate)
 
+    def step(self, name: str) -> str:
+        """O texto de um passo do job generate, do `- name:` até o próximo passo."""
+        m = re.search(rf"(?ms)^      - name: {re.escape(name)}\n(.*?)(?=^      - |\Z)", self.generate)
+        return m.group(1) if m else ""
+
+    def test_frees_disk_before_anything_else(self):
+        """O executor de repositório privado chega com ~13 GB livres em /: sem apagar as ferramentas que a geração
+        não usa, o extrato, os bancos e o swap não cabem."""
+        free = self.step("Liberar disco")
+        self.assertIn("sudo rm -rf /usr/share/dotnet /usr/local/lib/android", free)
+        self.assertIn("docker image prune", free)
+        self.assertLess(self.generate.find("- name: Liberar disco"),
+                        self.generate.find("- name: Dados e swap no disco com mais espaço"))
+
+    def test_data_and_swap_on_the_disk_with_more_space(self):
+        """data/ e o swap vão para o disco com mais espaço livre (/mnt, quando há, ou o de $HOME), antes do SQLite
+        3.22, que também grava em data/."""
+        place = self.step("Dados e swap no disco com mais espaço")
+        self.assertIn('ln -s "$base/sabia-data" gerador/data', place)
+        self.assertIn('sudo swapon "$base/swap-sabia"', place)
+        self.assertIn('if [ "$mnt" -gt "$root" ]; then base=/mnt; else base="$HOME"; fi', place)
+        self.assertLess(self.generate.find("- name: Dados e swap no disco com mais espaço"),
+                        self.generate.find("python scripts/install_sqlite.py"))
+        self.assertNotIn("/swap-sabia\n", self.generate.replace('"$base/swap-sabia"', ""))
+
+    def test_generation_log_is_live(self):
+        """Sem buffer: num run de horas, o log do passo mostra o progresso enquanto roda, não tudo no fim."""
+        self.assertIn('PYTHONUNBUFFERED: "1"', self.step("Gerar"))
+
+    def test_invalid_downloads_go_to_the_artifact(self):
+        """O corpo de uma resposta ruim do IBGE (data/raw/*.invalido) vai para o artefato: a falha diz a causa."""
+        self.assertIn("gerador/data/raw/*.invalido", self.step("Guardar logs e medições"))
+
+    def test_ibge_files_are_cached_by_month(self):
+        """Os arquivos do IBGE mudam raramente: guardados no cache do Actions por mês, um dia ruim do IBGE no meio do
+        mês não impede a geração. Salvos mesmo se a geração falhar depois, e só se existirem."""
+        restore = self.generate.find("- uses: actions/cache/restore@")
+        save = self.generate.find("- uses: actions/cache/save@")
+        self.assertGreater(restore, 0)
+        self.assertLess(restore, self.generate.find("python generate.py"))
+        self.assertGreater(save, self.generate.find("python generate.py"))
+        self.assertEqual(2, self.generate.count("key: ibge-${{ steps.month.outputs.month }}"))
+        self.assertEqual(2, self.generate.count("path: gerador/data/raw/ibge_*.json"))
+        self.assertIn("hashFiles('gerador/data/raw/ibge_*.json') != ''", self.generate[save:save + 300])
+        self.assertIn("if: always() && steps.ibge.outputs.cache-hit != 'true'", self.generate[save:save + 300])
+        self.assertNotRegex(self.generate, r"(?m)^\s+restore-keys:")
+
     def test_one_generation_at_a_time(self):
         self.assertRegex(self.text, r"(?m)^concurrency:\n  group: generate\n  cancel-in-progress: false")
 
