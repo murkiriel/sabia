@@ -16,7 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
-from tests import test_cnes, test_overture  # noqa: E402
+from tests import test_cnes, test_overture, test_snv  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
 
@@ -46,6 +46,9 @@ def write_ibge(raw: Path):
         test_overture.place("Loja do Teste", -16.62, -49.15, category="clothing_store"),
         test_overture.place("Posto Cerrado", -16.6805, -49.2502, category="gas_station"),
         test_overture.place("Duvidosa", -16.63, -49.15, confidence=0.3)])
+    # HS6: um trecho da BR-153 de 2 km em Goiânia (do km 500 ao 502) e um acesso (não entra)
+    test_snv.write_snv(raw / "dnit_snv.json", [test_snv.segment(br="153", start=500.0, end=502.0),
+                                               test_snv.segment(br="153", start=0.0, end=3.0, kind="A")])
 
 
 class StageFixture(unittest.TestCase):
@@ -86,7 +89,8 @@ class BuildStageTest(StageFixture):
         go = packages["states"]["GO"]
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
-        self.assertEqual(5, go["counts"]["poi"])  # o posto, a PRF do extrato, a PRF da ANTT, o hospital e a loja
+        # o posto, a PRF do extrato, a PRF da ANTT, o hospital, a loja e os 3 marcos de km
+        self.assertEqual(8, go["counts"]["poi"])
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -116,6 +120,11 @@ class BuildStageTest(StageFixture):
                                              "OR name IN ('Duvidosa', 'Posto Cerrado') AND kind <> 'amenity=fuel'")))
             self.assertEqual(1, db.execute("SELECT count(*) FROM item WHERE name = 'Posto Cerrado'").fetchone()[0])
             self.assertIn("Overture", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # HS6: os km do eixo principal entram; o do acesso, não
+            self.assertEqual(["BR-153 km 500", "BR-153 km 501", "BR-153 km 502"],
+                             [r[0] for r in db.execute("SELECT name FROM item WHERE kind = 'highway=milestone' "
+                                                       "ORDER BY name")])
+            self.assertIn("DNIT", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):

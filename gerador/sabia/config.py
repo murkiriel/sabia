@@ -80,9 +80,15 @@ OVERTURE_LISTING_URL = ("https://overturemaps-us-west-2.s3.us-west-2.amazonaws.c
                         "?list-type=2&prefix=release/&delimiter=/")
 OVERTURE_BUCKET = "overturemaps-us-west-2"
 
+# Sistema Nacional de Viação do DNIT (HS6): a camada de rodovias do serviço WFS do DNITGeo, consultada pela versão em
+# vigor no dia (sabia/snv.py monta a consulta).
+SNV_WFS_URL = "https://servicos.dnit.gov.br/dnitgeo/geoserver/ows"
+SNV_LAYER = "vgeo:vw_snv_rod"
+
 ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
                "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); "
-               "lugares: Overture Maps Foundation (CDLA Permissive 2.0)")
+               "lugares: Overture Maps Foundation (CDLA Permissive 2.0); "
+               "quilômetros das rodovias federais: DNIT (SNV)")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

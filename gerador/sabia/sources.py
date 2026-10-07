@@ -1,5 +1,5 @@
 """As fontes de uma geração: o extrato do Brasil no OpenStreetMap, os municípios do IBGE (malha e nomes) e as fontes
-novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES, Overture...).
+novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES, Overture, SNV...).
 
 O extrato só é baixado de novo quando o openstreetmap.fr tem versão mais nova (md5 publicado ao lado do arquivo);
 depois do download, o md5 é conferido. Se o site troca o extrato durante o download, o md5 e a data são lidos de novo
@@ -46,6 +46,7 @@ LOCALITIES_FILE = "ibge_localidades.zip"
 PRF_FILE = "antt_postos_prf.json"
 CNES_FILE = "cnes_estabelecimentos.zip"
 OVERTURE_FILE = "overture_lugares.parquet"
+SNV_FILE = "dnit_snv.json"
 
 
 @dataclass
@@ -290,8 +291,21 @@ def overture_places() -> Path:
     return dest
 
 
+def snv_roads() -> Path:
+    """data/raw/dnit_snv.json: os trechos de eixo principal do SNV em vigor hoje, do WFS do DNIT, conferidos (HS6;
+    snv.problem). A data da fonte é o começo da versão do SNV (não há Last-Modified), e a versão vai junto."""
+    from . import snv
+    path = _checked_download(snv.url(datetime.now(timezone.utc).strftime("%Y-%m-%d")), SNV_FILE, snv.problem,
+                             "a malha do SNV", "dnit", "do DNIT")
+    record = source_record(SNV_FILE)
+    if record is not None and "version" not in record:
+        record["version"], record["date"] = snv.version(path)
+        _write_record(SNV_FILE, record)
+    return path
+
+
 # Os arquivos conferidos de uma geração, na ordem da etapa sources: os que vão para o registro da geração.
-CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE, CNES_FILE, OVERTURE_FILE)
+CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE, CNES_FILE, OVERTURE_FILE, SNV_FILE)
 
 
 def generation_sources(osm: Dict[str, object]) -> Dict[str, Optional[dict]]:

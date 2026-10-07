@@ -408,5 +408,47 @@ class CnesDownloadTest(unittest.TestCase):
         self.assertIn(sources.CNES_FILE, sources.CHECKED_FILES)
 
 
+class SnvDownloadTest(unittest.TestCase):
+    """O SNV do DNIT (HS6), conferido como os arquivos do IBGE, com a versão no registro da geração."""
+
+    def setUp(self):
+        from sabia import snv
+        from tests.test_snv import one_per_state, write_snv
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+        good = self.raw / "bom.json"
+        write_snv(good, one_per_state())
+        self.server = FakeServer().__enter__()
+        self.server.files["/snv.json"] = good.read_bytes()
+        self._patches = [mock.patch.object(config, "RAW", self.raw),
+                         mock.patch.object(snv, "url", lambda day: self.server.url("/snv.json")),
+                         mock.patch.object(snv, "MIN_SEGMENTS", 27),
+                         mock.patch.object(sources, "RETRY_DELAY", 0),
+                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self.server.__exit__(None, None, None)
+        self._tmp.cleanup()
+
+    def test_a_good_file_is_saved_with_the_snv_version(self):
+        path = sources.snv_roads()
+        self.assertEqual(self.raw / sources.SNV_FILE, path)
+        record = sources.source_record(sources.SNV_FILE)
+        self.assertEqual(("202607A", "2026-07-28"), (record["version"], record["date"]))
+        self.assertIn(sources.SNV_FILE, sources.CHECKED_FILES)
+
+    def test_an_error_page_is_not_saved_and_the_error_names_the_dnit(self):
+        self.server.files["/snv.json"] = ERROR_PAGE
+        with self.assertRaises(RuntimeError) as ctx:
+            sources.snv_roads()
+        self.assertFalse((self.raw / sources.SNV_FILE).exists())
+        self.assertIn("DNIT", str(ctx.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

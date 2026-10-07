@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import (cnes, config, database, districts, localities, osm_reader, overture, prf, records, sources,
+from . import (cnes, config, database, districts, localities, osm_reader, overture, prf, records, snv, sources,
                street_lines)
 from .municipalities import MunicipalityIndex
 
@@ -74,6 +74,9 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
         a, r = overture.add(items, places, index, [uf])
         added, repeated = added + a, repeated + r
     print(f"[build] {added} lugares da Overture juntados ({repeated} já estavam registrados)", flush=True)
+    # HS6: um marco por km das rodovias federais, pelo SNV do DNIT
+    added, repeated = snv.add(items, snv.markers(snv.load(config.RAW / sources.SNV_FILE)), index, states)
+    print(f"[build] {added} marcos de km das rodovias federais juntados ({repeated} repetidos)", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 
