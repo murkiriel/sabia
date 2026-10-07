@@ -1,5 +1,5 @@
 """As fontes de uma geração: o extrato do Brasil no OpenStreetMap, os municípios do IBGE (malha e nomes) e as fontes
-novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF...).
+novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES...).
 
 O extrato só é baixado de novo quando o openstreetmap.fr tem versão mais nova (md5 publicado ao lado do arquivo);
 depois do download, o md5 é conferido. Se o site troca o extrato durante o download, o md5 e a data são lidos de novo
@@ -44,6 +44,7 @@ MESH_FILE = "ibge_malha_municipios.json"
 NAMES_FILE = "ibge_municipios.json"
 LOCALITIES_FILE = "ibge_localidades.zip"
 PRF_FILE = "antt_postos_prf.json"
+CNES_FILE = "cnes_estabelecimentos.zip"
 
 
 @dataclass
@@ -247,11 +248,18 @@ def prf_units() -> Path:
     """data/raw/antt_postos_prf.json: as unidades da PRF nas rodovias concedidas, da ANTT, conferidas (HS2;
     prf.problem)."""
     from . import prf
-    return _checked_download(config.PRF_URL, PRF_FILE, prf.problem, "os postos da PRF", "antt", "da ANTT")
+    return _checked_download(config.PRF_URL, PRF_FILE, prf.problem, "a lista de postos da PRF", "antt", "da ANTT")
+
+
+def cnes_units() -> Path:
+    """data/raw/cnes_estabelecimentos.zip: o CNES do Ministério da Saúde, conferido (HS3; cnes.problem)."""
+    from . import cnes
+    return _checked_download(config.CNES_URL, CNES_FILE, cnes.problem, "a base do CNES", "cnes",
+                             "do CNES (Ministério da Saúde)")
 
 
 # Os arquivos conferidos de uma geração, na ordem da etapa sources: os que vão para o registro da geração.
-CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE)
+CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE, CNES_FILE)
 
 
 def generation_sources(osm: Dict[str, object]) -> Dict[str, Optional[dict]]:

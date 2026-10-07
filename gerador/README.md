@@ -40,6 +40,7 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Municípios do IBGE (API de localidades, ~2 MB) | `ibge_municipios.json` | Nome oficial e UF de cada município; é a lista dos municípios |
 | Base de Localidades do IBGE (2022, GeoPackage num zip, ~6 MB) | `ibge_localidades.zip` | Povoados, vilas, aldeias, quilombos e outras localidades (HS1) |
 | Postos da PRF (ANTT, dados abertos, conjunto "PRF", JSON, ~50 kB) | `antt_postos_prf.json` | As unidades da Polícia Rodoviária Federal nas rodovias concedidas (HS2) |
+| CNES (Ministério da Saúde, CSV nacional num zip, ~56 MB, refeito todo dia) | `cnes_estabelecimentos.zip` | Hospitais, UPAs e prontos-socorros abertos 24 horas (HS3) |
 
 Os dois arquivos do IBGE são conferidos no cache e no download (JSON, as 27 UFs, pelo menos 5.570 municípios): uma
 API pode responder 200 com uma página de erro. Com resposta ruim (status de erro ou conteúdo que não passa), são até
@@ -101,6 +102,7 @@ OpenStreetMap e antes dos bairros (ganha bairro como os outros). O município é
 |---|---|---|---|
 | Localidades do IBGE | `sabia/localities.py` | `place` `ibge=<categoria>`, sem as sedes | Mesmo nome no mesmo município a até 3 km |
 | Postos da PRF (ANTT) | `sabia/prf.py` | `poi` `amenity=police`, "PRF - Polícia Rodoviária Federal, BR-060 km 182", só os ativos | Posto de polícia da PRF (pelo nome) ou sem nome a até 250 m: em GO e no DF, 14 das 16 unidades já estão no OpenStreetMap, a 4 a 202 m |
+| CNES (Ministério da Saúde) | `sabia/cnes.py` | `poi` `amenity=hospital`: hospital geral ou especializado, unidade mista, pronto-socorro e UPA com atendimento 24 horas, sem desativação, com o ponto no município que o cadastro declara; nome fantasia em caixa de título | Registro de saúde (hospital, clínica, consultório, `healthcare=*`) a até 500 m sem nome ou com uma palavra do nome em comum (fora as genéricas) |
 
 **Bairros** (`sabia/districts.py`, G4): as áreas de bairro (relações e vias fechadas com `place` suburb, quarter ou
 neighbourhood, e limites administrativos de nível 10, bairro, e 9, distrito) e os pontos de bairro sem área de mesmo

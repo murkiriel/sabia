@@ -117,7 +117,9 @@ Outras fontes, citadas no `attribution` do `catalogo.json` e na tabela `meta` de
 
 - os municípios, os limites municipais e as localidades (povoados, vilas, aldeias, quilombos): IBGE;
 - os postos da Polícia Rodoviária Federal nas rodovias concedidas: ANTT, dados abertos (Creative Commons
-  Atribuição).
+  Atribuição);
+- os hospitais, UPAs e prontos-socorros abertos 24 horas: CNES, Cadastro Nacional de Estabelecimentos de Saúde
+  (Ministério da Saúde, dados abertos).
 
 O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
 

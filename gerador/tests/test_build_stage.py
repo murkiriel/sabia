@@ -16,6 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
+from tests import test_cnes  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
 
@@ -34,6 +35,11 @@ def write_ibge(raw: Path):
     # HS2: um posto da PRF em Goiânia (entra) e um em Anápolis que já está no extrato (ver StageFixture: não repete)
     write_prf(raw / "antt_postos_prf.json", [unit(road="BR-153", km="500", lat="-16.6", lng="-49.3"),
                                              unit(road="BR-060", km="86", lat="-16.3", lng="-48.9")])
+    # HS3: um hospital 24 horas em Goiânia (entra), o Posto Cerrado do extrato não é saúde, e uma UPA em Anápolis com
+    # o ponto em Goiânia (coordenada errada: não entra)
+    test_cnes.write_zip(raw / "cnes_estabelecimentos.zip",
+                        [test_cnes.unit(name="HOSPITAL DO TESTE", lat="-16.6", lng="-49.1"),
+                         test_cnes.unit(name="UPA ANAPOLIS", kind="73", ibge="520110", lat="-16.6", lng="-49.4")])
 
 
 class StageFixture(unittest.TestCase):
@@ -74,7 +80,7 @@ class BuildStageTest(StageFixture):
         go = packages["states"]["GO"]
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
-        self.assertEqual(3, go["counts"]["poi"])  # o posto, a PRF do extrato e a PRF da ANTT
+        self.assertEqual(4, go["counts"]["poi"])  # o posto, a PRF do extrato, a PRF da ANTT e o hospital
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -94,6 +100,10 @@ class BuildStageTest(StageFixture):
                              list(db.execute("SELECT name, municipality FROM item WHERE kind = 'amenity=police' "
                                              "ORDER BY name")))
             self.assertIn("postos da PRF: ANTT", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # HS3: o hospital do CNES entra; a UPA com o ponto fora do município dela, não
+            self.assertEqual([("Hospital do Teste", 5208707)],
+                             list(db.execute("SELECT name, municipality FROM item WHERE kind = 'amenity=hospital'")))
+            self.assertIn("CNES", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):

@@ -13,7 +13,8 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import config, database, districts, localities, osm_reader, prf, records, sources, street_lines
+from . import (cnes, config, database, districts, localities, osm_reader, prf, records, sources,
+               street_lines)
 from .municipalities import MunicipalityIndex
 
 
@@ -59,6 +60,10 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     # HS2: os postos da PRF que o OpenStreetMap não tem
     added, repeated = prf.add(items, prf.load(config.RAW / sources.PRF_FILE), index, states)
     print(f"[build] {added} postos da PRF juntados ({repeated} já estavam no OpenStreetMap)", flush=True)
+    # HS3: hospitais, UPAs e prontos-socorros 24 horas do CNES que o OpenStreetMap não tem
+    added, repeated, misplaced = cnes.add(items, cnes.load(config.RAW / sources.CNES_FILE), index, states)
+    print(f"[build] {added} unidades de urgência do CNES juntadas ({repeated} já estavam no OpenStreetMap, "
+          f"{misplaced} com o ponto fora do município declarado)", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 

@@ -364,5 +364,49 @@ class PrfDownloadTest(unittest.TestCase):
         self.assertIn("ANTT", str(ctx.exception))
 
 
+class CnesDownloadTest(unittest.TestCase):
+    """O zip do CNES (HS3), conferido como os arquivos do IBGE."""
+
+    def setUp(self):
+        from sabia import cnes
+        from tests.test_cnes import one_per_state, write_zip
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+        good = self.raw / "bom.zip"
+        write_zip(good, one_per_state())
+        self.server = FakeServer().__enter__()
+        self.server.files["/cnes.zip"] = good.read_bytes()
+        self._patches = [mock.patch.object(config, "RAW", self.raw),
+                         mock.patch.object(config, "CNES_URL", self.server.url("/cnes.zip")),
+                         mock.patch.object(cnes, "MIN_ROWS", 27), mock.patch.object(cnes, "MIN_UNITS", 27),
+                         mock.patch.object(sources, "RETRY_DELAY", 0),
+                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self.server.__exit__(None, None, None)
+        self._tmp.cleanup()
+
+    def test_a_good_file_is_saved_with_its_date(self):
+        self.server.headers["/cnes.zip"] = {"Last-Modified": "Wed, 07 Oct 2026 06:21:58 GMT"}
+        path = sources.cnes_units()
+        self.assertEqual(self.raw / sources.CNES_FILE, path)
+        self.assertEqual("2026-10-07", sources.source_record(sources.CNES_FILE)["date"])
+
+    def test_an_error_page_is_not_saved_and_the_error_names_the_ministry(self):
+        self.server.files["/cnes.zip"] = ERROR_PAGE
+        with self.assertRaises(RuntimeError) as ctx:
+            sources.cnes_units()
+        self.assertFalse((self.raw / sources.CNES_FILE).exists())
+        self.assertIn("Ministério da Saúde", str(ctx.exception))
+
+    def test_the_cnes_is_in_the_generation_record(self):
+        self.assertIn(sources.CNES_FILE, sources.CHECKED_FILES)
+
+
 if __name__ == "__main__":
     unittest.main()

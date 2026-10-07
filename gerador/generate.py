@@ -59,12 +59,13 @@ def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
     sources.municipality_names()
     sources.ibge_localities()
     sources.prf_units()
+    sources.cnes_units()
     config.BUILD.mkdir(parents=True, exist_ok=True)
     (config.BUILD / "osm.json").write_text(json.dumps(osm, indent=2), encoding="utf-8")
     found = sources.generation_sources(osm)
     (config.BUILD / "fontes.json").write_text(json.dumps(found, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios e localidades do IBGE e postos da "
-          f"PRF conferidos")
+    print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios e localidades do IBGE, postos da "
+          f"PRF e CNES conferidos")
     return osm
 
 

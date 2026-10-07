@@ -71,8 +71,12 @@ IBGE_LOCALITIES_URL = ("https://geoftp.ibge.gov.br/organizacao_do_territorio/est
 PRF_URL = ("https://dados.antt.gov.br/dataset/87c613a5-af73-445f-bc35-5fe816e70935/resource/"
            "1e409dae-301a-4b54-a873-0becba08050f/download/informaes-sobre-os-postos-da-prfs.json")
 
+# Cadastro Nacional de Estabelecimentos de Saúde (Ministério da Saúde, dados abertos): o CSV nacional num zip (~56 MB),
+# refeito todo dia (HS3).
+CNES_URL = "https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/CNES/cnes_estabelecimentos_csv.zip"
+
 ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
-               "postos da PRF: ANTT")
+               "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde)")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.
