@@ -8,12 +8,14 @@ Cada fonte (PRF, CNES, Overture...) lê o próprio arquivo e entrega `Point`s co
   ser o mesmo lugar. O raio é medido para cada fonte e fica no módulo dela. Os pontos que entram passam a contar:
   dois pontos iguais da mesma fonte entram uma vez.
 - Os registros de cada estado ficam na ordem da geração (records.order_key).
+- **Nomes alternativos** (HS9, `attach_aliases`): o nome e os nomes alternativos de um ponto vão para o registro mais
+  perto que seja o mesmo lugar; ficam só no índice de busca (database.write_state), o nome mostrado não muda.
 """
 from __future__ import annotations
 
 import math
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Sequence, Set, Tuple
 
 from . import config, geo
@@ -32,6 +34,7 @@ class Point:
     kind: str
     lat: float
     lng: float
+    aliases: List[str] = field(default_factory=list, kw_only=True)   # nomes alternativos (HS9)
 
 
 def words(name: str) -> Set[str]:
@@ -77,7 +80,7 @@ def add(items: Dict[str, List[Item]], points: Sequence[Point], index: Municipali
                for it in grid.near(point.lat, point.lng)):
             repeated += 1
             continue
-        item = Item(cls, point.kind, point.name, code, point.lat, point.lng)
+        item = Item(cls, point.kind, point.name, code, point.lat, point.lng, aliases=list(point.aliases))
         items.setdefault(state, []).append(item)
         grid.put(item)
         touched.add(state)
@@ -90,6 +93,51 @@ def add(items: Dict[str, List[Item]], points: Sequence[Point], index: Municipali
 # Palavras que não distinguem um nome de outro (artigos, preposições, forma da empresa).
 _FILLER = {"a", "o", "as", "os", "de", "da", "do", "das", "dos", "e", "em", "na", "no", "the", "ltda", "me", "eireli",
            "sa", "s"}
+
+
+# Nomes alternativos por registro, no máximo (o índice de busca não incha com listas de grafias).
+MAX_ALIASES = 5
+
+
+def usable_alias(name: str) -> bool:
+    """Nome alternativo que serve para buscar: escrita latina, com letra, de 3 caracteres ou mais."""
+    return (len(name.strip()) >= 3 and any(c.isalpha() for c in name)
+            and all(ord(c) < 0x250 for c in name))
+
+
+def attach_aliases(items: Dict[str, List[Item]], points: Sequence[Point], index: MunicipalityIndex,
+                   states: Sequence[str], radius_m: float, match: Callable[[Item, Point], bool]) -> int:
+    """Põe o nome e os nomes alternativos de cada ponto no registro mais perto a até `radius_m` que `match` diga ser o
+    mesmo lugar: só os que servem para buscar, sem repetir o nome nem outro alternativo dele, até MAX_ALIASES.
+    Devolve quantos registros ganharam nome alternativo."""
+    wanted = set(states)
+    codes = index.locate([p.lat for p in points], [p.lng for p in points])
+    grids: Dict[str, _Grid] = {}
+    changed = set()
+    for point, code in zip(points, codes):
+        state = config.IBGE_STATE_CODES.get(code[:2]) if code else None
+        if state is None or state not in wanted:
+            continue
+        grid = grids.get(state)
+        if grid is None:
+            grid = grids[state] = _Grid(radius_m)
+            for it in items.get(state, []):
+                grid.put(it)
+        near = [(geo.dist_m(it.lat, it.lng, point.lat, point.lng), n, it)
+                for n, it in enumerate(grid.near(point.lat, point.lng))]
+        near = [x for x in near if x[0] <= radius_m and match(x[2], point)]
+        if not near:
+            continue
+        target = min(near, key=lambda x: (x[0], x[1]))[2]
+        known = {fold(target.name)} | {fold(a) for a in target.aliases}
+        for name in [point.name, *point.aliases]:
+            if len(target.aliases) >= MAX_ALIASES:
+                break
+            if usable_alias(name) and fold(name) not in known:
+                known.add(fold(name))
+                target.aliases.append(name.strip())
+                changed.add(id(target))
+    return len(changed)
 
 
 def similar_names(a: str, b: str) -> bool:

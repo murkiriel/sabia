@@ -16,7 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
-from tests import test_anac, test_cnes, test_overture, test_snv  # noqa: E402
+from tests import test_anac, test_cnes, test_geonames, test_overture, test_snv  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
 
@@ -55,6 +55,13 @@ def write_ibge(raw: Path):
                           test_anac.aerodrome("Fechado", "SBFF", lat="-16.56", lng="-49.45", situation="Interditado")])
     test_anac.write_list(raw / "anac_aerodromos_privados.json",
                          [test_anac.aerodrome("FAZENDA DO TESTE", "SWTT", lat="-16.52", lng="-49.05")])
+    # HS9: Goiânia ganha o nome antigo "Campinas" (GeoNames), uma cachoeira do GeoNames e um mirante do Wikidata entram
+    test_geonames.write_zip(raw / "geonames_lugares.zip",
+                            [test_geonames.feature(1, "Goiânia", -16.69, -49.26),
+                             test_geonames.feature(2, "Cachoeira do Teste", -16.58, -49.1, "H", "FLLS")])
+    test_geonames.write_zip(raw / "geonames_nomes.zip", [test_geonames.alt(1, "Campinas", "", historic="1")])
+    test_geonames.write_wd(raw / "wikidata_turismo.json",
+                           [test_geonames.wd_row("Q9", "Mirante do Teste", "-16.57", "-49.12", "Q6017969")])
 
 
 class StageFixture(unittest.TestCase):
@@ -95,8 +102,9 @@ class BuildStageTest(StageFixture):
         go = packages["states"]["GO"]
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
-        # o posto, a PRF do extrato, a PRF da ANTT, o hospital, a loja, os 3 marcos de km e os 2 aeródromos
-        self.assertEqual(10, go["counts"]["poi"])
+        # o posto, a PRF do extrato, a PRF da ANTT, o hospital, a loja, os 3 marcos de km, os 2 aeródromos, a
+        # cachoeira e o mirante
+        self.assertEqual(12, go["counts"]["poi"])
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -135,6 +143,14 @@ class BuildStageTest(StageFixture):
             self.assertEqual([("Aeroporto do Teste (SBTT)",), ("Aeródromo Fazenda do Teste (SWTT)",)],
                              list(db.execute("SELECT name FROM item WHERE kind = 'aeroway=aerodrome' ORDER BY name")))
             self.assertIn("ANAC", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # HS9: a cachoeira e o mirante entram; "campinas" acha Goiânia (o nome continua o do IBGE)
+            self.assertEqual([("Cachoeira do Teste", "natural=waterfall"), ("Mirante do Teste", "tourism=viewpoint")],
+                             list(db.execute("SELECT name, kind FROM item WHERE name LIKE '% do Teste' "
+                                             "AND kind IN ('natural=waterfall', 'tourism=viewpoint') ORDER BY name")))
+            self.assertEqual([("Goiânia",)], list(db.execute(
+                "SELECT item.name FROM item_text JOIN item ON item.id = item_text.docid "
+                "WHERE item_text MATCH 'name:campinas'")))
+            self.assertIn("GeoNames", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):

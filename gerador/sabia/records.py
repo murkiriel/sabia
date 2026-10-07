@@ -47,6 +47,7 @@ class Item:
     ways: List[int] = field(default_factory=list)      # índices em OsmData.ways: o traçado (G5)
     extent_m: float = 0.0
     suspect_long: bool = False
+    aliases: List[str] = field(default_factory=list)   # nomes alternativos: só no índice de busca (HS9)
 
     @property
     def uf(self) -> str:

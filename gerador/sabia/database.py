@@ -6,7 +6,8 @@ Banco do estado (`format_version` 1; nomes em inglês, a convenção do projeto)
     municipality  id (código do IBGE), name, lat, lng (a sede)
     district      id, municipality, name, kind, lat, lng, polygon (blob; NULL = bairro só com ponto)
     item          id, cls (place, street, road, poi), kind, name, municipality, district, lat, lng, cell
-    item_text     FTS4 sem conteúdo (docid = item.id), tokenizador simples, prefix="2,3": name; area
+    item_text     FTS4 sem conteúdo (docid = item.id), tokenizador simples, prefix="2,3": name (e os nomes
+                  alternativos, HS9); area
     street_line   item, cell, coords (blob)                       "que rua é esta?" (street_lines.py)
     word_form     word, form, rule                                 abreviações, formas, números (search_rules.py)
     category      word, kinds                                      "posto" -> amenity=fuel
@@ -184,7 +185,8 @@ def write_state(path: Path, uf: str, items: Sequence[Item], districts: Sequence[
                    ((n, i.cls, i.kind, i.name, int(i.municipality), i.district_id, _i(i.lat), _i(i.lng),
                      geo.cell(i.lat, i.lng)) for n, i in enumerate(items, 1)))
     db.executemany("INSERT INTO item_text(docid, name, area) VALUES(?,?,?)",
-                   ((n, index_text(i.name), fold(f"{names.get(i.municipality, '')} {i.district or ''}"))
+                   ((n, index_text(" ".join([i.name, *i.aliases])),
+                     fold(f"{names.get(i.municipality, '')} {i.district or ''}"))
                     for n, i in enumerate(items, 1)))
     db.executemany("INSERT INTO street_line VALUES(?,?,?)", ((x.item + 1, x.cell, x.coords) for x in lines))
     _search_tables(db)

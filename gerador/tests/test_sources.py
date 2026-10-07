@@ -493,5 +493,46 @@ class AnacDownloadTest(unittest.TestCase):
         self.assertIn("ANAC", str(ctx.exception))
 
 
+class GeonamesDownloadTest(unittest.TestCase):
+    """Os dois arquivos do GeoNames (HS9), conferidos como os do IBGE."""
+
+    def setUp(self):
+        from sabia import geonames
+        from tests.test_geonames import alt, one_per_state, write_zip
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+        write_zip(self.raw / "p.zip", one_per_state())
+        write_zip(self.raw / "n.zip", [alt(1, "Um"), alt(2, "Dois")])
+        self.server = FakeServer().__enter__()
+        self.server.files["/BR.zip"] = (self.raw / "p.zip").read_bytes()
+        self.server.files["/alt/BR.zip"] = (self.raw / "n.zip").read_bytes()
+        self._patches = [mock.patch.object(config, "RAW", self.raw),
+                         mock.patch.object(config, "GEONAMES_PLACES_URL", self.server.url("/BR.zip")),
+                         mock.patch.object(config, "GEONAMES_NAMES_URL", self.server.url("/alt/BR.zip")),
+                         mock.patch.object(geonames, "MIN_PLACES", 27), mock.patch.object(geonames, "MIN_NAMES", 2),
+                         mock.patch.object(sources, "RETRY_DELAY", 0),
+                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self.server.__exit__(None, None, None)
+        self._tmp.cleanup()
+
+    def test_both_files_are_saved(self):
+        self.assertEqual([self.raw / sources.GEONAMES_PLACES_FILE, self.raw / sources.GEONAMES_NAMES_FILE],
+                         sources.geonames_files())
+
+    def test_a_bad_places_file_is_not_saved(self):
+        self.server.files["/BR.zip"] = (self.raw / "n.zip").read_bytes()
+        with self.assertRaises(RuntimeError) as ctx:
+            sources.geonames_files()
+        self.assertFalse((self.raw / sources.GEONAMES_PLACES_FILE).exists())
+        self.assertIn("GeoNames", str(ctx.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

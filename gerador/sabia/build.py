@@ -13,8 +13,8 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import (anac, cnes, config, database, districts, localities, osm_reader, overture, prf, records, snv, sources,
-               street_lines)
+from . import (anac, cnes, config, database, districts, geonames, localities, osm_reader, overture, prf, records,
+               snv, sources, street_lines, wikidata)
 from .municipalities import MunicipalityIndex
 
 
@@ -81,6 +81,15 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     aerodromes = (anac.load(config.RAW / sources.ANAC_PUBLIC_FILE) + anac.load(config.RAW / sources.ANAC_PRIVATE_FILE))
     added, repeated = anac.add(items, aerodromes, index, states)
     print(f"[build] {added} aeródromos da ANAC juntados ({repeated} já estavam no OpenStreetMap)", flush=True)
+    # HS9: nomes alternativos e pontos turísticos do GeoNames e do Wikidata
+    added, repeated, aliased = geonames.add(items, geonames.load(config.RAW / sources.GEONAMES_PLACES_FILE,
+                                                                  config.RAW / sources.GEONAMES_NAMES_FILE),
+                                            index, states)
+    print(f"[build] GeoNames: {added} pontos turísticos juntados ({repeated} já registrados), {aliased} registros com "
+          f"nome alternativo", flush=True)
+    added, repeated, aliased = wikidata.add(items, wikidata.load(config.RAW / sources.WIKIDATA_FILE), index, states)
+    print(f"[build] Wikidata: {added} pontos turísticos juntados ({repeated} já registrados), {aliased} registros com "
+          f"nome alternativo", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 

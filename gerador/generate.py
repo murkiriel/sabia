@@ -63,12 +63,14 @@ def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
     sources.overture_places()
     sources.snv_roads()
     sources.anac_aerodromes()
+    sources.geonames_files()
+    sources.wikidata_tourism()
     config.BUILD.mkdir(parents=True, exist_ok=True)
     (config.BUILD / "osm.json").write_text(json.dumps(osm, indent=2), encoding="utf-8")
     found = sources.generation_sources(osm)
     (config.BUILD / "fontes.json").write_text(json.dumps(found, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios e localidades do IBGE, postos da "
-          f"PRF, CNES, lugares da Overture, SNV e aeródromos da ANAC conferidos")
+          f"PRF, CNES, lugares da Overture, SNV, aeródromos da ANAC, GeoNames e Wikidata conferidos")
     return osm
 
 

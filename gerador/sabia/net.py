@@ -73,8 +73,9 @@ def _is_permanent(e: urllib.error.HTTPError) -> bool:
 
 
 def body_start(data: bytes, limit: int = BODY_START) -> str:
-    """O começo de um corpo, legível num log de uma linha."""
-    return repr(data[:limit].decode("utf-8", errors="replace"))
+    """O começo de um corpo, legível num log de uma linha. Byte que não é UTF-8 vira escape (\\x8b), não o caractere
+    de substituição, que o console do Windows não imprime."""
+    return repr(data[:limit].decode("utf-8", errors="backslashreplace"))
 
 
 def _http_error(e: urllib.error.HTTPError) -> str:

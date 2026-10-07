@@ -92,10 +92,16 @@ ANAC_PUBLIC_URL = (_ANAC + "Aer%C3%B3dromos%20P%C3%BAblicos/Lista%20de%20aer%C3%
 ANAC_PRIVATE_URL = (_ANAC + "Aer%C3%B3dromos%20Privados/Lista%20de%20aer%C3%B3dromos%20privados/"
                     "Aerodromos%20Privados/AerodromosPrivados.json")
 
+# GeoNames (CC BY 4.0): os lugares do Brasil e os nomes alternativos; Wikidata (CC0): a consulta SPARQL (HS9).
+GEONAMES_PLACES_URL = "https://download.geonames.org/export/dump/BR.zip"
+GEONAMES_NAMES_URL = "https://download.geonames.org/export/dump/alternatenames/BR.zip"
+WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql"
+
 ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
                "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); "
                "lugares: Overture Maps Foundation (CDLA Permissive 2.0); "
-               "quilômetros das rodovias federais: DNIT (SNV); aeródromos: ANAC")
+               "quilômetros das rodovias federais: DNIT (SNV); aeródromos: ANAC; "
+               "nomes alternativos e pontos turísticos: GeoNames (CC BY 4.0) e Wikidata (CC0)")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

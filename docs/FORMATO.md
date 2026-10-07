@@ -37,6 +37,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 | `poi` | `overture=<categoria>` | Lugar de comércio ou serviço da Overture Maps sem `kind` equivalente do OpenStreetMap que a busca use: `overture=clothing_store`, `overture=beauty_salon`, `overture=dental_clinic`... (a categoria da Overture, em inglês). Os que têm equivalente (posto, farmácia, hotel, restaurante, oficina, borracharia, banco, escola, igreja...) entram com o `kind` do OpenStreetMap |
 | `poi` | `highway=milestone` | Marco de km de rodovia federal, gerado ao longo do SNV do DNIT: `name` é "BR-060 km 120". O km é o do SNV (recomeça em cada estado); em trechos concedidos com numeração antiga, a placa da estrada pode estar a alguns km |
 | `poi` | `aeroway=aerodrome` (ANAC) | Aeródromo público ou privado da ANAC que o OpenStreetMap não tem: "Aeródromo Fazenda Boa Vista (SWXX)", com o código OACI no fim |
+| `poi` | `natural=*`, `tourism=*`, `leisure=park`, `boundary=national_park` (GeoNames, Wikidata) | Cachoeira, caverna, praia, pico, fonte, parque, mirante ou atração turística do GeoNames ou do Wikidata que o pacote não tinha |
 | `poi` | `amenity=hospital` (CNES) | Hospital, UPA ou pronto-socorro aberto 24 horas do CNES que o OpenStreetMap não tem: `name` é o nome fantasia do cadastro em caixa de título ("Hospital Municipal de Itaberaí") |
 
 - Os registros de outras fontes que não o OpenStreetMap usam o `kind` do OpenStreetMap equivalente quando há um
@@ -53,7 +54,8 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 FTS4 sem conteúdo (`content=""`), tokenizador `simple`, prefixos de 2 e 3 letras (`prefix="2,3"`). O texto já vem
 **dobrado**: sem acento, minúsculo, pontuação virando espaço ("Avenida T-63" → `avenida t 63`).
 
-- `name`: o nome dobrado, com cada número também na outra forma logo depois ("Rua 14" → `rua 14 quatorze catorze`;
+- `name`: o nome dobrado (e os nomes alternativos do GeoNames e do Wikidata, quando há: "bonfim" acha Silvânia; o
+  nome mostrado continua o de `item.name`), com cada número também na outra forma logo depois ("Rua 14" → `rua 14 quatorze catorze`;
   "Rua Quatorze" → `rua quatorze 14`).
 - `area`: o município e o bairro, dobrados (`goiania setor oeste`).
 

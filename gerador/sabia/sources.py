@@ -1,5 +1,5 @@
 """As fontes de uma geração: o extrato do Brasil no OpenStreetMap, os municípios do IBGE (malha e nomes) e as fontes
-novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES, Overture, SNV, ANAC...).
+novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES, Overture, SNV, ANAC, GeoNames, Wikidata).
 
 O extrato só é baixado de novo quando o openstreetmap.fr tem versão mais nova (md5 publicado ao lado do arquivo);
 depois do download, o md5 é conferido. Se o site troca o extrato durante o download, o md5 e a data são lidos de novo
@@ -49,6 +49,9 @@ OVERTURE_FILE = "overture_lugares.parquet"
 SNV_FILE = "dnit_snv.json"
 ANAC_PUBLIC_FILE = "anac_aerodromos_publicos.json"
 ANAC_PRIVATE_FILE = "anac_aerodromos_privados.json"
+GEONAMES_PLACES_FILE = "geonames_lugares.zip"
+GEONAMES_NAMES_FILE = "geonames_nomes.zip"
+WIKIDATA_FILE = "wikidata_turismo.json"
 
 
 @dataclass
@@ -318,9 +321,27 @@ def anac_aerodromes() -> List[Path]:
                               "da ANAC")]
 
 
+def geonames_files() -> List[Path]:
+    """data/raw/geonames_lugares.zip e geonames_nomes.zip: os lugares e os nomes alternativos do Brasil no GeoNames,
+    conferidos (HS9; geonames.places_problem e names_problem)."""
+    from . import geonames
+    return [_checked_download(config.GEONAMES_PLACES_URL, GEONAMES_PLACES_FILE, geonames.places_problem,
+                              "a lista de lugares do GeoNames", "geonames", "do GeoNames"),
+            _checked_download(config.GEONAMES_NAMES_URL, GEONAMES_NAMES_FILE, geonames.names_problem,
+                              "a lista de nomes do GeoNames", "geonames", "do GeoNames")]
+
+
+def wikidata_tourism() -> Path:
+    """data/raw/wikidata_turismo.json: os pontos turísticos do Brasil no Wikidata, pela consulta SPARQL, conferidos
+    (HS9; wikidata.problem)."""
+    from . import wikidata
+    return _checked_download(wikidata.url(), WIKIDATA_FILE, wikidata.problem, "a consulta ao Wikidata", "wikidata",
+                             "do Wikidata")
+
+
 # Os arquivos conferidos de uma geração, na ordem da etapa sources: os que vão para o registro da geração.
 CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE, CNES_FILE, OVERTURE_FILE, SNV_FILE,
-                 ANAC_PUBLIC_FILE, ANAC_PRIVATE_FILE)
+                 ANAC_PUBLIC_FILE, ANAC_PRIVATE_FILE, GEONAMES_PLACES_FILE, GEONAMES_NAMES_FILE, WIKIDATA_FILE)
 
 
 def generation_sources(osm: Dict[str, object]) -> Dict[str, Optional[dict]]:
