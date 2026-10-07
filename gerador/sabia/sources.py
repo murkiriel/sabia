@@ -36,6 +36,7 @@ IBGE_RETRY_DELAY = 60
 
 MESH_FILE = "ibge_malha_municipios.json"
 NAMES_FILE = "ibge_municipios.json"
+LOCALITIES_FILE = "ibge_localidades.zip"
 
 
 @dataclass
@@ -198,6 +199,12 @@ def municipal_mesh() -> Path:
 def municipality_names() -> Path:
     """data/raw/ibge_municipios.json: código, nome oficial e UF de cada município."""
     return _checked_download(config.IBGE_NAMES_URL, NAMES_FILE, names_problem, "a lista de municípios")
+
+
+def ibge_localities() -> Path:
+    """data/raw/ibge_localidades.zip: a Base de Localidades do IBGE, conferida (HS1; localities.problem)."""
+    from . import localities  # aqui: localities usa records, que usa sources
+    return _checked_download(config.IBGE_LOCALITIES_URL, LOCALITIES_FILE, localities.problem, "as localidades")
 
 
 def load_municipalities(mesh: Path, names: Path) -> List[Municipality]:

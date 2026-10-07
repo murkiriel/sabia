@@ -53,6 +53,11 @@ class Item:
         return config.IBGE_STATE_CODES[self.municipality[:2]]
 
 
+def order_key(it: "Item") -> Tuple[int, str, str, float, float, str]:
+    """A ordem dos registros de um estado em toda geração: classe, nome sem acento, nome, ponto, kind."""
+    return (CLS_ORDER[it.cls], fold(it.name), it.name, it.lat, it.lng, it.kind)
+
+
 class _Dsu:
     def __init__(self, n: int) -> None:
         self.parent = list(range(n))
@@ -217,6 +222,6 @@ def build(data: OsmData, municipalities: Sequence[Municipality], states: Sequenc
             items.append(Item("poi", poi.kind, poi.name, code, poi.lat, poi.lng))
 
     out: Dict[str, List[Item]] = {uf: [] for uf in sorted(wanted)}
-    for item in sorted(items, key=lambda it: (CLS_ORDER[it.cls], fold(it.name), it.name, it.lat, it.lng, it.kind)):
+    for item in sorted(items, key=order_key):
         out[item.uf].append(item)
     return out

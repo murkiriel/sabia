@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import config, database, districts, osm_reader, records, sources, street_lines
+from . import config, database, districts, localities, osm_reader, records, sources, street_lines
 from .municipalities import MunicipalityIndex
 
 
@@ -52,6 +52,9 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     print(f"[build] lido em {time.time() - t0:.0f} s: {len(data.places)} lugares, {len(data.pois)} pontos de "
           f"interesse, {len(data.ways)} vias, {len(data.district_areas)} áreas de bairro", flush=True)
     items = records.build(data, municipalities, states)
+    # HS1: as localidades do IBGE que o OpenStreetMap não tem, antes dos bairros (elas também ganham bairro)
+    added = localities.add(items, localities.load(config.RAW / sources.LOCALITIES_FILE), states)
+    print(f"[build] {added} localidades do IBGE juntadas", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 

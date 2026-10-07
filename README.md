@@ -113,7 +113,7 @@ em [`LICENSE`](LICENSE)).
 - Cite "© colaboradores do OpenStreetMap".
 - Se você publicar uma base derivada destes pacotes, ela precisa manter a ODbL.
 
-Os municípios e os limites municipais vêm do IBGE. O **código** (pasta `gerador/`) é MIT
+Os municípios, os limites municipais e as localidades (povoados, vilas, aldeias, quilombos) vêm do IBGE. O **código** (pasta `gerador/`) é MIT
 ([`gerador/LICENSE`](gerador/LICENSE)).
 
 ## Convenções

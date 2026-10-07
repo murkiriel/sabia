@@ -29,6 +29,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 |---|---|---|
 | `place` | `municipality` | O município, com o nome oficial do IBGE, na sede |
 | `place` | `place=<valor>` | Lugar com nome do OpenStreetMap: `city`, `town`, `village`, `hamlet`, `suburb`, `neighbourhood`, `quarter`, `locality`, `isolated_dwelling`, `farm`, `island`, `islet` |
+| `place` | `ibge=<categoria>` | Localidade da Base de Localidades do IBGE (2022) que o OpenStreetMap não tem com o mesmo nome a até 3 km no mesmo município: `povoado`, `vila`, `lugarejo`, `nucleo_urbano`, `nucleo_rural`, `agrovila`, `indigena`, `quilombola`, `regiao_administrativa`, `distrito_estadual`; `localidade` para as outras (e para uma categoria nova do IBGE). As sedes municipais não entram: são o `municipality` |
 | `street` | `highway=<valor>` | Uma rua: os trechos de mesmo nome no mesmo município que se tocam ou têm as pontas a menos de 60 m. O `kind` é o do trecho mais importante; o ponto, o meio do trecho mais central |
 | `road` | `road` | Uma rodovia num município: `name` é a sigla (`BR-153`, `GO-060`) |
 | `poi` | `<chave>=<valor>` | Ponto de interesse: `amenity=fuel`, `shop=tyres`, `tourism=hotel`, `natural=waterfall`, `aeroway=aerodrome`, `barrier=toll_booth`... Os de viagem (posto, hospital, clínica, polícia, farmácia, recarga, borracharia, oficina, pedágio, áreas de descanso) entram também sem nome: `name` é a marca (`brand`) ou vazio |

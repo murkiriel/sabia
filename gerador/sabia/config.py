@@ -62,7 +62,11 @@ IBGE_NAMES_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios
 # Menos que isso na malha ou na lista é resposta quebrada da API, não o Brasil.
 MIN_MUNICIPALITIES = 5570
 
-ATTRIBUTION = "© colaboradores do OpenStreetMap (ODbL 1.0); municípios e limites municipais: IBGE"
+# Base de Localidades do IBGE (2022): povoados, vilas, aldeias, quilombos e outras localidades, com ponto (HS1).
+IBGE_LOCALITIES_URL = ("https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/localidades/"
+                       "Localidades_do_Brasil/2022/Localidades_Brasil_gpkg.zip")
+
+ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

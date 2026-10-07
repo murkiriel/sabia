@@ -57,9 +57,10 @@ def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
     osm = sources.local_extract(osm_file) if osm_file else sources.osm_extract()
     sources.municipal_mesh()
     sources.municipality_names()
+    sources.ibge_localities()
     config.BUILD.mkdir(parents=True, exist_ok=True)
     (config.BUILD / "osm.json").write_text(json.dumps(osm, indent=2), encoding="utf-8")
-    print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios do IBGE conferidos")
+    print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios e localidades do IBGE conferidos")
     return osm
 
 

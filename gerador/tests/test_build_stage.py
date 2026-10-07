@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
+from tests.test_localities import write_zip  # noqa: E402
 
 
 def write_ibge(raw: Path):
@@ -25,6 +26,10 @@ def write_ibge(raw: Path):
     (raw / "ibge_malha_municipios.json").write_text(json.dumps(mesh), encoding="utf-8")
     names = [{"municipio-id": int(m.code), "municipio-nome": m.name, "UF-sigla": m.uf} for m in MUNICIPALITIES]
     (raw / "ibge_municipios.json").write_text(json.dumps(names, ensure_ascii=False), encoding="utf-8")
+    # HS1: um povoado em Goiânia, a sede de Goiânia (já é o município) e um povoado de SP (estado não pedido)
+    write_zip(raw / "ibge_localidades.zip", [("GO", "5208707", "Povoado", None, "Povoado do Teste", -16.6, -49.4),
+                                             ("GO", "5208707", "Cidade", "Sede Municipal", "Goiânia", -16.68, -49.26),
+                                             ("SP", "3550308", "Povoado", None, "Longe Daqui", -23.5, -46.6)])
 
 
 class StageFixture(unittest.TestCase):
@@ -75,6 +80,10 @@ class BuildStageTest(StageFixture):
         self.assertEqual((self.build / "sabia-GO.sqlite").read_bytes(), back.read_bytes())
         with closing(sqlite3.connect(back)) as db:
             self.assertEqual("2026-09-30-01234567", dict(db.execute("SELECT key, value FROM meta"))["build_id"])
+            # HS1: as localidades do IBGE do estado entram como lugares; a sede não repete o município
+            self.assertEqual([("Povoado do Teste", "ibge=povoado")],
+                             list(db.execute("SELECT name, kind FROM item WHERE kind LIKE 'ibge=%'")))
+            self.assertIn("localidades: IBGE", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):
