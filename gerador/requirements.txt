@@ -2,3 +2,4 @@
 osmium==4.3.1      # leitura do extrato do OpenStreetMap (pyosmium), com as áreas das relações
 shapely==2.1.2     # município e bairro de cada registro, pela malha do IBGE e pelos polígonos de bairro
 zstandard==0.25.0  # compactação dos bancos (.sqlite.zst)
+pyarrow==23.0.1    # lugares da Overture (GeoParquet no S3), HS4

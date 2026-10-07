@@ -7,8 +7,9 @@ OpenStreetMap e dos municípios do IBGE.
 
 - Python 3.10+ (testado com 3.12)
 - `pip install -r requirements.txt`: `osmium` (pyosmium, leitura do extrato), `shapely` (município e bairro de cada
-  registro) e `zstandard` (compactação). Num Python sem venv (a distribuição "embeddable" do Windows), use
-  `pip install --target .pylib -r requirements.txt`; o `generate.py` põe `.pylib/` no caminho de import.
+  registro), `zstandard` (compactação) e `pyarrow` (os lugares da Overture, GeoParquet no S3). Num Python sem venv
+  (a distribuição "embeddable" do Windows), use `pip install --target .pylib -r requirements.txt`; o `generate.py`
+  põe `.pylib/` no caminho de import.
 - Para conferir o código: `ruff` e `mypy` (configurados no `pyproject.toml`).
 
 ## Como rodar
@@ -41,6 +42,7 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Base de Localidades do IBGE (2022, GeoPackage num zip, ~6 MB) | `ibge_localidades.zip` | Povoados, vilas, aldeias, quilombos e outras localidades (HS1) |
 | Postos da PRF (ANTT, dados abertos, conjunto "PRF", JSON, ~50 kB) | `antt_postos_prf.json` | As unidades da Polícia Rodoviária Federal nas rodovias concedidas (HS2) |
 | CNES (Ministério da Saúde, CSV nacional num zip, ~56 MB, refeito todo dia) | `cnes_estabelecimentos.zip` | Hospitais, UPAs e prontos-socorros abertos 24 horas (HS3) |
+| Overture Maps, lugares (versão mais nova pela listagem do S3 público; recorte do Brasil, ~190 MB, ~6 min daqui) | `overture_lugares.parquet` | Comércio e serviços que faltam no OpenStreetMap (HS4) |
 
 Os dois arquivos do IBGE são conferidos no cache e no download (JSON, as 27 UFs, pelo menos 5.570 municípios): uma
 API pode responder 200 com uma página de erro. Com resposta ruim (status de erro ou conteúdo que não passa), são até
@@ -102,6 +104,7 @@ OpenStreetMap e antes dos bairros (ganha bairro como os outros). O município é
 |---|---|---|---|
 | Localidades do IBGE | `sabia/localities.py` | `place` `ibge=<categoria>`, sem as sedes | Mesmo nome no mesmo município a até 3 km |
 | Postos da PRF (ANTT) | `sabia/prf.py` | `poi` `amenity=police`, "PRF - Polícia Rodoviária Federal, BR-060 km 182", só os ativos | Posto de polícia da PRF (pelo nome) ou sem nome a até 250 m: em GO e no DF, 14 das 16 unidades já estão no OpenStreetMap, a 4 a 202 m |
+| Overture Maps | `sabia/overture.py` | `poi` com o `kind` do OpenStreetMap quando a categoria tem um que a busca usa (posto, hospital, farmácia, hotel, restaurante, oficina, borracharia...), senão `overture=<categoria>`; só confiança de 0,6 ou mais, com categoria, sem lugares naturais e marcos (ficam com o OpenStreetMap) e sem o que vem da Foursquare | Lugar ou ponto de interesse de nome parecido (as palavras de um contidas nas do outro, ou metade em comum) a até 300 m, ou sem nome e do mesmo `kind` |
 | CNES (Ministério da Saúde) | `sabia/cnes.py` | `poi` `amenity=hospital`: hospital geral ou especializado, unidade mista, pronto-socorro e UPA com atendimento 24 horas, sem desativação, com o ponto no município que o cadastro declara; nome fantasia em caixa de título | Registro de saúde (hospital, clínica, consultório, `healthcare=*`) a até 500 m sem nome ou com uma palavra do nome em comum (fora as genéricas) |
 
 **Bairros** (`sabia/districts.py`, G4): as áreas de bairro (relações e vias fechadas com `place` suburb, quarter ou

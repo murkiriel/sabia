@@ -16,7 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
-from tests import test_cnes  # noqa: E402
+from tests import test_cnes, test_overture  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
 
@@ -40,6 +40,12 @@ def write_ibge(raw: Path):
     test_cnes.write_zip(raw / "cnes_estabelecimentos.zip",
                         [test_cnes.unit(name="HOSPITAL DO TESTE", lat="-16.6", lng="-49.1"),
                          test_cnes.unit(name="UPA ANAPOLIS", kind="73", ibge="520110", lat="-16.6", lng="-49.4")])
+    # HS4: uma loja da Overture em Goiânia (entra), o Posto Cerrado do extrato de novo (não repete) e uma de
+    # confiança baixa (não entra)
+    test_overture.write_extract(raw / "overture_lugares.parquet", [
+        test_overture.place("Loja do Teste", -16.62, -49.15, category="clothing_store"),
+        test_overture.place("Posto Cerrado", -16.6805, -49.2502, category="gas_station"),
+        test_overture.place("Duvidosa", -16.63, -49.15, confidence=0.3)])
 
 
 class StageFixture(unittest.TestCase):
@@ -80,7 +86,7 @@ class BuildStageTest(StageFixture):
         go = packages["states"]["GO"]
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
-        self.assertEqual(4, go["counts"]["poi"])  # o posto, a PRF do extrato, a PRF da ANTT e o hospital
+        self.assertEqual(5, go["counts"]["poi"])  # o posto, a PRF do extrato, a PRF da ANTT, o hospital e a loja
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -104,6 +110,12 @@ class BuildStageTest(StageFixture):
             self.assertEqual([("Hospital do Teste", 5208707)],
                              list(db.execute("SELECT name, municipality FROM item WHERE kind = 'amenity=hospital'")))
             self.assertIn("CNES", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # HS4: a loja da Overture entra; o posto repetido e a de confiança baixa, não
+            self.assertEqual([("Loja do Teste", "overture=clothing_store")],
+                             list(db.execute("SELECT name, kind FROM item WHERE kind LIKE 'overture=%' "
+                                             "OR name IN ('Duvidosa', 'Posto Cerrado') AND kind <> 'amenity=fuel'")))
+            self.assertEqual(1, db.execute("SELECT count(*) FROM item WHERE name = 'Posto Cerrado'").fetchone()[0])
+            self.assertIn("Overture", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):

@@ -75,8 +75,14 @@ PRF_URL = ("https://dados.antt.gov.br/dataset/87c613a5-af73-445f-bc35-5fe816e709
 # refeito todo dia (HS3).
 CNES_URL = "https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/CNES/cnes_estabelecimentos_csv.zip"
 
+# Lugares da Overture Maps (HS4): a listagem das versões no S3 público e o balde (lido pelo pyarrow, sem conta).
+OVERTURE_LISTING_URL = ("https://overturemaps-us-west-2.s3.us-west-2.amazonaws.com/"
+                        "?list-type=2&prefix=release/&delimiter=/")
+OVERTURE_BUCKET = "overturemaps-us-west-2"
+
 ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
-               "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde)")
+               "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); "
+               "lugares: Overture Maps Foundation (CDLA Permissive 2.0)")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

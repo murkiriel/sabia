@@ -1,5 +1,5 @@
 """As fontes de uma geração: o extrato do Brasil no OpenStreetMap, os municípios do IBGE (malha e nomes) e as fontes
-novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES...).
+novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES, Overture...).
 
 O extrato só é baixado de novo quando o openstreetmap.fr tem versão mais nova (md5 publicado ao lado do arquivo);
 depois do download, o md5 é conferido. Se o site troca o extrato durante o download, o md5 e a data são lidos de novo
@@ -45,6 +45,7 @@ NAMES_FILE = "ibge_municipios.json"
 LOCALITIES_FILE = "ibge_localidades.zip"
 PRF_FILE = "antt_postos_prf.json"
 CNES_FILE = "cnes_estabelecimentos.zip"
+OVERTURE_FILE = "overture_lugares.parquet"
 
 
 @dataclass
@@ -210,9 +211,8 @@ def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[st
             if found is None:
                 updated.replace(dest)
                 now = datetime.now(timezone.utc)
-                record = {"url": url, "date": _source_date(answer.last_modified, now),
-                          "downloaded_at": now.strftime("%Y-%m-%dT%H:%M:%SZ")}
-                _record_path(name).write_text(json.dumps(record, indent=2), encoding="utf-8")
+                _write_record(name, {"url": url, "date": _source_date(answer.last_modified, now),
+                                     "downloaded_at": now.strftime("%Y-%m-%dT%H:%M:%SZ")})
                 return dest
             kept = dest.with_name(f"{name}.{attempt}.invalido")
             updated.replace(kept)
@@ -258,8 +258,40 @@ def cnes_units() -> Path:
                              "do CNES (Ministério da Saúde)")
 
 
+def _write_record(name: str, record: dict) -> None:
+    _record_path(name).write_text(json.dumps(record, indent=2), encoding="utf-8")
+
+
+def overture_places() -> Path:
+    """data/raw/overture_lugares.parquet: o recorte do Brasil dos lugares da versão mais nova da Overture, conferido
+    (HS4; overture.problem). Um recorte guardado que passa na conferência é usado de novo; um que não passa vira
+    `.guardado.invalido`, e um recorte novo que não passa fica em `.invalido` e para a geração."""
+    from . import overture
+    config.RAW.mkdir(parents=True, exist_ok=True)
+    dest = config.RAW / OVERTURE_FILE
+    if dest.exists():
+        found = overture.problem(dest)
+        if found is None:
+            return dest
+        print(f"[overture] recorte guardado inválido ({found}); guardado em {OVERTURE_FILE}.guardado.invalido")
+        dest.replace(dest.with_name(OVERTURE_FILE + ".guardado.invalido"))
+    release = overture.latest_release(net.fetch_text(config.OVERTURE_LISTING_URL, delay=RETRY_DELAY))
+    source = f"{config.OVERTURE_BUCKET}/release/{release}/theme=places/type=place"
+    print(f"[overture] recortando o Brasil dos lugares da versão {release}...", flush=True)
+    updated = dest.with_name(OVERTURE_FILE + ".novo")
+    overture.extract(source, overture.filesystem(), updated)
+    found = overture.problem(updated)
+    if found is not None:
+        updated.replace(dest.with_name(OVERTURE_FILE + ".invalido"))
+        raise RuntimeError(f"o recorte dos lugares da Overture veio inválido ({found}): {source}")
+    updated.replace(dest)
+    _write_record(OVERTURE_FILE, {"url": f"s3://{source}", "date": release[:10], "release": release,
+                                  "downloaded_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
+    return dest
+
+
 # Os arquivos conferidos de uma geração, na ordem da etapa sources: os que vão para o registro da geração.
-CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE, CNES_FILE)
+CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE, CNES_FILE, OVERTURE_FILE)
 
 
 def generation_sources(osm: Dict[str, object]) -> Dict[str, Optional[dict]]:

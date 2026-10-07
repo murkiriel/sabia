@@ -81,6 +81,7 @@ class SourcesStageTest(unittest.TestCase):
             mock.patch.object(sources, "ibge_localities", lambda: self.calls.append(("localities",)) or Path("l")),
             mock.patch.object(sources, "prf_units", lambda: self.calls.append(("prf",)) or Path("p")),
             mock.patch.object(sources, "cnes_units", lambda: self.calls.append(("cnes",)) or Path("c")),
+            mock.patch.object(sources, "overture_places", lambda: self.calls.append(("overture",)) or Path("o")),
         ]
         for p in self._patches:
             p.start()
@@ -97,14 +98,14 @@ class SourcesStageTest(unittest.TestCase):
         meta = self.script.sources_stage(Path("x.osm.pbf"))
         self.assertEqual("local", meta["url"])
         self.assertEqual([("local", Path("x.osm.pbf")), ("mesh",), ("names",), ("localities",), ("prf",),
-                          ("cnes",)],
+                          ("cnes",), ("overture",)],
                          self.calls)
         self.assertEqual(meta, json.loads((self.build / "osm.json").read_text(encoding="utf-8")))
 
     def test_download_when_no_local_extract(self):
         meta = self.script.sources_stage(None)
         self.assertEqual([("download",), ("mesh",), ("names",), ("localities",), ("prf",),
-                          ("cnes",)], self.calls)
+                          ("cnes",), ("overture",)], self.calls)
         self.assertTrue(meta["url"].startswith("https://"))
 
     def test_the_sources_and_their_dates_go_to_the_generation_record(self):

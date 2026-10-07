@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import (cnes, config, database, districts, localities, osm_reader, prf, records, sources,
+from . import (cnes, config, database, districts, localities, osm_reader, overture, prf, records, sources,
                street_lines)
 from .municipalities import MunicipalityIndex
 
@@ -64,6 +64,16 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     added, repeated, misplaced = cnes.add(items, cnes.load(config.RAW / sources.CNES_FILE), index, states)
     print(f"[build] {added} unidades de urgência do CNES juntadas ({repeated} já estavam no OpenStreetMap, "
           f"{misplaced} com o ponto fora do município declarado)", flush=True)
+    # HS4: os lugares da Overture que o OpenStreetMap não tem, estado por estado (a memória fica a do maior)
+    added = repeated = 0
+    for uf in states:
+        box = MunicipalityIndex([m for m in municipalities if m.uf == uf]).bbox()
+        if box is None:
+            continue
+        places = overture.load(config.RAW / sources.OVERTURE_FILE, box)
+        a, r = overture.add(items, places, index, [uf])
+        added, repeated = added + a, repeated + r
+    print(f"[build] {added} lugares da Overture juntados ({repeated} já estavam registrados)", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 

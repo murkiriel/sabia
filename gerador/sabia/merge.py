@@ -85,3 +85,18 @@ def add(items: Dict[str, List[Item]], points: Sequence[Point], index: Municipali
     for state in touched:
         items[state].sort(key=order_key)
     return added, repeated
+
+
+# Palavras que não distinguem um nome de outro (artigos, preposições, forma da empresa).
+_FILLER = {"a", "o", "as", "os", "de", "da", "do", "das", "dos", "e", "em", "na", "no", "the", "ltda", "me", "eireli",
+           "sa", "s"}
+
+
+def similar_names(a: str, b: str) -> bool:
+    """Dois nomes do mesmo lugar? As palavras (sem acento, sem artigo nem "Ltda") de um contidas nas do outro, ou pelo
+    menos metade das do nome mais curto em comum: "Pão de Ouro Padaria" e "Padaria Pão de Ouro Ltda" sim; "Bar" e
+    "Barbearia do Zé" não."""
+    wa, wb = words(a) - _FILLER, words(b) - _FILLER
+    if not wa or not wb:
+        return False
+    return len(wa & wb) * 2 >= min(len(wa), len(wb))
