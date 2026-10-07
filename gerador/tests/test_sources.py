@@ -271,5 +271,98 @@ class IbgeTest(unittest.TestCase):
         self.assertEqual("MT", found["5101837"].uf)
 
 
+class SourceRecordTest(unittest.TestCase):
+    """A data de cada fonte conferida (HS2): gravada ao lado do arquivo no download, lida para o registro da
+    geração; o Last-Modified do site, senão o dia do download."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+        self.server = FakeServer().__enter__()
+        self.server.files["/malha"] = fake_mesh()
+        self._patches = [mock.patch.object(config, "RAW", self.raw),
+                         mock.patch.object(config, "IBGE_MESH_URL", self.server.url("/malha")),
+                         mock.patch.object(config, "MIN_MUNICIPALITIES", 27),
+                         mock.patch.object(sources, "RETRY_DELAY", 0),
+                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self.server.__exit__(None, None, None)
+        self._tmp.cleanup()
+
+    def test_the_date_comes_from_last_modified(self):
+        self.server.headers["/malha"] = {"Last-Modified": "Fri, 28 Aug 2026 18:27:01 GMT"}
+        sources.municipal_mesh()
+        record = sources.source_record(sources.MESH_FILE)
+        self.assertEqual("2026-08-28", record["date"])
+        self.assertEqual(self.server.url("/malha"), record["url"])
+        self.assertIn("downloaded_at", record)
+
+    def test_without_last_modified_the_date_is_the_download_day(self):
+        sources.municipal_mesh()
+        record = sources.source_record(sources.MESH_FILE)
+        self.assertEqual(record["downloaded_at"][:10], record["date"])
+
+    def test_a_cached_file_keeps_its_record_and_a_file_never_downloaded_has_none(self):
+        self.server.headers["/malha"] = {"Last-Modified": "Fri, 28 Aug 2026 18:27:01 GMT"}
+        sources.municipal_mesh()
+        self.server.headers["/malha"] = {"Last-Modified": "Sat, 29 Aug 2026 18:27:01 GMT"}
+        sources.municipal_mesh()
+        self.assertEqual("2026-08-28", sources.source_record(sources.MESH_FILE)["date"])
+        self.assertIsNone(sources.source_record("nao_existe.json"))
+
+    def test_the_records_of_a_generation(self):
+        self.server.headers["/malha"] = {"Last-Modified": "Fri, 28 Aug 2026 18:27:01 GMT"}
+        sources.municipal_mesh()
+        osm = {"url": "local", "timestamp": "2026-09-29T20:22:51Z", "path": "x", "md5": "ab", "size": 1}
+        found = sources.generation_sources(osm)
+        self.assertEqual({"url": "local", "date": "2026-09-29T20:22:51Z"}, found["openstreetmap"])
+        self.assertEqual("2026-08-28", found[sources.MESH_FILE]["date"])
+        self.assertIsNone(found[sources.NAMES_FILE])
+        self.assertIn(sources.PRF_FILE, found)
+
+
+class PrfDownloadTest(unittest.TestCase):
+    """O arquivo da ANTT com os postos da PRF, conferido como os do IBGE."""
+
+    def setUp(self):
+        from tests.test_prf import unit, write_prf
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+        good = self.raw / "bom.json"
+        write_prf(good, [unit()], copies=200)
+        self.server = FakeServer().__enter__()
+        self.server.files["/prf.json"] = good.read_bytes()
+        self._patches = [mock.patch.object(config, "RAW", self.raw),
+                         mock.patch.object(config, "PRF_URL", self.server.url("/prf.json")),
+                         mock.patch.object(sources, "RETRY_DELAY", 0),
+                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self.server.__exit__(None, None, None)
+        self._tmp.cleanup()
+
+    def test_a_good_file_is_saved(self):
+        path = sources.prf_units()
+        self.assertEqual(self.raw / sources.PRF_FILE, path)
+        self.assertEqual(200, len(json.loads(path.read_text(encoding="utf-8"))["PRF"]))
+
+    def test_an_error_page_is_not_saved_and_the_error_names_the_antt(self):
+        self.server.files["/prf.json"] = ERROR_PAGE
+        with self.assertRaises(RuntimeError) as ctx:
+            sources.prf_units()
+        self.assertFalse((self.raw / sources.PRF_FILE).exists())
+        self.assertIn("ANTT", str(ctx.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

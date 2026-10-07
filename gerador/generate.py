@@ -5,8 +5,8 @@
     python generate.py --osm-file data/raw/x.osm.pbf    # um extrato já baixado, sem baixar o do Brasil
     python generate.py --from validate                  # só valida e remonta o catálogo sobre os bancos já gerados
 
-Etapas, em ordem: sources (extrato do OpenStreetMap e arquivos do IBGE), build (lê o extrato e grava os bancos),
-validate (as travas), catalog. Depois, `python scripts/publish.py` publica.
+Etapas, em ordem: sources (extrato do OpenStreetMap, arquivos do IBGE e as outras fontes), build (lê o extrato e
+grava os bancos), validate (as travas), catalog. Depois, `python scripts/publish.py` publica.
 """
 from __future__ import annotations
 
@@ -58,10 +58,20 @@ def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
     sources.municipal_mesh()
     sources.municipality_names()
     sources.ibge_localities()
+    sources.prf_units()
     config.BUILD.mkdir(parents=True, exist_ok=True)
     (config.BUILD / "osm.json").write_text(json.dumps(osm, indent=2), encoding="utf-8")
-    print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios e localidades do IBGE conferidos")
+    found = sources.generation_sources(osm)
+    (config.BUILD / "fontes.json").write_text(json.dumps(found, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[fontes] OpenStreetMap de {osm['timestamp']} ({osm['url']}), municípios e localidades do IBGE e postos da "
+          f"PRF conferidos")
     return osm
+
+
+def sources_record() -> Dict[str, object]:
+    """A data de cada fonte da geração (data/build/fontes.json, da etapa sources), para o geracao.json; {} sem ela."""
+    path = config.BUILD / "fontes.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
 
 
 def build_stage(states: List[str], osm: Dict[str, object], today: Optional[str] = None) -> Dict[str, object]:
@@ -125,6 +135,7 @@ def _generate(args: argparse.Namespace, recorder: run_record.RunRecorder) -> str
             osm = sources_stage(args.osm_file)
         else:
             osm = json.loads((config.BUILD / "osm.json").read_text(encoding="utf-8"))
+    recorder.sources = sources_record()
     with recorder.stage("build"):
         if start <= STAGES.index("build"):
             packages = build_stage(args.states, osm)

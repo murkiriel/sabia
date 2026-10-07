@@ -66,7 +66,13 @@ MIN_MUNICIPALITIES = 5570
 IBGE_LOCALITIES_URL = ("https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/localidades/"
                        "Localidades_do_Brasil/2022/Localidades_Brasil_gpkg.zip")
 
-ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE")
+# Postos e unidades da Polícia Rodoviária Federal nas rodovias concedidas (ANTT, dados abertos, conjunto "PRF"; JSON
+# atualizado todo mês; licença Creative Commons Atribuição) (HS2).
+PRF_URL = ("https://dados.antt.gov.br/dataset/87c613a5-af73-445f-bc35-5fe816e70935/resource/"
+           "1e409dae-301a-4b54-a873-0becba08050f/download/informaes-sobre-os-postos-da-prfs.json")
+
+ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
+               "postos da PRF: ANTT")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

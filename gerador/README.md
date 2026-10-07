@@ -38,6 +38,8 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Extrato do Brasil no OpenStreetMap (openstreetmap.fr, ~2,3 GB) | `brazil-latest.osm.pbf` | Todos os registros. Só é baixado de novo quando há versão nova (md5 publicado ao lado); o md5 é conferido |
 | Malha municipal do IBGE (API de malhas v3, qualidade intermediária, ~12 MB) | `ibge_malha_municipios.json` | O município de cada registro, por polígono |
 | Municípios do IBGE (API de localidades, ~2 MB) | `ibge_municipios.json` | Nome oficial e UF de cada município; é a lista dos municípios |
+| Base de Localidades do IBGE (2022, GeoPackage num zip, ~6 MB) | `ibge_localidades.zip` | Povoados, vilas, aldeias, quilombos e outras localidades (HS1) |
+| Postos da PRF (ANTT, dados abertos, conjunto "PRF", JSON, ~50 kB) | `antt_postos_prf.json` | As unidades da Polícia Rodoviária Federal nas rodovias concedidas (HS2) |
 
 Os dois arquivos do IBGE são conferidos no cache e no download (JSON, as 27 UFs, pelo menos 5.570 municípios): uma
 API pode responder 200 com uma página de erro. Com resposta ruim (status de erro ou conteúdo que não passa), são até
@@ -46,6 +48,12 @@ o começo do corpo, e o corpo fica em `data/raw/<arquivo>.<tentativa>.invalido` 
 artefato). No Actions, os dois arquivos ficam no cache, um por mês. A lista de nomes tinha 5.571 municípios em
 2026-10-05 e a malha 5.570: Boa Esperança do Norte (MT), criado em 2025, ainda não tem polígono; os registros do
 território dele caem nos municípios de onde ele saiu, até a malha trazer o polígono.
+
+As fontes novas (Parte 9 da pesquisa) são baixadas e conferidas do mesmo jeito que os arquivos do IBGE, cada uma com
+a sua regra (formato, colunas, um mínimo de registros). A data de cada fonte conferida (o `Last-Modified` do site;
+sem ele, o dia do download) fica ao lado do arquivo, em `data/raw/<arquivo>.fonte.json`; a etapa sources junta todas,
+com a data do extrato, em `data/build/fontes.json`, e o registro da geração (`data/dist/geracao.json`) as leva em
+`sources`.
 
 Os testes também rodam no GitHub Actions a cada push e pull request (`.github/workflows/testes.yml`), com as
 dependências do `requirements.txt` e sem dados baixados.
@@ -84,6 +92,15 @@ em `data/`.
   `emergency` ou `historic` e nome, mais aeroporto, cachoeira, pico, praia, caverna, autódromo, pedágio e áreas de
   descanso; os de viagem (posto, hospital, clínica, polícia, farmácia, recarga, borracharia, oficina, pedágio)
   entram sem nome, com a marca (`brand`) no lugar do nome quando houver.
+
+**Fontes novas** (Parte 9 da pesquisa): cada uma num módulo próprio, juntada aos registros depois dos do
+OpenStreetMap e antes dos bairros (ganha bairro como os outros). O município é o do ponto, pela malha
+(`sabia/merge.py`); o que repete um registro já existente a até o raio medido da fonte não entra.
+
+| Fonte | Módulo | O que entra | Sem repetir |
+|---|---|---|---|
+| Localidades do IBGE | `sabia/localities.py` | `place` `ibge=<categoria>`, sem as sedes | Mesmo nome no mesmo município a até 3 km |
+| Postos da PRF (ANTT) | `sabia/prf.py` | `poi` `amenity=police`, "PRF - Polícia Rodoviária Federal, BR-060 km 182", só os ativos | Posto de polícia da PRF (pelo nome) ou sem nome a até 250 m: em GO e no DF, 14 das 16 unidades já estão no OpenStreetMap, a 4 a 202 m |
 
 **Bairros** (`sabia/districts.py`, G4): as áreas de bairro (relações e vias fechadas com `place` suburb, quarter ou
 neighbourhood, e limites administrativos de nível 10, bairro, e 9, distrito) e os pontos de bairro sem área de mesmo

@@ -40,6 +40,7 @@ class Response:
     content_type: str
     content_encoding: str
     size: int  # bytes gravados, já descomprimidos
+    last_modified: str = ""  # o cabeçalho Last-Modified, se veio: a data da fonte no registro da geração
 
 
 class DownloadError(RuntimeError):
@@ -145,7 +146,8 @@ def download(url: str, dest: Path, identity: Optional[str] = None, attempts: int
                 else:  # 200: começa do zero (inclusive quando o site ignorou o Range)
                     mode, already_had = "wb", 0
                 answer = Response(r.status, r.headers.get("Content-Type") or "",
-                                  (r.headers.get("Content-Encoding") or "identity").strip().lower(), 0)
+                                  (r.headers.get("Content-Encoding") or "identity").strip().lower(), 0,
+                                  r.headers.get("Last-Modified") or "")
                 expected = r.headers.get("Content-Length")
                 received = 0
                 with open(partial, mode) as f:

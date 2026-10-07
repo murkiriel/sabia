@@ -1,4 +1,5 @@
-"""As fontes de uma geração: o extrato do Brasil no OpenStreetMap e os municípios do IBGE (malha e nomes).
+"""As fontes de uma geração: o extrato do Brasil no OpenStreetMap, os municípios do IBGE (malha e nomes) e as fontes
+novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF...).
 
 O extrato só é baixado de novo quando o openstreetmap.fr tem versão mais nova (md5 publicado ao lado do arquivo);
 depois do download, o md5 é conferido. Se o site troca o extrato durante o download, o md5 e a data são lidos de novo
@@ -9,13 +10,18 @@ Para gerar aqui sem baixar o Brasil, `local_extract` usa um extrato já baixado 
 Os arquivos do IBGE ficam guardados em data/raw/ e são conferidos sempre, no cache e no download: uma API pode
 responder 200 com uma página de erro, e sem a conferência ela quebraria todas as gerações seguintes. Uma resposta
 ruim é tentada de novo, com espera, e registrada no log (status, tipo, tamanho, começo do corpo); o corpo fica em
-data/raw/ como `.invalido`, para o artefato do workflow.
+data/raw/ como `.invalido`, para o artefato do workflow. As fontes novas são baixadas e conferidas do mesmo jeito.
+
+A data de cada fonte conferida (o Last-Modified do site; sem ele, o dia do download) fica ao lado do arquivo, em
+`<arquivo>.fonte.json`, e vai para o registro da geração (data/build/fontes.json, depois o geracao.json).
 """
 from __future__ import annotations
 
 import json
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -37,6 +43,7 @@ IBGE_RETRY_DELAY = 60
 MESH_FILE = "ibge_malha_municipios.json"
 NAMES_FILE = "ibge_municipios.json"
 LOCALITIES_FILE = "ibge_localidades.zip"
+PRF_FILE = "antt_postos_prf.json"
 
 
 @dataclass
@@ -148,9 +155,34 @@ def names_problem(path: Path) -> Optional[str]:
     return _coverage_problem([str(r["municipio-id"]) for r in rows])
 
 
-def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[str]], label: str) -> Path:
+def _record_path(name: str) -> Path:
+    return config.RAW / (name + ".fonte.json")
+
+
+def _source_date(last_modified: str, downloaded_at: datetime) -> str:
+    """'Fri, 28 Aug 2026 18:27:01 GMT' -> '2026-08-28'; sem o cabeçalho (ou ilegível), o dia do download."""
+    try:
+        return parsedate_to_datetime(last_modified).strftime("%Y-%m-%d")
+    except (TypeError, ValueError, IndexError):
+        return downloaded_at.strftime("%Y-%m-%d")
+
+
+def source_record(name: str) -> Optional[dict]:
+    """{url, date, downloaded_at} do arquivo `name` de data/raw/, ou None se ele nunca foi baixado por aqui."""
+    path = _record_path(name)
+    if not path.exists():
+        return None
+    try:
+        found = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return found if isinstance(found, dict) else None
+
+
+def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[str]], label: str,
+                      tag: str = "ibge", origin: str = "do IBGE") -> Path:
     """Garante data/raw/<name>, conferido por `problem` no cache e no download; nunca grava um arquivo ruim com o
-    nome final.
+    nome final. `tag` vai no começo de cada linha do log; `origin` diz de quem é o arquivo no erro final.
 
     Resposta ruim (status de erro, mesmo depois das tentativas do net.download, ou conteúdo que não passa na
     conferência) é tentada de novo, até IBGE_ATTEMPTS tentativas, com espera crescente. Cada uma vai para o log com o
@@ -162,12 +194,12 @@ def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[st
         found = problem(dest)
         if found is None:
             return dest
-        print(f"[ibge] {label} guardada inválida ({found}); guardada em {name}.guardado.invalido, baixando de novo")
+        print(f"[{tag}] {label} guardada inválida ({found}); guardada em {name}.guardado.invalido, baixando de novo")
         dest.replace(dest.with_name(name + ".guardado.invalido"))
     updated = dest.with_name(dest.name + ".novo")
     failure = ""
     for attempt in range(1, IBGE_ATTEMPTS + 1):
-        print(f"[ibge] baixando {label} (tentativa {attempt} de {IBGE_ATTEMPTS})...")
+        print(f"[{tag}] baixando {label} (tentativa {attempt} de {IBGE_ATTEMPTS})...")
         try:
             answer = net.download(url, updated, delay=RETRY_DELAY)
         except net.DownloadError as e:
@@ -176,6 +208,10 @@ def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[st
             found = problem(updated)
             if found is None:
                 updated.replace(dest)
+                now = datetime.now(timezone.utc)
+                record = {"url": url, "date": _source_date(answer.last_modified, now),
+                          "downloaded_at": now.strftime("%Y-%m-%dT%H:%M:%SZ")}
+                _record_path(name).write_text(json.dumps(record, indent=2), encoding="utf-8")
                 return dest
             kept = dest.with_name(f"{name}.{attempt}.invalido")
             updated.replace(kept)
@@ -184,11 +220,11 @@ def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[st
             failure = (f"{found}; HTTP {answer.status}, Content-Type {answer.content_type or '(nenhum)'}, "
                        f"Content-Encoding {answer.content_encoding}, {answer.size} bytes, guardado em {kept.name}, "
                        f"início do corpo: {start}")
-        print(f"[ibge] {label} veio inválida na tentativa {attempt} de {IBGE_ATTEMPTS}: {failure}")
+        print(f"[{tag}] {label} veio inválida na tentativa {attempt} de {IBGE_ATTEMPTS}: {failure}")
         if attempt < IBGE_ATTEMPTS:
-            print(f"[ibge] tentando de novo em {IBGE_RETRY_DELAY * attempt} s")
+            print(f"[{tag}] tentando de novo em {IBGE_RETRY_DELAY * attempt} s")
             time.sleep(IBGE_RETRY_DELAY * attempt)
-    raise RuntimeError(f"{label} do IBGE veio inválida nas {IBGE_ATTEMPTS} tentativas ({failure}): {url}")
+    raise RuntimeError(f"{label} {origin} veio inválida nas {IBGE_ATTEMPTS} tentativas ({failure}): {url}")
 
 
 def municipal_mesh() -> Path:
@@ -207,6 +243,26 @@ def ibge_localities() -> Path:
     return _checked_download(config.IBGE_LOCALITIES_URL, LOCALITIES_FILE, localities.problem, "as localidades")
 
 
+def prf_units() -> Path:
+    """data/raw/antt_postos_prf.json: as unidades da PRF nas rodovias concedidas, da ANTT, conferidas (HS2;
+    prf.problem)."""
+    from . import prf
+    return _checked_download(config.PRF_URL, PRF_FILE, prf.problem, "os postos da PRF", "antt", "da ANTT")
+
+
+# Os arquivos conferidos de uma geração, na ordem da etapa sources: os que vão para o registro da geração.
+CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE)
+
+
+def generation_sources(osm: Dict[str, object]) -> Dict[str, Optional[dict]]:
+    """A data de cada fonte da geração: o extrato do OpenStreetMap (a data dele) e cada arquivo conferido (None se não
+    se sabe: baixado antes de haver o registro)."""
+    out: Dict[str, Optional[dict]] = {"openstreetmap": {"url": osm["url"], "date": osm["timestamp"]}}
+    for name in CHECKED_FILES:
+        out[name] = source_record(name)
+    return out
+
+
 def load_municipalities(mesh: Path, names: Path) -> List[Municipality]:
     """Os municípios da lista de nomes, cada um com o polígono da malha (None se a malha ainda não tem)."""
     geometries: Dict[str, BaseGeometry] = {}
@@ -218,3 +274,4 @@ def load_municipalities(mesh: Path, names: Path) -> List[Municipality]:
         code = str(r["municipio-id"])
         out.append(Municipality(code, r["municipio-nome"], r["UF-sigla"], geometries.get(code)))
     return sorted(out, key=lambda m: m.code)
+

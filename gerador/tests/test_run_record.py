@@ -38,5 +38,18 @@ class RunRecorderTest(unittest.TestCase):
         self.assertEqual("failed: caiu", data["result"])
 
 
+    def test_the_sources_and_their_dates_are_recorded(self):
+        """HS2: a data de cada fonte vai para o registro da geração; sem fontes conhecidas, um objeto vazio."""
+        with tempfile.TemporaryDirectory() as tmp:
+            recorder = run_record.RunRecorder(Path(tmp), interval=0.01)
+            recorder.save(Path(tmp) / "a.json", "ok")
+            self.assertEqual({}, json.loads((Path(tmp) / "a.json").read_text(encoding="utf-8"))["sources"])
+            recorder = run_record.RunRecorder(Path(tmp), interval=0.01)
+            recorder.sources = {"antt_postos_prf.json": {"date": "2026-08-28"}}
+            recorder.save(Path(tmp) / "b.json", "ok")
+            data = json.loads((Path(tmp) / "b.json").read_text(encoding="utf-8"))
+        self.assertEqual({"antt_postos_prf.json": {"date": "2026-08-28"}}, data["sources"])
+
+
 if __name__ == "__main__":
     unittest.main()

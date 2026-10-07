@@ -1,4 +1,5 @@
-"""Registro de uma geração em data/dist/geracao.json: tempo de cada etapa, pico de disco e resultado.
+"""Registro de uma geração em data/dist/geracao.json: tempo de cada etapa, pico de disco, resultado e a data de cada
+fonte (`sources`, de data/build/fontes.json).
 
 Os números do README (tempo, disco) vêm deste arquivo, não de memória. O pico de disco é amostrado numa thread a cada
 `interval` segundos, somando os arquivos de data/: pega os bancos intermediários, que podem ser apagados antes do
@@ -13,7 +14,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator, List
+from typing import Dict, Iterator, List
 
 GB = 1_000_000_000
 
@@ -41,6 +42,7 @@ class RunRecorder:
     def __init__(self, folder: Path, interval: float = 20.0) -> None:
         self.folder = folder
         self.stages: List[dict] = []
+        self.sources: Dict[str, object] = {}  # a data de cada fonte (data/build/fontes.json), quando se sabe
         self.peak = folder_size(folder)
         self.start = datetime.now(timezone.utc)
         self._stop = threading.Event()
@@ -73,6 +75,7 @@ class RunRecorder:
             "stages": self.stages,
             "total_minutes": round(sum(e["minutes"] for e in self.stages), 2),
             "peak_disk_gb": round(self.peak / GB, 6),
+            "sources": self.sources,
         }
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

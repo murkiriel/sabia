@@ -16,6 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
+from tests.test_prf import unit, write_prf  # noqa: E402
 
 
 def write_ibge(raw: Path):
@@ -30,6 +31,9 @@ def write_ibge(raw: Path):
     write_zip(raw / "ibge_localidades.zip", [("GO", "5208707", "Povoado", None, "Povoado do Teste", -16.6, -49.4),
                                              ("GO", "5208707", "Cidade", "Sede Municipal", "Goiânia", -16.68, -49.26),
                                              ("SP", "3550308", "Povoado", None, "Longe Daqui", -23.5, -46.6)])
+    # HS2: um posto da PRF em Goiânia (entra) e um em Anápolis que já está no extrato (ver StageFixture: não repete)
+    write_prf(raw / "antt_postos_prf.json", [unit(road="BR-153", km="500", lat="-16.6", lng="-49.3"),
+                                             unit(road="BR-060", km="86", lat="-16.3", lng="-48.9")])
 
 
 class StageFixture(unittest.TestCase):
@@ -43,6 +47,7 @@ class StageFixture(unittest.TestCase):
         osm = OsmBuilder()
         osm.street((-16.68, -49.26), 400, "Rua 10")
         osm.node(-16.68, -49.25, amenity="fuel", name="Posto Cerrado")
+        osm.node(-16.3, -48.9003, amenity="police", name="PRF")
         osm.street((-15.79, -47.88), 400, "Eixo Rodoviário", highway="trunk")
         self.pbf = osm.write(root / "x.osm.pbf")
         self.osm = {"path": str(self.pbf), "url": "local", "timestamp": "2026-09-29T00:59:51Z",
@@ -69,7 +74,7 @@ class BuildStageTest(StageFixture):
         go = packages["states"]["GO"]
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
-        self.assertEqual(1, go["counts"]["poi"])
+        self.assertEqual(3, go["counts"]["poi"])  # o posto, a PRF do extrato e a PRF da ANTT
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -84,6 +89,11 @@ class BuildStageTest(StageFixture):
             self.assertEqual([("Povoado do Teste", "ibge=povoado")],
                              list(db.execute("SELECT name, kind FROM item WHERE kind LIKE 'ibge=%'")))
             self.assertIn("localidades: IBGE", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # HS2: o posto da PRF novo entra como polícia; o de Anápolis, que o extrato já tem, não repete
+            self.assertEqual([("PRF", 5201108), ("PRF - Polícia Rodoviária Federal, BR-153 km 500", 5208707)],
+                             list(db.execute("SELECT name, municipality FROM item WHERE kind = 'amenity=police' "
+                                             "ORDER BY name")))
+            self.assertIn("postos da PRF: ANTT", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):

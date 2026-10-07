@@ -33,7 +33,10 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 | `street` | `highway=<valor>` | Uma rua: os trechos de mesmo nome no mesmo município que se tocam ou têm as pontas a menos de 60 m. O `kind` é o do trecho mais importante; o ponto, o meio do trecho mais central |
 | `road` | `road` | Uma rodovia num município: `name` é a sigla (`BR-153`, `GO-060`) |
 | `poi` | `<chave>=<valor>` | Ponto de interesse: `amenity=fuel`, `shop=tyres`, `tourism=hotel`, `natural=waterfall`, `aeroway=aerodrome`, `barrier=toll_booth`... Os de viagem (posto, hospital, clínica, polícia, farmácia, recarga, borracharia, oficina, pedágio, áreas de descanso) entram também sem nome: `name` é a marca (`brand`) ou vazio |
+| `poi` | `amenity=police` (PRF) | Unidade da Polícia Rodoviária Federal (ANTT) que o OpenStreetMap não tem: `name` é "PRF - Polícia Rodoviária Federal, BR-060 km 182" |
 
+- Os registros de outras fontes que não o OpenStreetMap usam o `kind` do OpenStreetMap equivalente quando há um
+  (a PRF é `amenity=police`): as palavras de categoria e os ícones valem para eles sem mudar nada em quem consome.
 - `municipality`: código do IBGE do município do registro; `district`: o `district.id` do bairro, ou NULL.
 - `lat`, `lng`: inteiros, graus × 100.000 (5 casas, ~1 m).
 - `cell`: o quadrado do mapa no zoom 13 (o tile dos mapas na web, ~4 a 5 km de lado no Brasil), como um número:

@@ -73,11 +73,13 @@ class SourcesStageTest(unittest.TestCase):
         remote = dict(local, url="https://exemplo/brazil-latest.osm.pbf", path="brazil-latest.osm.pbf")
         self._patches = [
             mock.patch.object(config, "BUILD", build),
+            mock.patch.object(config, "RAW", build / "raw"),
             mock.patch.object(sources, "local_extract", lambda p: self.calls.append(("local", p)) or local),
             mock.patch.object(sources, "osm_extract", lambda: self.calls.append(("download",)) or remote),
             mock.patch.object(sources, "municipal_mesh", lambda: self.calls.append(("mesh",)) or Path("m")),
             mock.patch.object(sources, "municipality_names", lambda: self.calls.append(("names",)) or Path("n")),
             mock.patch.object(sources, "ibge_localities", lambda: self.calls.append(("localities",)) or Path("l")),
+            mock.patch.object(sources, "prf_units", lambda: self.calls.append(("prf",)) or Path("p")),
         ]
         for p in self._patches:
             p.start()
@@ -93,13 +95,25 @@ class SourcesStageTest(unittest.TestCase):
 
         meta = self.script.sources_stage(Path("x.osm.pbf"))
         self.assertEqual("local", meta["url"])
-        self.assertEqual([("local", Path("x.osm.pbf")), ("mesh",), ("names",), ("localities",)], self.calls)
+        self.assertEqual([("local", Path("x.osm.pbf")), ("mesh",), ("names",), ("localities",), ("prf",)],
+                         self.calls)
         self.assertEqual(meta, json.loads((self.build / "osm.json").read_text(encoding="utf-8")))
 
     def test_download_when_no_local_extract(self):
         meta = self.script.sources_stage(None)
-        self.assertEqual([("download",), ("mesh",), ("names",), ("localities",)], self.calls)
+        self.assertEqual([("download",), ("mesh",), ("names",), ("localities",), ("prf",)], self.calls)
         self.assertTrue(meta["url"].startswith("https://"))
+
+    def test_the_sources_and_their_dates_go_to_the_generation_record(self):
+        """HS2: data/build/fontes.json, com a data de cada fonte, que o registro da geração (geracao.json) leva."""
+        import json
+
+        self.assertEqual({}, self.script.sources_record())
+        self.script.sources_stage(Path("x.osm.pbf"))
+        saved = json.loads((self.build / "fontes.json").read_text(encoding="utf-8"))
+        self.assertEqual({"url": "local", "date": "2026-09-29T20:22:51Z"}, saved["openstreetmap"])
+        self.assertIn("antt_postos_prf.json", saved)
+        self.assertEqual(saved, self.script.sources_record())
 
 
 if __name__ == "__main__":
