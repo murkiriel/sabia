@@ -122,7 +122,8 @@ Outras fontes, citadas no `attribution` do `catalogo.json` e na tabela `meta` de
   (Ministério da Saúde, dados abertos);
 - lojas, restaurantes, oficinas e outros lugares de comércio e serviço: Overture Maps Foundation, sob a CDLA
   Permissive 2.0 (<https://cdla.dev/permissive-2-0/>);
-- os quilômetros das rodovias federais ("BR-060 km 120"): Sistema Nacional de Viação do DNIT, dados abertos.
+- os quilômetros das rodovias federais ("BR-060 km 120"): Sistema Nacional de Viação do DNIT, dados abertos;
+- os aeródromos públicos e privados: ANAC, dados abertos.
 
 O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
 

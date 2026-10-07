@@ -44,6 +44,7 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | CNES (Ministério da Saúde, CSV nacional num zip, ~56 MB, refeito todo dia) | `cnes_estabelecimentos.zip` | Hospitais, UPAs e prontos-socorros abertos 24 horas (HS3) |
 | Overture Maps, lugares (versão mais nova pela listagem do S3 público; recorte do Brasil, ~190 MB, ~6 min daqui) | `overture_lugares.parquet` | Comércio e serviços que faltam no OpenStreetMap (HS4) |
 | SNV do DNIT (WFS do DNITGeo, a versão em vigor no dia, só eixo principal construído, GeoJSON, ~130 MB) | `dnit_snv.json` | Os quilômetros das rodovias federais (HS6) |
+| Aeródromos públicos e privados da ANAC (dados abertos, JSON, ~0,3 e ~2,5 MB) | `anac_aerodromos_publicos.json`, `anac_aerodromos_privados.json` | Aeroportos e pistas (HS8) |
 
 Os dois arquivos do IBGE são conferidos no cache e no download (JSON, as 27 UFs, pelo menos 5.570 municípios): uma
 API pode responder 200 com uma página de erro. Com resposta ruim (status de erro ou conteúdo que não passa), são até
@@ -107,6 +108,7 @@ OpenStreetMap e antes dos bairros (ganha bairro como os outros). O município é
 | Postos da PRF (ANTT) | `sabia/prf.py` | `poi` `amenity=police`, "PRF - Polícia Rodoviária Federal, BR-060 km 182", só os ativos | Posto de polícia da PRF (pelo nome) ou sem nome a até 250 m: em GO e no DF, 14 das 16 unidades já estão no OpenStreetMap, a 4 a 202 m |
 | Overture Maps | `sabia/overture.py` | `poi` com o `kind` do OpenStreetMap quando a categoria tem um que a busca usa (posto, hospital, farmácia, hotel, restaurante, oficina, borracharia...), senão `overture=<categoria>`; só confiança de 0,6 ou mais, com categoria, sem lugares naturais e marcos (ficam com o OpenStreetMap) e sem o que vem da Foursquare | Lugar ou ponto de interesse de nome parecido (as palavras de um contidas nas do outro, ou metade em comum) a até 300 m, ou sem nome e do mesmo `kind` |
 | SNV do DNIT | `sabia/snv.py` | `poi` `highway=milestone`, "BR-060 km 120": um por km inteiro de cada trecho de eixo principal construído, na fração da linha entre o km inicial e o final; o km recomeça em cada UF. Contra 572 pontos de km conhecidos (PRF e edificações da ANTT): mediana de 286 m, 71% a até 1 km; em trechos concedidos com numeração antiga, a placa fica a vários km | Marco de mesmo nome a até 1 km |
+| ANAC | `sabia/anac.py` | `poi` `aeroway=aerodrome`, "Aeródromo Fazenda Boa Vista (SWXX)" (sem "Aeródromo" quando o nome já diz), sem os interditados | Aeródromo do OpenStreetMap a até 1,5 km, qualquer nome: em GO, 17 dos 19 públicos a até 676 m; 82 dos 243 privados a até 1 km |
 | CNES (Ministério da Saúde) | `sabia/cnes.py` | `poi` `amenity=hospital`: hospital geral ou especializado, unidade mista, pronto-socorro e UPA com atendimento 24 horas, sem desativação, com o ponto no município que o cadastro declara; nome fantasia em caixa de título | Registro de saúde (hospital, clínica, consultório, `healthcare=*`) a até 500 m sem nome ou com uma palavra do nome em comum (fora as genéricas) |
 
 **Bairros** (`sabia/districts.py`, G4): as áreas de bairro (relações e vias fechadas com `place` suburb, quarter ou

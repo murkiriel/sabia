@@ -450,5 +450,48 @@ class SnvDownloadTest(unittest.TestCase):
         self.assertIn("DNIT", str(ctx.exception))
 
 
+class AnacDownloadTest(unittest.TestCase):
+    """As duas listas de aeródromos da ANAC (HS8), conferidas como os arquivos do IBGE."""
+
+    def setUp(self):
+        from sabia import anac
+        from tests.test_anac import aerodrome, write_list
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self._tmp.name)
+        good = self.raw / "bom.json"
+        write_list(good, [aerodrome()], copies=3)
+        self.server = FakeServer().__enter__()
+        self.server.files["/publicos.json"] = good.read_bytes()
+        self.server.files["/privados.json"] = good.read_bytes()
+        self._patches = [mock.patch.object(config, "RAW", self.raw),
+                         mock.patch.object(config, "ANAC_PUBLIC_URL", self.server.url("/publicos.json")),
+                         mock.patch.object(config, "ANAC_PRIVATE_URL", self.server.url("/privados.json")),
+                         mock.patch.object(anac, "MIN_PUBLIC", 3), mock.patch.object(anac, "MIN_PRIVATE", 3),
+                         mock.patch.object(sources, "RETRY_DELAY", 0),
+                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self.server.__exit__(None, None, None)
+        self._tmp.cleanup()
+
+    def test_both_lists_are_saved(self):
+        self.assertEqual([self.raw / sources.ANAC_PUBLIC_FILE, self.raw / sources.ANAC_PRIVATE_FILE],
+                         sources.anac_aerodromes())
+
+    def test_each_list_has_its_own_minimum(self):
+        from sabia import anac
+
+        with mock.patch.object(anac, "MIN_PRIVATE", 4), self.assertRaises(RuntimeError) as ctx:
+            sources.anac_aerodromes()
+        self.assertTrue((self.raw / sources.ANAC_PUBLIC_FILE).exists())
+        self.assertFalse((self.raw / sources.ANAC_PRIVATE_FILE).exists())
+        self.assertIn("ANAC", str(ctx.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

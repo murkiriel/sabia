@@ -36,6 +36,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 | `poi` | `amenity=police` (PRF) | Unidade da Polícia Rodoviária Federal (ANTT) que o OpenStreetMap não tem: `name` é "PRF - Polícia Rodoviária Federal, BR-060 km 182" |
 | `poi` | `overture=<categoria>` | Lugar de comércio ou serviço da Overture Maps sem `kind` equivalente do OpenStreetMap que a busca use: `overture=clothing_store`, `overture=beauty_salon`, `overture=dental_clinic`... (a categoria da Overture, em inglês). Os que têm equivalente (posto, farmácia, hotel, restaurante, oficina, borracharia, banco, escola, igreja...) entram com o `kind` do OpenStreetMap |
 | `poi` | `highway=milestone` | Marco de km de rodovia federal, gerado ao longo do SNV do DNIT: `name` é "BR-060 km 120". O km é o do SNV (recomeça em cada estado); em trechos concedidos com numeração antiga, a placa da estrada pode estar a alguns km |
+| `poi` | `aeroway=aerodrome` (ANAC) | Aeródromo público ou privado da ANAC que o OpenStreetMap não tem: "Aeródromo Fazenda Boa Vista (SWXX)", com o código OACI no fim |
 | `poi` | `amenity=hospital` (CNES) | Hospital, UPA ou pronto-socorro aberto 24 horas do CNES que o OpenStreetMap não tem: `name` é o nome fantasia do cadastro em caixa de título ("Hospital Municipal de Itaberaí") |
 
 - Os registros de outras fontes que não o OpenStreetMap usam o `kind` do OpenStreetMap equivalente quando há um

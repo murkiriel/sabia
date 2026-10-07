@@ -16,7 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
-from tests import test_cnes, test_overture, test_snv  # noqa: E402
+from tests import test_anac, test_cnes, test_overture, test_snv  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
 
@@ -49,6 +49,12 @@ def write_ibge(raw: Path):
     # HS6: um trecho da BR-153 de 2 km em Goiânia (do km 500 ao 502) e um acesso (não entra)
     test_snv.write_snv(raw / "dnit_snv.json", [test_snv.segment(br="153", start=500.0, end=502.0),
                                                test_snv.segment(br="153", start=0.0, end=3.0, kind="A")])
+    # HS8: um aeródromo público em Goiânia (entra), um interditado (não) e um privado (entra)
+    test_anac.write_list(raw / "anac_aerodromos_publicos.json",
+                         [test_anac.aerodrome("Aeroporto do Teste", "SBTT", lat="-16.55", lng="-49.45"),
+                          test_anac.aerodrome("Fechado", "SBFF", lat="-16.56", lng="-49.45", situation="Interditado")])
+    test_anac.write_list(raw / "anac_aerodromos_privados.json",
+                         [test_anac.aerodrome("FAZENDA DO TESTE", "SWTT", lat="-16.52", lng="-49.05")])
 
 
 class StageFixture(unittest.TestCase):
@@ -89,8 +95,8 @@ class BuildStageTest(StageFixture):
         go = packages["states"]["GO"]
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
-        # o posto, a PRF do extrato, a PRF da ANTT, o hospital, a loja e os 3 marcos de km
-        self.assertEqual(8, go["counts"]["poi"])
+        # o posto, a PRF do extrato, a PRF da ANTT, o hospital, a loja, os 3 marcos de km e os 2 aeródromos
+        self.assertEqual(10, go["counts"]["poi"])
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -125,6 +131,10 @@ class BuildStageTest(StageFixture):
                              [r[0] for r in db.execute("SELECT name FROM item WHERE kind = 'highway=milestone' "
                                                        "ORDER BY name")])
             self.assertIn("DNIT", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # HS8: o aeroporto público e o privado da ANAC entram; o interditado, não
+            self.assertEqual([("Aeroporto do Teste (SBTT)",), ("Aeródromo Fazenda do Teste (SWTT)",)],
+                             list(db.execute("SELECT name FROM item WHERE kind = 'aeroway=aerodrome' ORDER BY name")))
+            self.assertIn("ANAC", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):

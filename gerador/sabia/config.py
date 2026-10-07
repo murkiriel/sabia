@@ -85,10 +85,17 @@ OVERTURE_BUCKET = "overturemaps-us-west-2"
 SNV_WFS_URL = "https://servicos.dnit.gov.br/dnitgeo/geoserver/ows"
 SNV_LAYER = "vgeo:vw_snv_rod"
 
+# Aeródromos públicos e privados (ANAC, dados abertos, JSON) (HS8).
+_ANAC = "https://sistemas.anac.gov.br/dadosabertos/Aerodromos/"
+ANAC_PUBLIC_URL = (_ANAC + "Aer%C3%B3dromos%20P%C3%BAblicos/Lista%20de%20aer%C3%B3dromos%20p%C3%BAblicos/"
+                   "AerodromosPublicos.json")
+ANAC_PRIVATE_URL = (_ANAC + "Aer%C3%B3dromos%20Privados/Lista%20de%20aer%C3%B3dromos%20privados/"
+                    "Aerodromos%20Privados/AerodromosPrivados.json")
+
 ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
                "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); "
                "lugares: Overture Maps Foundation (CDLA Permissive 2.0); "
-               "quilômetros das rodovias federais: DNIT (SNV)")
+               "quilômetros das rodovias federais: DNIT (SNV); aeródromos: ANAC")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

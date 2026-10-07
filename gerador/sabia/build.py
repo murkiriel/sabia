@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import (cnes, config, database, districts, localities, osm_reader, overture, prf, records, snv, sources,
+from . import (anac, cnes, config, database, districts, localities, osm_reader, overture, prf, records, snv, sources,
                street_lines)
 from .municipalities import MunicipalityIndex
 
@@ -77,6 +77,10 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     # HS6: um marco por km das rodovias federais, pelo SNV do DNIT
     added, repeated = snv.add(items, snv.markers(snv.load(config.RAW / sources.SNV_FILE)), index, states)
     print(f"[build] {added} marcos de km das rodovias federais juntados ({repeated} repetidos)", flush=True)
+    # HS8: os aeródromos públicos e privados da ANAC que o OpenStreetMap não tem
+    aerodromes = (anac.load(config.RAW / sources.ANAC_PUBLIC_FILE) + anac.load(config.RAW / sources.ANAC_PRIVATE_FILE))
+    added, repeated = anac.add(items, aerodromes, index, states)
+    print(f"[build] {added} aeródromos da ANAC juntados ({repeated} já estavam no OpenStreetMap)", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 
