@@ -11,6 +11,8 @@ Banco do estado (`format_version` 1; nomes em inglês, a convenção do projeto)
     street_line   item, cell, coords (blob)                       "que rua é esta?" (street_lines.py)
     word_form     word, form, rule                                 abreviações, formas, números (search_rules.py)
     category      word, kinds                                      "posto" -> amenity=fuel
+    item_source   item, source                                     origem sem conferência no mapa: "anp" (HP5b1);
+                  só os registros marcados (o que não está aqui veio do mapa); um leitor antigo não a lê
 
 Base nacional: `municipality` com `uf` (todos os municípios), `item` com os municípios e as rodovias federais,
 `road_state` (item, uf: os estados de cada rodovia federal), `item_text`, `word_form`, `category` e `meta` (uf "base").
@@ -60,6 +62,7 @@ CREATE VIRTUAL TABLE item_text USING fts4(content="", name, area, tokenize=simpl
 CREATE TABLE street_line(item INTEGER NOT NULL, cell INTEGER NOT NULL, coords BLOB NOT NULL);
 CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NULL);
 CREATE TABLE category(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
+CREATE TABLE item_source(item INTEGER PRIMARY KEY, source TEXT NOT NULL);
 """
 STATE_INDEXES = """
 CREATE INDEX item_cell ON item(cell);
@@ -189,6 +192,7 @@ def write_state(path: Path, uf: str, items: Sequence[Item], districts: Sequence[
                      fold(f"{names.get(i.municipality, '')} {i.district or ''}"))
                     for n, i in enumerate(items, 1)))
     db.executemany("INSERT INTO street_line VALUES(?,?,?)", ((x.item + 1, x.cell, x.coords) for x in lines))
+    db.executemany("INSERT INTO item_source VALUES(?,?)", ((n, i.source) for n, i in enumerate(items, 1) if i.source))
     _search_tables(db)
     _meta(db, uf, meta)
     _finish(db, STATE_INDEXES)

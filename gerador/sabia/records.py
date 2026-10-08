@@ -48,6 +48,7 @@ class Item:
     extent_m: float = 0.0
     suspect_long: bool = False
     aliases: List[str] = field(default_factory=list)   # nomes alternativos: só no índice de busca (HS9)
+    source: str = ""                                   # origem sem conferência no mapa: "anp" (HP5b1); "" = o mapa
 
     @property
     def uf(self) -> str:

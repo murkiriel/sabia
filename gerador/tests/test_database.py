@@ -152,6 +152,26 @@ class StateDatabaseTest(unittest.TestCase):
         self.assertEqual((1, 1), (header[18], header[19]))
 
 
+class SourceTableTest(unittest.TestCase):
+    """HP5b1: `item_source` diz a origem dos registros que não vêm do mapa conferido (hoje só os postos da ANP)."""
+
+    def test_only_the_marked_items_with_their_ids(self):
+        items = [records.Item("place", "municipality", "Goiânia", "5208707", -16.68, -49.25),
+                 records.Item("poi", "amenity=fuel", "Posto Ipiranga", "5208707", -16.70, -49.20, source="anp"),
+                 records.Item("poi", "amenity=fuel", "Posto Shell", "5208707", -16.71, -49.21)]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "sabia-GO.sqlite"
+            database.write_state(path, "GO", items, [], [], MUNICIPALITIES, META)
+            db = sqlite3.connect(path)
+            try:
+                rows = db.execute("SELECT s.source, i.name FROM item_source s JOIN item i ON i.id = s.item").fetchall()
+                sql = db.execute("SELECT sql FROM sqlite_master WHERE name = 'item_source'").fetchone()[0]
+            finally:
+                db.close()
+        self.assertEqual([("anp", "Posto Ipiranga")], rows)
+        self.assertIn("item INTEGER PRIMARY KEY", sql)
+
+
 class BaseDatabaseTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

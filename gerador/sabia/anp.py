@@ -13,6 +13,8 @@ OpenStreetMap não tem, e o nome dos postos sem nome que ele tem.
   ganha o da ANP ("posto ipiranga" passa a achar). Medido em Goiás (2026-10-07): 1.122 dos 2.019 postos da ANP têm um
   posto do pacote a até 100 m; com os pontos da ANP deslocados 333 m (o acaso), 59. Entre 150 e 200 m o acaso já
   passa do que casa de verdade.
+- **Origem.** O posto que entra só pela ANP leva `source` "anp" (tabela `item_source` do banco, HP5b1): quem usa o
+  pacote pode dizer que a posição não foi conferida no mapa. O posto do pacote que ganhou o nome segue sem marca.
 """
 from __future__ import annotations
 
@@ -35,6 +37,8 @@ DUPLICATE_M = 100.0
 PAUSE_DEFAULT = 5
 PAUSE = PAUSE_DEFAULT
 KIND = "amenity=fuel"
+# A origem do posto que só a ANP tem (HP5b1): o ponto é o declarado à ANP, sem um posto do mapa que o confirme.
+SOURCE = "anp"
 FIELDS = ("razaoSocial", "uf", "distribuidora", "latitude", "longitude")
 UNBRANDED = "BANDEIRA BRANCA"
 # Bandeira na ANP -> como o posto é conhecido.
@@ -135,7 +139,7 @@ def add(items: Dict[str, List[Item]], points: Sequence[Point], index: Municipali
                 named += 1
                 touched.add(state)
             continue
-        item = Item("poi", KIND, point.name, code, point.lat, point.lng)
+        item = Item("poi", KIND, point.name, code, point.lat, point.lng, source=SOURCE)
         items.setdefault(state, []).append(item)
         grid.put(item)
         touched.add(state)

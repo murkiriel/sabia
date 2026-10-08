@@ -109,6 +109,14 @@ class AddTest(unittest.TestCase):
         counts, items = self.add([])
         self.assertEqual((1, 0, 0), counts)
 
+    def test_only_a_station_that_comes_from_the_anp_alone_is_marked_with_its_origin(self):
+        """HP5b1: o posto que só a ANP tem leva a origem "anp" (posição não conferida no mapa); o do pacote que ganha
+        o nome não."""
+        _, items = self.add([])
+        self.assertEqual("anp", items["GO"][0].source)
+        _, items = self.add([fuel("", *east(-16.7, -49.2, 95))])
+        self.assertEqual("", items["GO"][0].source)
+
     def test_a_station_of_the_package_nearby_is_the_same_and_gets_the_name_if_it_has_none(self):
         lat, lng = east(-16.7, -49.2, 95)
         counts, items = self.add([fuel("", lat, lng)])
