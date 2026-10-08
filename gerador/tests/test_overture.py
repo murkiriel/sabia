@@ -128,7 +128,8 @@ class LoadTest(unittest.TestCase):
 
     def test_the_confidence_cut(self):
         # a fronteira passou de 0,6 para 0,8 em 08/10/2026 (mudança declarada)
-        found = self.load([place("Alta", confidence=0.8), place("Baixa", confidence=0.79), place("Média", confidence=0.6)])
+        found = self.load([place("Alta", confidence=0.8), place("Baixa", confidence=0.79),
+                           place("Média", confidence=0.6)])
         self.assertEqual(["Alta"], [p.name for p in found])
 
     def test_without_category_or_from_foursquare_stays_out(self):
