@@ -127,7 +127,8 @@ class LoadTest(unittest.TestCase):
             return overture.load(path, box)
 
     def test_the_confidence_cut(self):
-        found = self.load([place("Alta", confidence=0.6), place("Baixa", confidence=0.59)])
+        # a fronteira passou de 0,6 para 0,8 em 08/10/2026 (mudança declarada)
+        found = self.load([place("Alta", confidence=0.8), place("Baixa", confidence=0.79), place("Média", confidence=0.6)])
         self.assertEqual(["Alta"], [p.name for p in found])
 
     def test_without_category_or_from_foursquare_stays_out(self):
@@ -211,7 +212,8 @@ class AddTest(unittest.TestCase):
 
     def test_the_radius_measured(self):
         self.assertEqual(300.0, overture.DUPLICATE_M)
-        self.assertEqual(0.6, overture.MIN_CONFIDENCE)
+        # de 0,6 para 0,8 em 08/10/2026, para o pacote crescer menos (mudança declarada)
+        self.assertEqual(0.8, overture.MIN_CONFIDENCE)
 
 
 class DownloadTest(unittest.TestCase):

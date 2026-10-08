@@ -39,7 +39,7 @@ from .records import Item
 # Menos que isto no recorte do Brasil é leitura quebrada (a versão de 2026-09-23 dá 6,67 milhões no retângulo).
 MIN_PLACES = 1_000_000
 # Corte de confiança e raio dos repetidos medidos em Goiás (M9).
-MIN_CONFIDENCE = 0.6
+MIN_CONFIDENCE = 0.8  # era 0,6 até 08/10/2026 (Goiás: 9,6 → 8,3 MB)
 DUPLICATE_M = 300.0
 # O retângulo do Brasil (lat mín, lng mín, lat máx, lng máx), com folga; o município de cada lugar vem depois.
 BRAZIL = (-34.0, -74.5, 5.5, -28.5)
