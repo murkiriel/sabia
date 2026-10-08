@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import (anac, cnes, config, database, districts, geonames, localities, osm_reader, overture, prf, records,
+from . import (anac, anp, cnes, config, database, districts, geonames, localities, osm_reader, overture, prf, records,
                snv, sources, street_lines, wikidata)
 from .municipalities import MunicipalityIndex
 
@@ -90,6 +90,10 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     added, repeated, aliased = wikidata.add(items, wikidata.load(config.RAW / sources.WIKIDATA_FILE), index, states)
     print(f"[build] Wikidata: {added} pontos turísticos juntados ({repeated} já registrados), {aliased} registros com "
           f"nome alternativo", flush=True)
+    # HS10: os postos da ANP que o pacote não tem; o posto sem nome do pacote ganha o da ANP
+    added, repeated, named = anp.add(items, anp.load(config.RAW / sources.ANP_FILE), index, states)
+    print(f"[build] {added} postos da ANP juntados ({repeated} já estavam no pacote, {named} deles ganharam nome)",
+          flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 

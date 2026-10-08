@@ -160,5 +160,17 @@ def md5(b: bytes) -> str:
     return hashlib.md5(b).hexdigest()
 
 
+class BodyStartTest(unittest.TestCase):
+    def test_prints_in_any_console(self):
+        """O começo do corpo vai para o log: tem de sair até num console cp1252 (Windows). Os acentos ficam; o resto
+        (byte que não é UTF-8, letra de outra escrita) vira escape. Um zip baixado no lugar de outro arquivo derrubava o
+        log ao acaso, quando os bytes formavam uma letra como "Ȭ"."""
+        text = net.body_start("Serviço indisponível Ȭ 瓦".encode("utf-8") + b"\x8b\xff")
+        self.assertEqual(text, text.encode("cp1252", errors="replace").decode("cp1252"))
+        self.assertIn("Serviço indisponível", text)
+        self.assertNotIn("Ȭ", text)
+        self.assertIn("x8b", text)  # o byte que veio, não um caractere de substituição
+
+
 if __name__ == "__main__":
     unittest.main()

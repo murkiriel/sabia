@@ -38,6 +38,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 | `poi` | `highway=milestone` | Marco de km de rodovia federal, gerado ao longo do SNV do DNIT: `name` é "BR-060 km 120". O km é o do SNV (recomeça em cada estado); em trechos concedidos com numeração antiga, a placa da estrada pode estar a alguns km |
 | `poi` | `aeroway=aerodrome` (ANAC) | Aeródromo público ou privado da ANAC que o OpenStreetMap não tem: "Aeródromo Fazenda Boa Vista (SWXX)", com o código OACI no fim |
 | `poi` | `natural=*`, `tourism=*`, `leisure=park`, `boundary=national_park` (GeoNames, Wikidata) | Cachoeira, caverna, praia, pico, fonte, parque, mirante ou atração turística do GeoNames ou do Wikidata que o pacote não tinha |
+| `poi` | `amenity=fuel` (ANP) | Posto em operação da ANP que o pacote não tinha: "Posto Ipiranga", "Posto Petrobras" (bandeira Vibra), "Posto Shell" (Raízen) ou a razão social. Um posto do OpenStreetMap sem nome a até 100 m de um da ANP fica com o nome dele |
 | `poi` | `amenity=hospital` (CNES) | Hospital, UPA ou pronto-socorro aberto 24 horas do CNES que o OpenStreetMap não tem: `name` é o nome fantasia do cadastro em caixa de título ("Hospital Municipal de Itaberaí") |
 
 - Os registros de outras fontes que não o OpenStreetMap usam o `kind` do OpenStreetMap equivalente quando há um

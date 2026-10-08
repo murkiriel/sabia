@@ -86,6 +86,7 @@ class SourcesStageTest(unittest.TestCase):
             mock.patch.object(sources, "anac_aerodromes", lambda: self.calls.append(("anac",)) or []),
             mock.patch.object(sources, "geonames_files", lambda: self.calls.append(("geonames",)) or []),
             mock.patch.object(sources, "wikidata_tourism", lambda: self.calls.append(("wikidata",)) or Path("w")),
+            mock.patch.object(sources, "anp_stations", lambda: self.calls.append(("anp",)) or Path("a")),
         ]
         for p in self._patches:
             p.start()
@@ -102,14 +103,16 @@ class SourcesStageTest(unittest.TestCase):
         meta = self.script.sources_stage(Path("x.osm.pbf"))
         self.assertEqual("local", meta["url"])
         self.assertEqual([("local", Path("x.osm.pbf")), ("mesh",), ("names",), ("localities",), ("prf",),
-                          ("cnes",), ("overture",), ("snv",), ("anac",), ("geonames",), ("wikidata",)],
+                          ("cnes",), ("overture",), ("snv",), ("anac",), ("geonames",), ("wikidata",),
+                          ("anp",)],
                          self.calls)
         self.assertEqual(meta, json.loads((self.build / "osm.json").read_text(encoding="utf-8")))
 
     def test_download_when_no_local_extract(self):
         meta = self.script.sources_stage(None)
         self.assertEqual([("download",), ("mesh",), ("names",), ("localities",), ("prf",),
-                          ("cnes",), ("overture",), ("snv",), ("anac",), ("geonames",), ("wikidata",)], self.calls)
+                          ("cnes",), ("overture",), ("snv",), ("anac",), ("geonames",), ("wikidata",),
+                          ("anp",)], self.calls)
         self.assertTrue(meta["url"].startswith("https://"))
 
     def test_the_sources_and_their_dates_go_to_the_generation_record(self):

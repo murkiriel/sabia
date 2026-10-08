@@ -97,11 +97,15 @@ GEONAMES_PLACES_URL = "https://download.geonames.org/export/dump/BR.zip"
 GEONAMES_NAMES_URL = "https://download.geonames.org/export/dump/alternatenames/BR.zip"
 WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql"
 
+# API de revendedores da ANP (sem conta): os postos de combustível em operação, com a posição geográfica (HS10).
+ANP_API_URL = "https://revendedoresapi.anp.gov.br/v1/combustivel"
+
 ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
                "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); "
                "lugares: Overture Maps Foundation (CDLA Permissive 2.0); "
                "quilômetros das rodovias federais: DNIT (SNV); aeródromos: ANAC; "
-               "nomes alternativos e pontos turísticos: GeoNames (CC BY 4.0) e Wikidata (CC0)")
+               "nomes alternativos e pontos turísticos: GeoNames (CC BY 4.0) e Wikidata (CC0); "
+               "postos de combustível: ANP")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

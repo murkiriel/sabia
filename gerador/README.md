@@ -47,6 +47,7 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Aeródromos públicos e privados da ANAC (dados abertos, JSON, ~0,3 e ~2,5 MB) | `anac_aerodromos_publicos.json`, `anac_aerodromos_privados.json` | Aeroportos e pistas (HS8) |
 | GeoNames, o Brasil e os nomes alternativos do Brasil (CC BY 4.0, ~7 e ~3 MB) | `geonames_lugares.zip`, `geonames_nomes.zip` | Nomes alternativos em português e pontos turísticos (HS9) |
 | Wikidata, consulta SPARQL dos pontos turísticos do Brasil (CC0, JSON) | `wikidata_turismo.json` | Pontos turísticos e os apelidos deles (HS9) |
+| API de revendedores da ANP (sem conta; UF por UF, com 5 s entre pedidos por causa do limite do Cloudflare; ~46 mil postos, ~3 min) | `anp_postos.json` | Postos de combustível em operação, com a posição geográfica (HS10) |
 
 Os dois arquivos do IBGE são conferidos no cache e no download (JSON, as 27 UFs, pelo menos 5.570 municípios): uma
 API pode responder 200 com uma página de erro. Com resposta ruim (status de erro ou conteúdo que não passa), são até
@@ -113,6 +114,7 @@ OpenStreetMap e antes dos bairros (ganha bairro como os outros). O município é
 | ANAC | `sabia/anac.py` | `poi` `aeroway=aerodrome`, "Aeródromo Fazenda Boa Vista (SWXX)" (sem "Aeródromo" quando o nome já diz), sem os interditados | Aeródromo do OpenStreetMap a até 1,5 km, qualquer nome: em GO, 17 dos 19 públicos a até 676 m; 82 dos 243 privados a até 1 km |
 | GeoNames | `sabia/geonames.py` | Os nomes em português e os históricos de cada lugar habitado e ponto turístico vão para o índice de busca do registro de nome parecido a até 3 km (o nome mostrado não muda; até 5 por registro); cachoeiras, cavernas, praias, picos, fontes e parques novos entram como `poi` com o `kind` do OpenStreetMap | Registro de nome parecido a até 2 km |
 | Wikidata | `sabia/wikidata.py` | Como o GeoNames, com os itens de cachoeira, caverna, praia, montanha, atração turística, mirante, parque nacional, fonte termal e torre de observação, e os apelidos em português | Como o GeoNames |
+| ANP | `sabia/anp.py` | `poi` `amenity=fuel`, "Posto Ipiranga" (Vibra é Petrobras; Raízen, Shell) ou, bandeira branca, a razão social sem "Ltda"; sem os interditados. O posto sem nome do pacote a até 100 m ganha o nome da ANP | Posto do pacote a até 100 m: em GO, 1.122 dos 2.019 postos da ANP (59 por acaso, com os pontos deslocados 333 m) |
 | CNES (Ministério da Saúde) | `sabia/cnes.py` | `poi` `amenity=hospital`: hospital geral ou especializado, unidade mista, pronto-socorro e UPA com atendimento 24 horas, sem desativação, com o ponto no município que o cadastro declara; nome fantasia em caixa de título | Registro de saúde (hospital, clínica, consultório, `healthcare=*`) a até 500 m sem nome ou com uma palavra do nome em comum (fora as genéricas) |
 
 **Bairros** (`sabia/districts.py`, G4): as áreas de bairro (relações e vias fechadas com `place` suburb, quarter ou

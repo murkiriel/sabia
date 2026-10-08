@@ -1,5 +1,5 @@
 """As fontes de uma geração: o extrato do Brasil no OpenStreetMap, os municípios do IBGE (malha e nomes) e as fontes
-novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES, Overture, SNV, ANAC, GeoNames, Wikidata).
+novas da Parte 9 da pesquisa (localidades do IBGE, postos da PRF, CNES, Overture, SNV, ANAC, GeoNames, Wikidata, ANP).
 
 O extrato só é baixado de novo quando o openstreetmap.fr tem versão mais nova (md5 publicado ao lado do arquivo);
 depois do download, o md5 é conferido. Se o site troca o extrato durante o download, o md5 e a data são lidos de novo
@@ -52,6 +52,7 @@ ANAC_PRIVATE_FILE = "anac_aerodromos_privados.json"
 GEONAMES_PLACES_FILE = "geonames_lugares.zip"
 GEONAMES_NAMES_FILE = "geonames_nomes.zip"
 WIKIDATA_FILE = "wikidata_turismo.json"
+ANP_FILE = "anp_postos.json"
 
 
 @dataclass
@@ -339,9 +340,56 @@ def wikidata_tourism() -> Path:
                              "do Wikidata")
 
 
+def anp_stations() -> Path:
+    """data/raw/anp_postos.json: os postos em operação da API de revendedores da ANP, UF por UF e página por página,
+    num arquivo só, conferido (HS10; anp.problem). Um arquivo guardado que passa na conferência é usado de novo; um
+    novo que não passa fica em `.invalido` e para a geração."""
+    from . import anp
+    config.RAW.mkdir(parents=True, exist_ok=True)
+    dest = config.RAW / ANP_FILE
+    if dest.exists():
+        found = anp.problem(dest)
+        if found is None:
+            return dest
+        print(f"[anp] postos guardados inválidos ({found}); guardados em {ANP_FILE}.guardado.invalido")
+        dest.replace(dest.with_name(ANP_FILE + ".guardado.invalido"))
+    rows: list = []
+    for uf in sorted(config.STATES):
+        page = 1
+        while True:
+            url = f"{config.ANP_API_URL}?uf={uf}&numeropagina={page}"
+            time.sleep(anp.PAUSE)
+            text = net.fetch_text(url, attempts=5, delay=max(RETRY_DELAY, 6 * anp.PAUSE))
+            try:
+                answer = json.loads(text)
+                got = answer["data"] or []
+                pages = int((answer.get("searchPageFilter") or {}).get("totalPagina") or 1)
+            except (ValueError, KeyError, TypeError, AttributeError) as e:
+                raise RuntimeError(f"a API de postos da ANP respondeu algo que não é a lista de postos "
+                                   f"({e.__class__.__name__}; início: {net.body_start(text.encode('utf-8'))}): "
+                                   f"{url}") from e
+            rows += got
+            if not got or page >= pages:
+                break
+            page += 1
+        print(f"[anp] {uf}: {sum(1 for r in rows if r.get('uf') == uf)} postos", flush=True)
+    updated = dest.with_name(ANP_FILE + ".novo")
+    updated.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+    found = anp.problem(updated)
+    if found is not None:
+        updated.replace(dest.with_name(ANP_FILE + ".invalido"))
+        raise RuntimeError(f"os postos da ANP vieram inválidos ({found}): {config.ANP_API_URL}")
+    updated.replace(dest)
+    now = datetime.now(timezone.utc)
+    _write_record(ANP_FILE, {"url": config.ANP_API_URL, "date": now.strftime("%Y-%m-%d"),
+                             "downloaded_at": now.strftime("%Y-%m-%dT%H:%M:%SZ")})
+    return dest
+
+
 # Os arquivos conferidos de uma geração, na ordem da etapa sources: os que vão para o registro da geração.
 CHECKED_FILES = (MESH_FILE, NAMES_FILE, LOCALITIES_FILE, PRF_FILE, CNES_FILE, OVERTURE_FILE, SNV_FILE,
-                 ANAC_PUBLIC_FILE, ANAC_PRIVATE_FILE, GEONAMES_PLACES_FILE, GEONAMES_NAMES_FILE, WIKIDATA_FILE)
+                 ANAC_PUBLIC_FILE, ANAC_PRIVATE_FILE, GEONAMES_PLACES_FILE, GEONAMES_NAMES_FILE, WIKIDATA_FILE,
+                 ANP_FILE)
 
 
 def generation_sources(osm: Dict[str, object]) -> Dict[str, Optional[dict]]:

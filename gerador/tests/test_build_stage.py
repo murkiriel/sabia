@@ -16,7 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
-from tests import test_anac, test_cnes, test_geonames, test_overture, test_snv  # noqa: E402
+from tests import test_anac, test_anp, test_cnes, test_geonames, test_overture, test_snv  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
 
@@ -62,6 +62,11 @@ def write_ibge(raw: Path):
     test_geonames.write_zip(raw / "geonames_nomes.zip", [test_geonames.alt(1, "Campinas", "", historic="1")])
     test_geonames.write_wd(raw / "wikidata_turismo.json",
                            [test_geonames.wd_row("Q9", "Mirante do Teste", "-16.57", "-49.12", "Q6017969")])
+    # HS10: um posto Ipiranga da ANP em Goiânia (entra) e um a 50 m do Posto Cerrado do extrato (não repete; o Posto
+    # Cerrado tem nome e fica com ele)
+    test_anp.write_stations(raw / "anp_postos.json",
+                            [test_anp.station(brand="IPIRANGA", lat="-16.53", lng="-49.4"),
+                             test_anp.station(brand="RAIZEN", lat="-16.68", lng="-49.2505")])
 
 
 class StageFixture(unittest.TestCase):
@@ -103,8 +108,8 @@ class BuildStageTest(StageFixture):
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
         # o posto, a PRF do extrato, a PRF da ANTT, o hospital, a loja, os 3 marcos de km, os 2 aeródromos, a
-        # cachoeira e o mirante
-        self.assertEqual(12, go["counts"]["poi"])
+        # cachoeira, o mirante e o posto da ANP
+        self.assertEqual(13, go["counts"]["poi"])
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -151,6 +156,10 @@ class BuildStageTest(StageFixture):
                 "SELECT item.name FROM item_text JOIN item ON item.id = item_text.docid "
                 "WHERE item_text MATCH 'name:campinas'")))
             self.assertIn("GeoNames", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # HS10: o posto Ipiranga da ANP entra; o perto do Posto Cerrado, não
+            self.assertEqual([("Posto Cerrado",), ("Posto Ipiranga",)],
+                             list(db.execute("SELECT name FROM item WHERE kind = 'amenity=fuel' ORDER BY name")))
+            self.assertIn("ANP", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):
