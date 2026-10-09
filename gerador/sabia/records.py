@@ -49,6 +49,8 @@ class Item:
     suspect_long: bool = False
     aliases: List[str] = field(default_factory=list)   # nomes alternativos: só no índice de busca (HS9)
     source: str = ""                                   # origem sem conferência no mapa: "anp" (HP5b1); "" = o mapa
+    # a escada de números do CNEFE (SE1): (lado 0 par / 1 ímpar, pedaço, número, lat, lng); só nas ruas
+    numbers: List[Tuple[int, int, int, float, float]] = field(default_factory=list)
 
     @property
     def uf(self) -> str:
