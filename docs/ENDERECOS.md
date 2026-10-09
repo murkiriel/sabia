@@ -41,7 +41,19 @@ a mais de 300 m: sem a quebra, o p90 do erro era de 1,5 km.
 Proposta: degrau a cada 20 números, quebra a 300 m. O pacote de GO hoje tem 6,2 MB em zstd; os degraus, com números e
 coordenadas em inteiros como o resto do pacote, devem somar uns 2 a 3 MB comprimidos.
 
-## Formato proposto (etapa seguinte)
+## O que entrou (2026-10-09)
+
+- **Só ruas que o mapa já tem.** A primeira geração local de GO pôs também, como registro novo, a rua do CNEFE sem
+  par no pacote (55 mil): o pacote foi de 8,3 MB para 18,3 MB e a busca "br-153 anapolis" passou a trazer a
+  "Avenida Br 153" do CNEFE na frente da rodovia. Sem traçado, essas ruas ajudam pouco; ficaram de fora.
+- **Uma linha por rua, degraus num blob** (`house_number(street INTEGER PRIMARY KEY, rungs BLOB)`, no molde do
+  `street_line`): a chave é o rowid, sem índice à parte. `WITHOUT ROWID` daria o mesmo, mas a trava de esquema do
+  gerador não aceita nada além do que o SQLite 3.22 lê sem surpresa.
+- **Goiás, geração local:** 27.730 ruas com número, 291.404 degraus; 99.193 pedaços casados com ruas do mapa e
+  121.324 sem rua de mesmo nome por perto. Pacote de 8,3 MB para 10,2 MB comprimido (+2,0 MB); as 49 buscas de
+  referência passam e o banco abre igual no SQLite 3.22.
+
+## Formato proposto (a primeira ideia)
 
 - Tabela `house_number(street INTEGER NOT NULL, side INTEGER NOT NULL, seg INTEGER NOT NULL, number INTEGER NOT NULL,
   lat INTEGER NOT NULL, lng INTEGER NOT NULL)`: `street` é o item da rua (o casado pelo nome no município; a rua do

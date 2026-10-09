@@ -172,6 +172,39 @@ class SourceTableTest(unittest.TestCase):
         self.assertIn("item INTEGER PRIMARY KEY", sql)
 
 
+class HouseNumberTableTest(unittest.TestCase):
+    """SE1 (docs/ENDERECOS.md): `house_number` guarda a escada de números do CNEFE de cada rua numa linha, com o id do
+    registro como chave (o rowid, sem índice à parte) e os degraus num blob de int32 little-endian: lado, pedaço,
+    número, lat e lng x 100.000, em ordem."""
+
+    def test_one_row_per_street_with_its_rungs_in_a_blob(self):
+        import struct
+        rua = records.Item("street", "highway=residential", "Rua 9", "5208707", -16.70, -49.25,
+                           numbers=[(1, 0, 21, -16.70, -49.2481), (0, 0, 2, -16.7001, -49.25),
+                                    (1, 0, 1, -16.700001, -49.250004)])
+        items = [records.Item("place", "municipality", "Goiânia", "5208707", -16.68, -49.25), rua,
+                 records.Item("street", "highway=residential", "Rua 10", "5208707", -16.71, -49.25)]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "sabia-GO.sqlite"
+            counts = database.write_state(path, "GO", items, [], [], MUNICIPALITIES, META)
+            db = sqlite3.connect(path)
+            try:
+                tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+                self.assertIn("house_number", tables)
+                self.assertEqual(["street", "rungs"], [r[1] for r in db.execute("PRAGMA table_info(house_number)")])
+                rows = db.execute("SELECT i.name, h.rungs FROM house_number h "
+                                  "JOIN item i ON i.id = h.street").fetchall()
+                sql = db.execute("SELECT sql FROM sqlite_master WHERE name = 'house_number'").fetchone()[0]
+            finally:
+                db.close()
+        self.assertEqual(["Rua 9"], [r[0] for r in rows])
+        values = struct.unpack(f"<{len(rows[0][1]) // 4}i", rows[0][1])
+        self.assertEqual([(0, 0, 2, -1670010, -4925000), (1, 0, 1, -1670000, -4925000), (1, 0, 21, -1670000, -4924810)],
+                         [values[i:i + 5] for i in range(0, len(values), 5)])
+        self.assertEqual((1, 3), (counts["house_number"], counts["house_number_rungs"]))
+        self.assertIn("street INTEGER PRIMARY KEY", sql)
+
+
 class BaseDatabaseTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

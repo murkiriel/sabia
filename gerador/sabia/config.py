@@ -100,12 +100,16 @@ WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql"
 # API de revendedores da ANP (sem conta): os postos de combustível em operação, com a posição geográfica (HS10).
 ANP_API_URL = "https://revendedoresapi.anp.gov.br/v1/combustivel"
 
+# CNEFE do Censo 2022 do IBGE, um zip por UF (<código>_<UF>.zip): o número das casas (SE1, docs/ENDERECOS.md).
+CNEFE_UF_URL = ("https://ftp.ibge.gov.br/Cadastro_Nacional_de_Enderecos_para_Fins_Estatisticos/Censo_Demografico_2022/"
+                "Arquivos_CNEFE/CSV/UF/")
+
 ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; "
                "postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); "
                "lugares: Overture Maps Foundation (CDLA Permissive 2.0); "
                "quilômetros das rodovias federais: DNIT (SNV); aeródromos: ANAC; "
                "nomes alternativos e pontos turísticos: GeoNames (CC BY 4.0) e Wikidata (CC0); "
-               "postos de combustível: ANP")
+               "postos de combustível: ANP; números das casas: IBGE (CNEFE, Censo 2022)")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.

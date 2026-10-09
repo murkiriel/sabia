@@ -13,8 +13,8 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import (anac, anp, cnes, config, database, districts, geonames, localities, osm_reader, overture, prf, records,
-               snv, sources, street_lines, wikidata)
+from . import (anac, anp, cnefe, cnes, config, database, districts, geonames, localities, osm_reader, overture, prf,
+               records, snv, sources, street_lines, wikidata)
 from .municipalities import MunicipalityIndex
 
 
@@ -94,6 +94,15 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     added, repeated, named = anp.add(items, anp.load(config.RAW / sources.ANP_FILE), index, states)
     print(f"[build] {added} postos da ANP juntados ({repeated} já estavam no pacote, {named} deles ganharam nome)",
           flush=True)
+    # SE1: o número das casas pelo CNEFE do IBGE, o arquivo de cada UF (baixado na etapa das fontes)
+    for uf in states:
+        path = config.RAW / sources.cnefe_name(uf)
+        if not path.exists():
+            print(f"[build] {uf}: sem o CNEFE ({path.name}), sem números", flush=True)
+            continue
+        matched, unmatched = cnefe.add(items, cnefe.read(path), uf)
+        print(f"[build] {uf}: números do CNEFE em {matched} pedaços de ruas do mapa ({unmatched} sem rua de mesmo "
+              f"nome por perto, de fora)", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 

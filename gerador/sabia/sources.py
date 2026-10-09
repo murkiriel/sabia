@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import osmium
 from shapely.geometry import shape
@@ -338,6 +338,34 @@ def wikidata_tourism() -> Path:
     from . import wikidata
     return _checked_download(wikidata.url(), WIKIDATA_FILE, wikidata.problem, "a consulta ao Wikidata", "wikidata",
                              "do Wikidata")
+
+
+def cnefe_name(uf: str) -> str:
+    """O arquivo do CNEFE de uma UF em data/raw: cnefe_52_GO.zip."""
+    code = next(c for c, s in config.IBGE_STATE_CODES.items() if s == uf)
+    return f"cnefe_{code}_{uf}.zip"
+
+
+def cnefe_problem(path: Path) -> Optional[str]:
+    """O que há de errado no zip do CNEFE guardado; None se é um zip com o CSV."""
+    import zipfile
+    try:
+        with zipfile.ZipFile(path) as z:
+            if not any(n.lower().endswith(".csv") for n in z.namelist()):
+                return "zip sem CSV"
+    except (zipfile.BadZipFile, OSError) as e:
+        return f"não é zip ({e})"
+    return None
+
+
+def cnefe_files(states: Optional[Sequence[str]] = None) -> List[Path]:
+    """O CNEFE de cada UF pedida (todas, sem lista) em data/raw, baixado do IBGE uma vez: é o retrato do Censo."""
+    out = []
+    for uf in states or sorted(config.IBGE_STATE_CODES.values()):
+        name = cnefe_name(uf)
+        out.append(_checked_download(config.CNEFE_UF_URL + name[len("cnefe_"):], name, cnefe_problem,
+                                     f"CNEFE de {uf}", tag="cnefe"))
+    return out
 
 
 def anp_stations() -> Path:

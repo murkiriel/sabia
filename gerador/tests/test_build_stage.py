@@ -16,7 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
-from tests import test_anac, test_anp, test_cnes, test_geonames, test_overture, test_snv  # noqa: E402
+from tests import test_anac, test_anp, test_cnes, test_cnefe, test_geonames, test_overture, test_snv  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
 
@@ -67,6 +67,10 @@ def write_ibge(raw: Path):
     test_anp.write_stations(raw / "anp_postos.json",
                             [test_anp.station(brand="IPIRANGA", lat="-16.53", lng="-49.4"),
                              test_anp.station(brand="RAIZEN", lat="-16.68", lng="-49.2505")])
+    # SE1: o CNEFE de Goiás com a Rua 10 do extrato, de 1 a 41 (os números da casa de cada lado)
+    test_cnefe._zip(raw / "cnefe_52_GO.zip",
+                    [test_cnefe._row("5208707", "RUA", "", "10", n, *test_cnefe.east(-16.68, -49.26, n * 8.0))
+                     for n in range(1, 42)])
 
 
 class StageFixture(unittest.TestCase):
@@ -98,6 +102,13 @@ class StageFixture(unittest.TestCase):
 
 
 class BuildStageTest(StageFixture):
+    def test_the_house_numbers_of_the_cnefe_go_to_the_street(self):
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        go = packages["states"]["GO"]
+        self.assertEqual(1, go["counts"]["street"], "the CNEFE's Rua 10 is the map's")
+        # uma rua, dos dois lados: 1, 21, 41 e 2, 22, 40
+        self.assertEqual((1, 6), (go["counts"]["house_number"], go["counts"]["house_number_rungs"]))
+
     def test_packages_and_counts(self):
         self.dist.mkdir(parents=True)
         (self.dist / "sabia-SP.sqlite.zst").write_bytes(b"sobra de outra geracao")

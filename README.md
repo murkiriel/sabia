@@ -125,7 +125,8 @@ Outras fontes, citadas no `attribution` do `catalogo.json` e na tabela `meta` de
 - os quilômetros das rodovias federais ("BR-060 km 120"): Sistema Nacional de Viação do DNIT, dados abertos;
 - os aeródromos públicos e privados: ANAC, dados abertos;
 - nomes alternativos e pontos turísticos: GeoNames (<https://www.geonames.org/>, CC BY 4.0) e Wikidata (CC0);
-- os postos de combustível em operação: ANP, cadastro de revendedores.
+- os postos de combustível em operação: ANP, cadastro de revendedores;
+- o número das casas: IBGE, Cadastro Nacional de Endereços para Fins Estatísticos (CNEFE) do Censo 2022.
 
 O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
 

@@ -1,6 +1,7 @@
 """O número das casas pelo CNEFE do IBGE (SE1, docs/ENDERECOS.md): a leitura do arquivo da UF, a escada de números por
 rua e lado (um degrau a cada STEP números, quebrada onde dois números seguidos ficam a mais de GAP_M) e o casamento com
-as ruas do pacote; a rua do CNEFE que o pacote não tem vira registro novo."""
+as ruas do pacote. A rua do CNEFE que o pacote não tem fica de fora (SE1c: como registro novo, sem traçado, dobrava o
+pacote de GO e passava na frente da rodovia na busca "br-153 anapolis")."""
 import csv
 import io
 import sys
@@ -83,7 +84,7 @@ class Read(unittest.TestCase):
 
 
 class Add(unittest.TestCase):
-    def test_each_piece_goes_to_the_nearest_street_of_that_name_and_the_rest_becomes_a_new_street(self):
+    def test_each_piece_goes_to_the_nearest_street_of_that_name_and_the_rest_stays_out(self):
         near = Item("street", "highway=residential", "R. 9", GYN, *east(-16.70, -49.25, 20.0))
         other = Item("street", "highway=residential", "Rua 9", GYN, *east(-16.70, -49.25, 1_500.0))  # a 1,5 km
         avenue = Item("street", "highway=primary", "Av. Dep. Jamel Cecílio", GYN, -16.71, -49.24)
@@ -92,15 +93,23 @@ class Add(unittest.TestCase):
             (GYN, "rua 9"): ("Rua 9", [(1, 0, 1, -16.70, -49.25), (1, 0, 21, *east(-16.70, -49.25, 200.0))]),
             (GYN, "rua 10"): ("Rua 10", [(0, 0, 2, -16.72, -49.26)]),
         }
-        matched, created = cnefe.add(items, groups, "GO")
-        self.assertEqual((1, 1), (matched, created))
+        matched, unmatched = cnefe.add(items, groups, "GO")
+        self.assertEqual((1, 1), (matched, unmatched))
         self.assertEqual([1, 21], [r[2] for r in near.numbers])
         self.assertEqual([], other.numbers)
-        new = items["GO"][-1]
-        self.assertEqual(("street", "cnefe", "Rua 10", GYN, "cnefe"),
-                         (new.cls, new.kind, new.name, new.municipality, new.source))
-        self.assertEqual([(0, 0, 2, -16.72, -49.26)], new.numbers)
-        self.assertEqual((-16.72, -49.26), (new.lat, new.lng))
+        self.assertEqual(3, len(items["GO"]), "no new street")
+
+    def test_two_spellings_on_one_street_keep_their_pieces_apart(self):
+        # "Rua 9" e "R 9" no CNEFE caem na mesma rua do pacote: cada pedaço com o seu número, sem colidir
+        rua = Item("street", "highway=residential", "Rua 9", GYN, -16.70, -49.25)
+        items = {"GO": [rua]}
+        groups = {(GYN, "rua 9"): ("Rua 9", [(1, 0, 1, -16.70, -49.25), (1, 0, 21, -16.70, -49.2481)]),
+                  (GYN, "r 9"): ("R 9", [(1, 0, 5, -16.70, -49.2495)])}
+        self.assertEqual((2, 0), cnefe.add(items, groups, "GO"))
+        segs = {r[2]: r[1] for r in rua.numbers}
+        self.assertEqual([1, 5, 21], sorted(segs))
+        self.assertEqual(segs[1], segs[21], "Rua 9's piece stays one")
+        self.assertNotEqual(segs[1], segs[5], "R 9's piece is another")
 
     def test_the_even_and_the_odd_pieces_go_each_to_its_own_street(self):
         here = Item("street", "highway=residential", "Rua 9", GYN, -16.70, -49.25)
@@ -113,9 +122,29 @@ class Add(unittest.TestCase):
     def test_a_street_of_that_name_too_far_from_the_piece_is_not_it(self):
         far = Item("street", "highway=residential", "Rua 9", GYN, -16.60, -49.30)
         items = {"GO": [far]}
-        matched, created = cnefe.add(items, {(GYN, "rua 9"): ("Rua 9", [(1, 0, 1, -16.70, -49.25)])}, "GO")
-        self.assertEqual((0, 1), (matched, created))
+        matched, unmatched = cnefe.add(items, {(GYN, "rua 9"): ("Rua 9", [(1, 0, 1, -16.70, -49.25)])}, "GO")
+        self.assertEqual((0, 1), (matched, unmatched))
+        self.assertEqual([], far.numbers)
         self.assertEqual(2_000.0, cnefe.MATCH_M)
+
+
+class SourceFile(unittest.TestCase):
+    """O arquivo de cada UF em data/raw, a conferência do zip e o crédito do IBGE (SE1c)."""
+
+    def test_the_name_the_check_and_the_credit(self):
+        from sabia import config, sources
+        self.assertEqual("cnefe_52_GO.zip", sources.cnefe_name("GO"))
+        with tempfile.TemporaryDirectory() as tmp:
+            good = _zip(Path(tmp) / "a.zip", [_row(GYN, "RUA", "", "9", 1, -16.7, -49.25)])
+            bad = Path(tmp) / "b.zip"
+            bad.write_bytes(b"<html>erro</html>")
+            empty = Path(tmp) / "c.zip"
+            with zipfile.ZipFile(empty, "w") as z:
+                z.writestr("leia.txt", "x")
+            self.assertIsNone(sources.cnefe_problem(good))
+            self.assertIn("não é zip", sources.cnefe_problem(bad) or "")
+            self.assertEqual("zip sem CSV", sources.cnefe_problem(empty))
+        self.assertIn("números das casas: IBGE (CNEFE, Censo 2022)", config.ATTRIBUTION)
 
 
 if __name__ == "__main__":

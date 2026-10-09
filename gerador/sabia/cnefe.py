@@ -10,7 +10,8 @@
   pelo código do município, e cada balde vira escada; só os degraus ficam na memória (o de SP tem 3,7 GB descompactado).
 - **Casamento.** Cada pedaço vai para a rua do pacote de mesmo nome no município (nome dobrado, abreviações expandidas,
   sem o tipo do logradouro: "R. 9" e "Rua 9", "Av. Dep. Jamel" e "Avenida Deputado Jamel") mais perto dele, a até
-  MATCH_M; sem ela, a rua do CNEFE vira registro novo (`kind` "cnefe", `source` "cnefe").
+  MATCH_M; sem ela, o pedaço fica de fora (como registro novo, sem traçado, dobrava o pacote de GO e passava na frente
+  da rodovia na busca "br-153 anapolis").
 """
 from __future__ import annotations
 
@@ -30,8 +31,6 @@ STEP = 20
 GAP_M = 300.0
 MATCH_M = 2_000.0
 BUCKETS = 64
-KIND = "cnefe"
-SOURCE = "cnefe"
 
 Rung = Tuple[int, int, int, float, float]   # (lado 0 par / 1 ímpar, pedaço, número, lat, lng)
 _TYPES = {"rua", "avenida", "alameda", "travessa", "rodovia", "estrada", "praca", "largo", "viela", "via", "beco",
@@ -123,27 +122,26 @@ def read(path: Path) -> Dict[Tuple[str, str], Tuple[str, List[Rung]]]:
 
 def add(items: Dict[str, List[Item]], groups: Dict[Tuple[str, str], Tuple[str, List[Rung]]],
         uf: str) -> Tuple[int, int]:
-    """Põe cada pedaço da escada na rua do pacote de mesmo nome no município mais perto dele (a até MATCH_M) ou numa rua
-    nova. Devolve (pedaços postos em ruas do pacote, ruas novas)."""
+    """Põe cada pedaço da escada na rua do pacote de mesmo nome no município mais perto dele (a até MATCH_M); o pedaço
+    sem rua fica de fora. Na rua, o pedaço ganha o próximo número livre do seu lado (duas grafias do CNEFE na mesma rua
+    não colidem). Devolve (pedaços postos, pedaços de fora)."""
     by_name: Dict[Tuple[str, str], List[Item]] = {}
     for it in items.get(uf, []):
         if it.cls == "street":
             by_name.setdefault((it.municipality, core(it.name)), []).append(it)
-    matched = created = 0
-    for (mun, key), (name, rungs) in sorted(groups.items()):
+    matched = unmatched = 0
+    for (mun, key), (_name, rungs) in sorted(groups.items()):
         candidates = by_name.get((mun, core(key)), [])
         for side, seg in sorted({(r[0], r[1]) for r in rungs}):
             piece = [r for r in rungs if (r[0], r[1]) == (side, seg)]
             mid = piece[len(piece) // 2]
             near = [(geo.dist_m(it.lat, it.lng, mid[3], mid[4]), n, it) for n, it in enumerate(candidates)]
             near = [x for x in near if x[0] <= MATCH_M]
-            if near:
-                min(near, key=lambda x: (x[0], x[1]))[2].numbers.extend(piece)
-                matched += 1
+            if not near:
+                unmatched += 1
                 continue
-            street = Item("street", KIND, name, mun, piece[0][3], piece[0][4], source=SOURCE, numbers=list(piece))
-            items.setdefault(uf, []).append(street)
-            candidates.append(street)
-            by_name[(mun, core(key))] = candidates
-            created += 1
-    return matched, created
+            street = min(near, key=lambda x: (x[0], x[1]))[2]
+            free = 1 + max((r[1] for r in street.numbers if r[0] == side), default=-1)
+            street.numbers.extend((s, free, n, la, lo) for s, _, n, la, lo in piece)
+            matched += 1
+    return matched, unmatched

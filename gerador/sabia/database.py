@@ -13,6 +13,10 @@ Banco do estado (`format_version` 1; nomes em inglês, a convenção do projeto)
     category      word, kinds                                      "posto" -> amenity=fuel
     item_source   item, source                                     origem sem conferência no mapa: "anp" (HP5b1);
                   só os registros marcados (o que não está aqui veio do mapa); um leitor antigo não a lê
+    house_number  street, rungs (blob)                              número das casas (SE1, docs/ENDERECOS.md): a
+                  escada do CNEFE de cada rua numa linha (a chave é o rowid, sem índice à parte); os degraus em
+                  int32 little-endian, de 5 em 5: lado (0 par, 1 ímpar), pedaço, número, lat, lng x 100.000, em
+                  ordem; entre dois degraus do mesmo lado e pedaço se interpola; um leitor antigo não a lê
 
 Base nacional: `municipality` com `uf` (todos os municípios), `item` com os municípios e as rodovias federais,
 `road_state` (item, uf: os estados de cada rodovia federal), `item_text`, `word_form`, `category` e `meta` (uf "base").
@@ -63,6 +67,7 @@ CREATE TABLE street_line(item INTEGER NOT NULL, cell INTEGER NOT NULL, coords BL
 CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NULL);
 CREATE TABLE category(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
 CREATE TABLE item_source(item INTEGER PRIMARY KEY, source TEXT NOT NULL);
+CREATE TABLE house_number(street INTEGER PRIMARY KEY, rungs BLOB NOT NULL);
 """
 STATE_INDEXES = """
 CREATE INDEX item_cell ON item(cell);
@@ -193,11 +198,16 @@ def write_state(path: Path, uf: str, items: Sequence[Item], districts: Sequence[
                     for n, i in enumerate(items, 1)))
     db.executemany("INSERT INTO street_line VALUES(?,?,?)", ((x.item + 1, x.cell, x.coords) for x in lines))
     db.executemany("INSERT INTO item_source VALUES(?,?)", ((n, i.source) for n, i in enumerate(items, 1) if i.source))
+    ladders = [(n, sorted((side, seg, number, _i(lat), _i(lng)) for side, seg, number, lat, lng in i.numbers))
+               for n, i in enumerate(items, 1) if i.numbers]
+    db.executemany("INSERT INTO house_number VALUES(?,?)",
+                   ((n, struct.pack(f"<{5 * len(r)}i", *(v for rung in r for v in rung))) for n, r in ladders))
     _search_tables(db)
     _meta(db, uf, meta)
     _finish(db, STATE_INDEXES)
     counts = {"items": len(items), "district": len(districts), "street_line": len(lines),
-              "municipality": len(seats)}
+              "municipality": len(seats), "house_number": len(ladders),
+              "house_number_rungs": sum(len(r) for _, r in ladders)}
     for cls in ("place", "street", "road", "poi"):
         counts[cls] = sum(1 for i in items if i.cls == cls)
     return counts

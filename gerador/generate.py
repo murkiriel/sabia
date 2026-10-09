@@ -51,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
-def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
+def sources_stage(osm_file: Optional[Path], states: Optional[List[str]] = None) -> Dict[str, object]:
     """Extrato do OpenStreetMap (o local, se pedido; senão o do Brasil, baixado se houver versão nova) e os arquivos
     do IBGE. Os dados do extrato ficam em data/build/osm.json para as etapas seguintes."""
     osm = sources.local_extract(osm_file) if osm_file else sources.osm_extract()
@@ -66,6 +66,7 @@ def sources_stage(osm_file: Optional[Path]) -> Dict[str, object]:
     sources.geonames_files()
     sources.wikidata_tourism()
     sources.anp_stations()
+    sources.cnefe_files(states)
     config.BUILD.mkdir(parents=True, exist_ok=True)
     (config.BUILD / "osm.json").write_text(json.dumps(osm, indent=2), encoding="utf-8")
     found = sources.generation_sources(osm)
@@ -139,7 +140,7 @@ def _generate(args: argparse.Namespace, recorder: run_record.RunRecorder) -> str
     start = STAGES.index(args.from_stage)
     with recorder.stage("sources"):
         if start <= STAGES.index("sources"):
-            osm = sources_stage(args.osm_file)
+            osm = sources_stage(args.osm_file, args.states)
         else:
             osm = json.loads((config.BUILD / "osm.json").read_text(encoding="utf-8"))
     recorder.sources = sources_record()

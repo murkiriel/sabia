@@ -20,6 +20,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 | `street_line` | `item`, `cell`, `coords` | O traçado das ruas, para "que rua é esta?" |
 | `word_form` | `word`, `form`, `rule` | Abreviações, formas e números (regras de busca) |
 | `category` | `word`, `kinds` | Palavras de categoria: "posto" → `amenity=fuel` |
+| `house_number` | `street`, `rungs` | O número das casas pelo CNEFE do IBGE: a escada de números de cada rua (veja abaixo). Pacote anterior: sem a tabela |
 | `item_source` | `item`, `source` | A origem dos registros cuja posição não foi conferida no mapa: `anp` (posto que só a ANP tem). Só os marcados; o registro que não está aqui veio do mapa. Pacote anterior: sem a tabela |
 
 Índices comuns: `item_cell` em `item(cell)` e `street_line_cell` em `street_line(cell)`.
@@ -69,6 +70,16 @@ Cada trecho de rua com nome (e cada trecho sem nome de uma rodovia), simplificad
 2 km. `item` é o `item.id` da rua (ou da rodovia); `cell` é o quadrado do meio do pedaço; `coords` são int32
 little-endian, `lat, lng, lat, lng...` × 100.000. Para achar a rua de um ponto: os pedaços dos 9 quadrados em volta,
 a distância do ponto até cada segmento, o menor.
+
+### `house_number`
+
+Uma linha por rua que tem número no CNEFE do Censo 2022 (IBGE). `street` é o `item.id` da rua (a chave da tabela, o
+próprio rowid); `rungs` são int32 little-endian de 5 em 5: `lado, pedaço, número, lat, lng` (lado 0 par, 1 ímpar;
+lat e lng × 100.000), em ordem de lado, pedaço e número. Cada pedaço é um trecho da rua onde os números seguem
+juntos (dois números seguidos a mais de 300 m abrem outro pedaço: a mesma "Rua 1" em dois bairros). Para achar
+"Rua X, 123": a rua como hoje e, no lado do número (123 é ímpar), o pedaço cujos degraus o cercam; a posição se
+interpola entre os dois degraus pelo número. Fora de todos os pedaços, a rua. Degrau a cada 20 números; medido em
+Goiás: erro de 12 m na mediana e 92 m no p90 ([ENDERECOS.md](ENDERECOS.md)).
 
 ### `district.polygon`
 
