@@ -47,11 +47,18 @@ class SearchGateTest(unittest.TestCase):
         self.assertIsNone(rows[0]["rank"])
 
     def test_rank_must_be_within_top(self):
-        case = {"uf": "GO", "query": "goiania", "name": "Avenida Goiânia"}
-        self.assertEqual(1, len(self.run_cases(dict(case, top=1))[0]))
-        problems, rows = self.run_cases(dict(case, top=5))
+        """A posição relatada é a da busca; passa só até `top`."""
+        # a outra Rua 10 de Goiânia, fora do Setor Oeste (a do Setor Oeste, secundária no exemplo, vem antes)
+        case = {"uf": "GO", "query": "rua 10", "name": "Rua 10", "lat": LAT + 0.05, "lng": LNG + 0.002,
+                "radius_m": 600}
+        with closing(sqlite3.connect(self.pack.path)) as db:
+            found = validation.search.search(db, "rua 10", limit=5)
+        position = next(n for n, r in enumerate(found, 1) if validation._matches(case, r))
+        self.assertGreater(position, 1)
+        self.assertEqual(1, len(self.run_cases(dict(case, top=position - 1))[0]))
+        problems, rows = self.run_cases(dict(case, top=position))
         self.assertEqual([], problems)
-        self.assertEqual(2, rows[0]["rank"])
+        self.assertEqual(position, rows[0]["rank"])
 
     def test_point_too_far_fails(self):
         problems, _ = self.run_cases({"uf": "GO", "query": "posto cerrado", "name": "Posto Cerrado",

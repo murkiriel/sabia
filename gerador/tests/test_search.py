@@ -36,7 +36,7 @@ def sample():
     osm.node(LAT - 0.2, LNG, amenity="fuel", name="Posto Cerrado")
     osm.node(-16.33, -48.95, amenity="fuel", brand="Ipiranga")  # Anápolis
     osm.node(LAT - 0.03, LNG + 0.03, amenity="bus_station", name="Terminal Rodoviário de Goiânia")
-    osm.node(-16.70, -49.30, place="city", name="Goiânia")
+    osm.node(-16.70, -49.30, place="city", name="Goiânia", population="1536097")
     osm.node(LAT - 0.03, LNG + 0.05, amenity="bus_station", name="Terminal Goiânia Viva")
     osm.node(LAT + 0.1, LNG + 0.1, place="suburb", name="Setor Marista")
     osm.node(LAT + 0.1, LNG + 0.101, place="town", name="Stella Marista")
@@ -49,6 +49,20 @@ def sample():
     osm.node(LAT - 0.031, LNG + 0.04, amenity="bus_station", name="Rodoviária de Campinas")
     osm.street((LAT - 0.16, LNG), 400, "Rua R-16")
     osm.street((LAT - 0.17, LNG), 400, "Rua Goiana")
+    osm.street((LAT - 0.18, LNG), 400, "Rua CM-14", highway="primary")
+    osm.node(LAT - 0.19, LNG + 0.05, amenity="university", name="Universidade Católica de Goiás")
+    osm.node(LAT - 0.19, LNG + 0.06, amenity="university", name="Universidade de Goiás - Campus Norte")
+    osm.node(-16.95, -49.45, place="town", name="Rubiataba", population="18000")   # Aparecida, longe
+    osm.street((LAT - 0.25, LNG), 300, "Rua Bahia")
+    osm.node(LAT + 0.024, LNG + 0.01, amenity="fuel", name="Posto Central")   # 1,4 km ao norte do Ipiranga
+    osm.node(LAT + 0.10, LNG - 0.10, aeroway="aerodrome", name="Aeroporto de Goiânia")   # ~15 km a noroeste
+    osm.node(-16.32, -48.96, leisure="park", name="Praca Civica")    # Anápolis, antes na ordem do banco
+    osm.node(LAT + 0.03, LNG, leisure="park", name="Praça Cívica")   # Goiânia
+    osm.node(LAT + 0.04, LNG, amenity="university", name="Universidade Católica de Goiânia")
+    osm.node(LAT + 0.04, LNG + 0.01, amenity="university",
+             name="Universidade de Goiânia - Campus Sul Avenida Principal")
+    osm.street((LAT + 0.05, LNG + 0.05), 300, "Rua das Flores")
+    osm.street((LAT + 0.06, LNG + 0.05), 300, "Avenida Rua das Flores", highway="primary")
     return osm
 
 
@@ -143,7 +157,10 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(("Goiânia", "municipality"), (r.name, r.kind))
 
     def test_city_before_street(self):
-        self.assertEqual(["Goiânia", "Avenida Goiânia"], self.names("goiania", n=2))
+        """O município (nome igual à busca) primeiro; depois os nomes que só contêm a palavra, pela importância."""
+        found = self.names("goiania", n=10)
+        self.assertEqual("Goiânia", found[0])
+        self.assertIn("Avenida Goiânia", found)
 
     def test_municipality_name_pulls_its_records(self):
         """A palavra que é o nome inteiro de um município puxa os registros dele: "goiania" não é "Aparecida de
@@ -180,6 +197,87 @@ class SearchTest(unittest.TestCase):
         for query in ("r dr olinto", "rua quatorze", "posto ipiranga anapolis", "rodoviaria de goiania"):
             for match in search.match_strings(self.db, query):
                 self.assertNotIn(" OR ", match.upper())
+
+
+class OrderTest(unittest.TestCase):
+    """A ordem (item 7): depois das palavras casadas, do número da casa, do município citado e do tipo da categoria,
+    a qualidade do casamento com o nome (igual, começo, no meio) e então a importância e a distância juntas."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.pack = Pack(Path(cls._tmp.name))
+        cls.db = sqlite3.connect(cls.pack.path)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+        cls._tmp.cleanup()
+
+    def names(self, query, n=3, **kw):
+        return [r.name for r in search.search(self.db, query, **kw)[:n]]
+
+    def test_the_whole_name_before_a_more_important_street(self):
+        """"rua 14": a Rua 14 (o nome é a busca) antes da Rua CM-14, primária."""
+        self.assertEqual("Rua 14", self.names("rua 14")[0])
+
+    def test_the_name_that_starts_with_the_query(self):
+        """"universidade de goias": a que começa com essas palavras antes da Católica, de nome mais curto."""
+        self.assertEqual("Universidade de Goiás - Campus Norte", self.names("universidade de goias")[0])
+
+    def test_near_beats_a_bigger_place_far_away(self):
+        """"ru" na Rua Bahia: uma rua perto antes de Rubiataba (vila de 18 mil a ~40 km)."""
+        found = search.search(self.db, "ru", near=(LAT - 0.25, LNG + 0.001))
+        self.assertEqual("street", found[0].cls)
+        self.assertLess(found[0].distance_m, 5000)
+
+    def test_the_bigger_place_without_position(self):
+        """Sem posição, a importância: Rubiataba (18 mil) antes das ruas que começam com "ru"."""
+        self.assertEqual("Rubiataba", self.names("ru")[0])
+
+    def test_category_alone_is_only_by_distance(self):
+        """"posto" no posto sem nome (marca Ipiranga): ele, e não o "Posto Central" a 1,4 km por ter "posto" no nome."""
+        r = search.search(self.db, "posto", near=(LAT + 0.011, LNG + 0.01))[0]
+        self.assertEqual("Ipiranga", r.name)
+
+
+class MoreOrderTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.pack = Pack(Path(cls._tmp.name))
+        cls.db = sqlite3.connect(cls.pack.path)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+        cls._tmp.cleanup()
+
+    def test_a_name_with_the_municipality_words_is_not_pushed_down(self):
+        """"avenida anapolis": Anápolis é município, mas a Avenida Anápolis (de Goiânia) tem a palavra no nome e vem
+        antes das avenidas de Anápolis."""
+        r = search.search(self.db, "avenida anapolis")[0]
+        self.assertEqual(("Avenida Anápolis", "Goiânia"), (r.name, r.municipality))
+
+    def test_the_city_word_alone_does_not_make_a_name_match(self):
+        """"universidade de goiania": "Universidade Católica de Goiânia" não ganha como se "goiania" sozinho (sem a
+        categoria) fosse o nome dela; o campus, que começa com "universidade de goiania", vem antes."""
+        r = search.search(self.db, "universidade de goiania")[0]
+        self.assertEqual("Universidade de Goiânia - Campus Sul Avenida Principal", r.name)
+
+    def test_the_start_of_the_name_beats_the_middle(self):
+        """"rua das flor": a Rua das Flores (começa com a busca) antes da Avenida Rua das Flores, primária."""
+        self.assertEqual("Rua das Flores", search.search(self.db, "rua das flor")[0].name)
+
+    def test_same_name_in_the_bigger_municipality(self):
+        """Duas "Praça Cívica" iguais, sem posição: a do município maior (Goiânia, 1,5 milhão) primeiro."""
+        self.assertEqual("Goiânia", search.search(self.db, "praca civica")[0].municipality)
+
+    def test_category_alone_widens_the_neighbourhood(self):
+        """"aeroporto" a ~15 km: fora dos 9 quadrados em volta (~5 km cada), achado abrindo a vizinhança."""
+        r = search.search(self.db, "aeroporto", near=(LAT, LNG))
+        self.assertTrue(r)
+        self.assertEqual("Aeroporto de Goiânia", r[0].name)
 
 
 class HouseNumberTest(unittest.TestCase):

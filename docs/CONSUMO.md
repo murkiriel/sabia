@@ -73,16 +73,29 @@ o estado da cidade não está instalado (e diz, pela `uf`, qual pacote baixar).
 
 9. **Ordenar**, nesta ordem de critérios:
    1. quantas palavras da busca casam com uma palavra do **nome** (com as alternativas; a palavra da categoria conta
-      uma vez pelo `kind` e mais uma se estiver no nome). As palavras do município citado não contam aqui, a não ser
-      que a busca seja só o nome dele; o número da casa também não;
+      uma vez pelo `kind` e mais uma se estiver no nome, menos na busca só pela categoria com a posição conhecida).
+      As palavras do município citado não contam aqui, a não ser que a busca seja só o nome dele; o número da casa
+      também não;
    2. a rua que tem o número da casa na escada;
-   3. registros do município citado primeiro;
+   3. registros do município citado primeiro (ou cujo nome tem as palavras dele: "avenida anapolis" é também a
+      Avenida Anápolis de Goiânia);
    4. com categoria, os do tipo dela primeiro;
-   5. a classe: município, cidade e vila grande (`municipality`, `place=city`, `place=town`); vila e bairro
-      (`place=village`, `suburb`, `neighbourhood`, `quarter`); outros lugares e ruas; rodovias; pontos de interesse;
-   6. entre ruas, a via mais importante (`highway=primary` antes de `highway=residential`);
-   7. as palavras do município citado no nome do registro ("goiania shopping" → "Goiânia Shopping");
-   8. o mais perto do usuário, se a posição for conhecida; senão o nome mais curto.
+   5. a **nota** (maior primeiro), uma soma com pesos de notas de 0 a 1, calibrada nas buscas de verdade do gerador
+      (os pesos estão no começo de `gerador/sabia/search.py`):
+      - `W_FULL` 0,2 × o casamento das palavras da busca, **em ordem**, com o nome (sem as palavras vazias), contando
+        as do município citado: 1 o nome é a busca, palavra por palavra inteira; 2/3 o nome começa com ela (ou é ela
+        com a última palavra pela metade); 1/3 ela está no meio do nome; 0 o resto. Com categoria, o nome igual às
+        outras palavras sem a da categoria também vale 1 ("posto ipiranga" e o posto chamado "Ipiranga");
+      - `W_NAME` 0,4 × o mesmo casamento sem as palavras do município citado;
+      - `W_MUNICIPALITY` 0,1 × a fração das palavras do município citado que estão no nome;
+      - `W_COVER` 0,2 × a fração das palavras do nome (sem as vazias) que alguma palavra da busca casa (o nome
+        comercial comprido vale menos que o do bairro); fora na busca só pela categoria com a posição;
+      - `W_RANK` 1,0 × `item.rank` / 255 (pacote sem a coluna: o valor do tipo em `ranks.py`);
+      - `W_PLACE` 0,2 × o `rank` do município do registro / 255 (o registro `kind = 'municipality'` dele);
+      - com a posição, `W_DISTANCE` 1,5 × (1 − log10(1 + km) / log10(2001)), zero a partir de 2.000 km;
+   6. o nome mais curto; o `id` menor.
+   Só a categoria com a posição ("posto"): os registros do tipo nos 9 quadrados em volta e, se forem menos que os
+   pedidos, nos 25 e nos 81 (até ~20 km).
 10. **Rótulo:** nome, o número da casa se houver, bairro e município, sem repetir ("Rua 10, 152, Setor Oeste,
     Goiânia"). Ponto de interesse sem nome (posto sem nome no OpenStreetMap) mostra o tipo ("Posto de combustível").
 
