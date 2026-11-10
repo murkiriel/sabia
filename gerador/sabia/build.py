@@ -13,8 +13,8 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping, Optional
 
-from . import (anac, anp, cnefe, cnes, config, database, districts, geonames, localities, osm_reader, overture, prf,
-               records, snv, sources, street_lines, wikidata)
+from . import (anac, anp, cnefe, cnes, config, database, dedup, districts, geonames, localities, osm_reader, overture,
+               prf, records, snv, sources, street_lines, wikidata)
 from .municipalities import MunicipalityIndex
 
 
@@ -103,6 +103,10 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
         matched, unmatched = cnefe.add(items, cnefe.read(path), uf)
         print(f"[build] {uf}: números do CNEFE em {matched} pedaços de ruas do mapa ({unmatched} sem rua de mesmo "
               f"nome por perto, de fora)", flush=True)
+    # item 8: o mesmo lugar duas vezes (ponto e área do mapa, o mapa e a Overture com o nome escrito de outro jeito)
+    removed = dedup.collapse(items)
+    print(f"[build] {removed} registros repetidos juntados (o mesmo lugar, tipo e nome a até "
+          f"{dedup.DUPLICATE_M:.0f} m)", flush=True)
     found = districts.build(data, municipalities, states)
     districts.assign(items, found)
 

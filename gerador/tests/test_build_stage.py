@@ -89,6 +89,9 @@ class StageFixture(unittest.TestCase):
         osm.street((-16.68, -49.26), 400, "Rua 10")
         osm.node(-16.68, -49.25, amenity="fuel", name="Posto Cerrado")
         osm.node(-16.3, -48.9003, amenity="police", name="PRF")
+        # item 8: a mesma rodoviária duas vezes no mapa, a 30 m, uma com o nome errado (vira um registro)
+        osm.node(-16.66, -49.26, amenity="bus_station", name="Rodoviária do Teste")
+        osm.node(-16.66, -49.2597, amenity="bus_station", name="Rodoviria do Teste")
         osm.street((-15.79, -47.88), 400, "Eixo Rodoviário", highway="trunk")
         self.pbf = osm.write(root / "x.osm.pbf")
         self.osm = {"path": str(self.pbf), "url": "local", "timestamp": "2026-09-29T00:59:51Z",
@@ -123,8 +126,8 @@ class BuildStageTest(StageFixture):
         self.assertEqual("sabia-GO.sqlite.zst", go["file"])
         self.assertEqual(1, go["counts"]["street"])
         # o posto, a PRF do extrato, a PRF da ANTT, o hospital, a loja, os 3 marcos de km, os 2 aeródromos, a
-        # cachoeira, o mirante e o posto da ANP
-        self.assertEqual(13, go["counts"]["poi"])
+        # cachoeira, o mirante, o posto da ANP e a rodoviária (uma vez só)
+        self.assertEqual(14, go["counts"]["poi"])
         self.assertEqual(2, go["counts"]["municipality"])
         self.assertEqual("sabia-base.sqlite.zst", packages["base"]["file"])
         self.assertFalse((self.dist / "sabia-SP.sqlite.zst").exists())  # a saída anterior é limpa
@@ -139,6 +142,12 @@ class BuildStageTest(StageFixture):
             self.assertEqual([("Povoado do Teste", "ibge=povoado")],
                              list(db.execute("SELECT name, kind FROM item WHERE kind LIKE 'ibge=%'")))
             self.assertIn("localidades: IBGE", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
+            # item 8: a rodoviária repetida virou uma, e o nome errado fica na busca
+            self.assertEqual([("Rodoviária do Teste",)],
+                             list(db.execute("SELECT name FROM item WHERE kind = 'amenity=bus_station'")))
+            self.assertEqual([("Rodoviária do Teste",)],
+                             list(db.execute("SELECT i.name FROM item_text t JOIN item i ON i.id = t.docid "
+                                             "WHERE item_text MATCH 'rodoviria'")))
             # HS2: o posto da PRF novo entra como polícia; o de Anápolis, que o extrato já tem, não repete
             self.assertEqual([("PRF", 5201108), ("PRF - Polícia Rodoviária Federal, BR-153 km 500", 5208707)],
                              list(db.execute("SELECT name, municipality FROM item WHERE kind = 'amenity=police' "
