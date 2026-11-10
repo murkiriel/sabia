@@ -1,8 +1,9 @@
-"""As cópias versionadas das fontes que não respondem aos executores do GitHub Actions (desde 2026-11-04 o IBGE, e o
-DNIT e a ANAC na sonda de 2026-11-10): a geração usa só as cópias (sources._versioned_copy), conferidas pelo sha256
-do config. `refresh` as baixa de novo de uma conexão que alcança as fontes (scripts/update_copies.py), confere cada
-uma como a geração conferia o download e grava em gzip sem data no cabeçalho (os mesmos bytes para o mesmo conteúdo);
-depois, os sha256 novos vão para o config à mão (a cópia nova muda o resultado da geração).
+"""As cópias versionadas das fontes que não respondem aos executores do GitHub Actions (desde 2026-11-04 o IBGE; o
+DNIT e a ANAC na sonda de 2026-11-10; a ANTT na tarde do mesmo dia): a geração usa só as cópias
+(sources._versioned_copy), conferidas pelo sha256 do config. `refresh` as baixa de novo de uma conexão que alcança as
+fontes (scripts/update_copies.py), confere cada uma como a geração conferia o download e grava em gzip sem data no
+cabeçalho (os mesmos bytes para o mesmo conteúdo); depois, os sha256 novos vão para o config à mão (a cópia nova muda
+o resultado da geração).
 
 | Cópia | Fonte | Conteúdo |
 |---|---|---|
@@ -10,6 +11,7 @@ depois, os sha256 novos vão para o config à mão (a cópia nova muda o resulta
 | `ibge_municipios.json.gz` | API de localidades do IBGE | A lista dos municípios, como a API devolve |
 | `dnit_snv_marcos.json.gz` | WFS do SNV do DNIT | Os marcos de km já calculados (snv.markers_json; o SNV, 128 MB) |
 | `anac_aerodromos_publicos.json.gz`, `..._privados.json.gz` | Dados abertos da ANAC | As listas, como a ANAC publica |
+| `antt_postos_prf.json.gz` | Dados abertos da ANTT | Os postos da PRF, como a ANTT publica |
 """
 from __future__ import annotations
 
@@ -59,6 +61,10 @@ def refresh(dest: Path, today: str) -> Dict[str, str]:
         path = sources._checked_download(url, name, functools.partial(anac.problem, minimum=minimum), label,
                                          "anac", "da ANAC")
         bodies.append((constant, copy.name, path.read_bytes()))
+    from . import prf
+    path = sources._checked_download(config.PRF_URL, sources.PRF_FILE, prf.problem, "a lista de postos da PRF",
+                                     "antt", "da ANTT")
+    bodies.append(("PRF_COPY_SHA256", config.PRF_COPY.name, path.read_bytes()))
     dest.mkdir(parents=True, exist_ok=True)
     out = {}
     with tempfile.TemporaryDirectory() as tmp:

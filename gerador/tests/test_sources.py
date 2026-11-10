@@ -425,42 +425,45 @@ class SourceRecordTest(unittest.TestCase):
         self.assertIn(sources.PRF_FILE, found)
 
 
-class PrfDownloadTest(unittest.TestCase):
-    """O arquivo da ANTT com os postos da PRF, conferido como os do IBGE."""
+class PrfCopyTest(unittest.TestCase):
+    """A lista de postos da PRF da ANTT (HS2) vem da cópia versionada (gzip), conferida pelo sha256 e pela regra de
+    sempre (prf.problem); nada vai para a rede. Em 2026-11-10 a ANTT passou a recusar o executor do Actions ("Request
+    Rejected"), depois de responder de manhã."""
 
     def setUp(self):
         from tests.test_prf import unit, write_prf
 
         self._tmp = tempfile.TemporaryDirectory()
-        self.raw = Path(self._tmp.name)
-        good = self.raw / "bom.json"
+        tmp = Path(self._tmp.name)
+        self.raw = tmp / "raw"
+        good = tmp / "bom.json"
         write_prf(good, [unit()], copies=200)
-        self.server = FakeServer().__enter__()
-        self.server.files["/prf.json"] = good.read_bytes()
+        self.body = good.read_bytes()
+        self.copy = tmp / "antt_postos_prf.json.gz"
         self._patches = [mock.patch.object(config, "RAW", self.raw),
-                         mock.patch.object(config, "PRF_URL", self.server.url("/prf.json")),
-                         mock.patch.object(sources, "RETRY_DELAY", 0),
-                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+                         mock.patch.object(config, "PRF_COPY", self.copy),
+                         mock.patch.object(config, "PRF_COPY_SHA256", write_copy(self.copy, self.body)),
+                         mock.patch.object(sources.net, "download", side_effect=AssertionError("foi à rede"))]
         for p in self._patches:
             p.start()
 
     def tearDown(self):
         for p in self._patches:
             p.stop()
-        self.server.__exit__(None, None, None)
         self._tmp.cleanup()
 
-    def test_a_good_file_is_saved(self):
+    def test_the_copy_is_used(self):
         path = sources.prf_units()
         self.assertEqual(self.raw / sources.PRF_FILE, path)
         self.assertEqual(200, len(json.loads(path.read_text(encoding="utf-8"))["PRF"]))
+        self.assertEqual(config.PRF_COPY_DATE, sources.source_record(sources.PRF_FILE)["date"])
 
-    def test_an_error_page_is_not_saved_and_the_error_names_the_antt(self):
-        self.server.files["/prf.json"] = ERROR_PAGE
-        with self.assertRaises(RuntimeError) as ctx:
+    def test_a_copy_that_is_not_the_list_is_refused(self):
+        with mock.patch.object(config, "PRF_COPY_SHA256", write_copy(self.copy, ERROR_PAGE)), \
+                self.assertRaises(RuntimeError) as ctx:
             sources.prf_units()
+        self.assertIn("PRF", str(ctx.exception))
         self.assertFalse((self.raw / sources.PRF_FILE).exists())
-        self.assertIn("ANTT", str(ctx.exception))
 
 
 class CnesDownloadTest(unittest.TestCase):
@@ -622,6 +625,7 @@ class RealCopiesTest(unittest.TestCase):
             markers = snv.load_markers(sources.snv_roads())
             public, private = sources.anac_aerodromes()
             self.assertTrue(public.exists() and private.exists())
+            self.assertTrue(sources.prf_units().exists())
         self.assertGreaterEqual(len(markers), snv.MIN_MARKERS)
 
 

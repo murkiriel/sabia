@@ -41,7 +41,7 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Malha municipal do IBGE (API de malhas v3, qualidade intermediária, ~12 MB; **cópia versionada** `gerador/ibge_malha_municipios.json.gz`) | `ibge_malha_municipios.json` | O município de cada registro, por polígono |
 | Municípios do IBGE (API de localidades, ~2 MB; **cópia versionada** `gerador/ibge_municipios.json.gz`) | `ibge_municipios.json` | Nome oficial e UF de cada município; é a lista dos municípios |
 | Base de Localidades do IBGE (2022, GeoPackage num zip, ~6 MB) | `ibge_localidades.zip` | Povoados, vilas, aldeias, quilombos e outras localidades (HS1) |
-| Postos da PRF (ANTT, dados abertos, conjunto "PRF", JSON, ~50 kB) | `antt_postos_prf.json` | As unidades da Polícia Rodoviária Federal nas rodovias concedidas (HS2) |
+| Postos da PRF (ANTT, dados abertos, conjunto "PRF", JSON, ~50 kB; **cópia versionada** `gerador/antt_postos_prf.json.gz`) | `antt_postos_prf.json` | As unidades da Polícia Rodoviária Federal nas rodovias concedidas (HS2) |
 | CNES (Ministério da Saúde, CSV nacional num zip, ~56 MB, refeito todo dia) | `cnes_estabelecimentos.zip` | Hospitais, UPAs e prontos-socorros abertos 24 horas (HS3) |
 | Overture Maps, lugares (versão mais nova pela listagem do S3 público; recorte do Brasil, ~190 MB, ~6 min daqui) | `overture_lugares.parquet` | Comércio e serviços que faltam no OpenStreetMap (HS4) |
 | SNV do DNIT (WFS do DNITGeo, a versão em vigor, só eixo principal construído; **cópia versionada** dos marcos já calculados, `gerador/dnit_snv_marcos.json.gz`, 0,9 MB) | `dnit_snv_marcos.json` | Os quilômetros das rodovias federais (HS6) |
@@ -50,16 +50,15 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Wikidata, consulta SPARQL dos pontos turísticos do Brasil (CC0, JSON) | `wikidata_turismo.json` | Pontos turísticos e os apelidos deles (HS9) |
 | API de revendedores da ANP (sem conta; UF por UF, com 5 s entre pedidos por causa do limite do Cloudflare; ~46 mil postos, ~3 min) | `anp_postos.json` | Postos de combustível em operação, com a posição geográfica (HS10) |
 
-A malha municipal, a lista de municípios, o SNV e as listas da ANAC **não são baixadas**: a geração usa as cópias
-versionadas no repositório (gzip), conferidas pelo sha256 do conteúdo (`config.*_COPY_SHA256`) e pela regra de cada
-uma (o país inteiro; o mínimo de marcos e de aeródromos); só então vão para `data/raw/`. De 2026-11-04 a 2026-11-09
-todas as gerações agendadas caíram no download da malha: a API do IBGE não respondia aos executores do GitHub
-Actions; uma sonda de 2026-11-10 mostrou o mesmo no WFS do DNIT e nos dados abertos da ANAC (as outras fontes
-responderam). Do SNV (128 MB) a cópia guarda só os marcos de km já calculados. Para renovar as cópias (município
-novo, versão nova do SNV, aeródromos novos): `python scripts/update_copies.py` de uma conexão que alcance as fontes,
-que confere cada uma e imprime os sha256 para o `config.py`; depois, testes e uma geração local. A lista tem 5.571 municípios e a malha 5.570: Boa Esperança do Norte (MT), criado em
-2025, ainda não tem polígono; os registros do território dele caem nos municípios de onde ele saiu, até a malha
-trazer o polígono.
+A malha municipal, a lista de municípios, o SNV, as listas da ANAC e a da PRF **não são baixadas**: a geração usa
+as cópias versionadas no repositório (gzip), conferidas pelo sha256 do conteúdo (`config.*_COPY_SHA256`) e pela regra
+de cada uma (o país inteiro; o mínimo de marcos e de aeródromos; a lista da PRF); só então vão para `data/raw/`. De
+2026-11-04 a 2026-11-09 todas as gerações agendadas caíram no download da malha: a API do IBGE não respondia aos
+executores do GitHub Actions; uma sonda de 2026-11-10 mostrou o mesmo no WFS do DNIT e nos dados abertos da ANAC (as
+outras fontes responderam), e na tarde do mesmo dia a ANTT passou a recusar também. Do SNV (128 MB) a cópia guarda só
+os marcos de km já calculados. Para renovar as cópias (município novo, versão nova do SNV, aeródromos novos):
+`python scripts/update_copies.py` de uma conexão que alcance as fontes, que confere cada uma e imprime os sha256 para
+o `config.py`; depois, testes e uma geração local.
 
 As outras fontes são conferidas no cache e no download: uma API pode responder 200 com uma página de erro. Com
 resposta ruim (status de erro ou conteúdo que não passa), são até 3 tentativas, com 60 s e depois 120 s de espera;

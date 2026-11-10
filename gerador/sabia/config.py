@@ -80,6 +80,11 @@ ANAC_PUBLIC_COPY_SHA256 = "76ac00e3dddc0e813e769b287127a589e4aaba2b918e9c41c91bc
 ANAC_PRIVATE_COPY = GENERATOR_DIR / "anac_aerodromos_privados.json.gz"
 ANAC_PRIVATE_COPY_SHA256 = "dc2babf91b43794ace1bdbd1d2f9c8537d606b77469979ac7c5ae49d2a0d7957"
 ANAC_COPIES_DATE = "2026-11-10"
+# Na tarde de 2026-11-10 a ANTT passou a recusar o executor do Actions ("Request Rejected"; de manhã respondia): a
+# lista de postos da PRF (50 kB) também vem de cópia.
+PRF_COPY = GENERATOR_DIR / "antt_postos_prf.json.gz"
+PRF_COPY_SHA256 = "26af25105c79348e16b84c33d464aaad84d8756348b41a88cf0600a0f7338d65"
+PRF_COPY_DATE = "2026-11-10"
 # Menos que isso na malha ou na lista é resposta quebrada da API, não o Brasil.
 MIN_MUNICIPALITIES = 5570
 

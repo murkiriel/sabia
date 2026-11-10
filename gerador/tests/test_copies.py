@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sabia import anac, config, copies, snv, sources  # noqa: E402
 from tests.fake_server import FakeServer  # noqa: E402
 from tests.test_anac import aerodrome, write_list  # noqa: E402
+from tests.test_prf import unit, write_prf  # noqa: E402
 from tests.test_snv import one_per_state, write_snv  # noqa: E402
 from tests.test_sources import ERROR_PAGE, fake_mesh, fake_names  # noqa: E402
 
@@ -38,14 +39,18 @@ class RefreshTest(unittest.TestCase):
         write_snv(snv_file, one_per_state())
         write_list(anac_file, [aerodrome()], copies=3)
         self.server = FakeServer().__enter__()
+        prf_file = tmp / "prf.json"
+        write_prf(prf_file, [unit()], copies=200)
         self.server.files.update({"/malha": fake_mesh(), "/nomes": fake_names(), "/snv": snv_file.read_bytes(),
-                                  "/publicos": anac_file.read_bytes(), "/privados": anac_file.read_bytes()})
+                                  "/publicos": anac_file.read_bytes(), "/privados": anac_file.read_bytes(),
+                                  "/prf": prf_file.read_bytes()})
         self._patches = [mock.patch.object(config, "RAW", tmp / "raw"),
                          mock.patch.object(config, "IBGE_MESH_URL", self.server.url("/malha")),
                          mock.patch.object(config, "IBGE_NAMES_URL", self.server.url("/nomes")),
                          mock.patch.object(snv, "url", lambda day: self.server.url("/snv")),
                          mock.patch.object(config, "ANAC_PUBLIC_URL", self.server.url("/publicos")),
                          mock.patch.object(config, "ANAC_PRIVATE_URL", self.server.url("/privados")),
+                         mock.patch.object(config, "PRF_URL", self.server.url("/prf")),
                          mock.patch.object(config, "MIN_MUNICIPALITIES", 27),
                          mock.patch.object(snv, "MIN_SEGMENTS", 27), mock.patch.object(snv, "MIN_MARKERS", 27),
                          mock.patch.object(anac, "MIN_PUBLIC", 3), mock.patch.object(anac, "MIN_PRIVATE", 3),
@@ -63,9 +68,9 @@ class RefreshTest(unittest.TestCase):
     def test_every_copy_is_written_and_checked(self):
         found = copies.refresh(self.dest, "2026-11-10")
         self.assertEqual({"IBGE_MESH_COPY_SHA256", "IBGE_NAMES_COPY_SHA256", "SNV_COPY_SHA256",
-                          "ANAC_PUBLIC_COPY_SHA256", "ANAC_PRIVATE_COPY_SHA256"}, set(found))
+                          "ANAC_PUBLIC_COPY_SHA256", "ANAC_PRIVATE_COPY_SHA256", "PRF_COPY_SHA256"}, set(found))
         for name in ("ibge_malha_municipios.json.gz", "ibge_municipios.json.gz", "dnit_snv_marcos.json.gz",
-                     "anac_aerodromos_publicos.json.gz", "anac_aerodromos_privados.json.gz"):
+                     "anac_aerodromos_publicos.json.gz", "anac_aerodromos_privados.json.gz", "antt_postos_prf.json.gz"):
             self.assertTrue((self.dest / name).exists(), name)
         body = gzip.decompress((self.dest / "dnit_snv_marcos.json.gz").read_bytes())
         self.assertEqual(hashlib.sha256(body).hexdigest(), found["SNV_COPY_SHA256"])

@@ -285,10 +285,11 @@ def ibge_localities() -> Path:
 
 
 def prf_units() -> Path:
-    """data/raw/antt_postos_prf.json: as unidades da PRF nas rodovias concedidas, da ANTT, conferidas (HS2;
-    prf.problem)."""
+    """data/raw/antt_postos_prf.json: as unidades da PRF nas rodovias concedidas, da ANTT, da cópia versionada
+    (config.PRF_COPY), conferidas (HS2; prf.problem). Em 2026-11-10 a ANTT passou a recusar o executor do Actions."""
     from . import prf
-    return _checked_download(config.PRF_URL, PRF_FILE, prf.problem, "a lista de postos da PRF", "antt", "da ANTT")
+    return _versioned_copy(config.PRF_COPY, config.PRF_COPY_SHA256, "PRF_COPY_SHA256", PRF_FILE, config.PRF_URL,
+                           prf.problem, "a lista de postos da PRF da ANTT", config.PRF_COPY_DATE)
 
 
 def cnes_units() -> Path:
