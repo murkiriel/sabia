@@ -1,21 +1,21 @@
 {
   "schema": 1,
   "format_version": 1,
-  "build_id": "2026-10-06-93a54bc6",
-  "built_at": "2026-10-06T20:25:16Z",
-  "generator_commit": "e4d3d5c",
+  "build_id": "2026-11-10-c17dff60",
+  "built_at": "2026-11-10T11:44:39Z",
+  "generator_commit": "365e750",
   "osm": {
-    "timestamp": "2026-10-05T00:58:57Z",
-    "md5": "93a54bc6b85f5f39abfb43fdc046b1e7",
+    "timestamp": "2026-11-09T00:31:19Z",
+    "md5": "c17dff60347f269911ccba4491071a64",
     "url": "https://download.openstreetmap.fr/extracts/south-america/brazil-latest.osm.pbf"
   },
-  "release_url": "https://github.com/Murkiriel/sabia/releases/download/2026-10-06-93a54bc6/",
-  "attribution": "© colaboradores do OpenStreetMap (ODbL 1.0); municípios e limites municipais: IBGE",
+  "release_url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/",
+  "attribution": "© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); lugares: Overture Maps Foundation (CDLA Permissive 2.0); quilômetros das rodovias federais: DNIT (SNV); aeródromos: ANAC; nomes alternativos e pontos turísticos: GeoNames (CC BY 4.0) e Wikidata (CC0); postos de combustível: ANP; números das casas: IBGE (CNEFE, Censo 2022)",
   "base": {
     "file": "sabia-base.sqlite.zst",
-    "bytes": 322799,
-    "sha256": "76f81ce53ab867ec6f1cd3d85eb4e8a311dbaf72ce7b09bd65a734da29b4becb",
-    "bytes_db": 1126400,
+    "bytes": 411619,
+    "sha256": "7a32fae7890970d50305f3c544de9db2b2f0bdd2dbaea74231dfac64de0a20b1",
+    "bytes_db": 1277952,
     "bbox": [
       -33.76,
       -74.0,
@@ -24,16 +24,16 @@
     ],
     "counts": {
       "municipality": 5571,
-      "road": 171
+      "road": 172
     }
   },
   "states": {
     "AC": {
       "name": "Acre",
       "file": "sabia-AC.sqlite.zst",
-      "bytes": 751517,
-      "sha256": "c296f2b031b430bc5fc8b0d24f3caef8d8112d90914de469846cee6ecdc40b40",
-      "bytes_db": 2613248,
+      "bytes": 1539788,
+      "sha256": "03348f1fe2245273ace533bb3613eae48fe67a422a7f6490bebc48c20d6170d7",
+      "bytes_db": 5681152,
       "bbox": [
         -11.15,
         -74.0,
@@ -41,22 +41,24 @@
         -66.62
       ],
       "counts": {
-        "items": 9648,
-        "district": 218,
-        "street_line": 11240,
+        "items": 14598,
+        "district": 258,
+        "street_line": 11346,
         "municipality": 22,
-        "place": 1604,
-        "street": 6549,
+        "house_number": 4614,
+        "house_number_rungs": 83905,
+        "place": 2196,
+        "street": 6602,
         "road": 43,
-        "poi": 1452
+        "poi": 5757
       }
     },
     "AL": {
       "name": "Alagoas",
       "file": "sabia-AL.sqlite.zst",
-      "bytes": 1770080,
-      "sha256": "f02f6d88d7b0f991e8239ec8ea37b6e0a3d0b694aa707ee1e29acc820e8f8d4f",
-      "bytes_db": 6561792,
+      "bytes": 3650022,
+      "sha256": "b1cc226cf2b117490fc4db8e2eb1969aacd630a0f2c23afd78f34b85b7cf5f57",
+      "bytes_db": 13422592,
       "bbox": [
         -10.5,
         -38.24,
@@ -64,22 +66,24 @@
         -35.15
       ],
       "counts": {
-        "items": 25840,
-        "district": 283,
-        "street_line": 32484,
+        "items": 37799,
+        "district": 287,
+        "street_line": 32489,
         "municipality": 102,
-        "place": 946,
-        "street": 19287,
+        "house_number": 11238,
+        "house_number_rungs": 185512,
+        "place": 3209,
+        "street": 19279,
         "road": 244,
-        "poi": 5363
+        "poi": 15067
       }
     },
     "AM": {
       "name": "Amazonas",
       "file": "sabia-AM.sqlite.zst",
-      "bytes": 2898151,
-      "sha256": "6937393dbefa9862e2eb0d0582eb0dd3a35aaec33f2edd07114acdfc24e9670e",
-      "bytes_db": 9461760,
+      "bytes": 5472258,
+      "sha256": "d7b85cf50ae124c9c947c540f166df1cb3e7f7fe354a689e49f9e5033f97e876",
+      "bytes_db": 18923520,
       "bbox": [
         -9.82,
         -73.81,
@@ -87,22 +91,24 @@
         -56.09
       ],
       "counts": {
-        "items": 31927,
-        "district": 314,
-        "street_line": 32273,
+        "items": 53999,
+        "district": 327,
+        "street_line": 32340,
         "municipality": 62,
-        "place": 5448,
-        "street": 19824,
-        "road": 55,
-        "poi": 6600
+        "house_number": 12155,
+        "house_number_rungs": 193294,
+        "place": 9071,
+        "street": 19851,
+        "road": 56,
+        "poi": 25021
       }
     },
     "AP": {
       "name": "Amapá",
       "file": "sabia-AP.sqlite.zst",
-      "bytes": 672124,
-      "sha256": "c900a156dc505f9afc1ae2a7f74970a2657ee345186a1ef57bc91edbf4de3f8e",
-      "bytes_db": 2191360,
+      "bytes": 1299980,
+      "sha256": "44109dd08c6965761d1bcbb3806a5025ff54cc214b6826d4d5e46585735aa9f9",
+      "bytes_db": 4673536,
       "bbox": [
         -1.24,
         -54.88,
@@ -110,22 +116,24 @@
         -49.87
       ],
       "counts": {
-        "items": 7705,
+        "items": 12176,
         "district": 130,
-        "street_line": 6851,
+        "street_line": 6886,
         "municipality": 16,
-        "place": 872,
-        "street": 3587,
+        "house_number": 2292,
+        "house_number_rungs": 58971,
+        "place": 1267,
+        "street": 3596,
         "road": 40,
-        "poi": 3206
+        "poi": 7273
       }
     },
     "BA": {
       "name": "Bahia",
       "file": "sabia-BA.sqlite.zst",
-      "bytes": 12139527,
-      "sha256": "a73241cacf034a003534b78be2bebe193741aaff21a613db97f7b71c2feecdd5",
-      "bytes_db": 43261952,
+      "bytes": 21336432,
+      "sha256": "3417303d7c3c2f7dd9a63c6f8576c99b26b46f6d8e727cfc0c82706f717b046b",
+      "bytes_db": 74993664,
       "bbox": [
         -18.34,
         -46.58,
@@ -133,22 +141,24 @@
         -37.34
       ],
       "counts": {
-        "items": 180341,
-        "district": 3323,
-        "street_line": 180149,
+        "items": 231706,
+        "district": 3332,
+        "street_line": 180535,
         "municipality": 417,
-        "place": 32662,
-        "street": 101006,
-        "road": 1288,
-        "poi": 45385
+        "house_number": 63744,
+        "house_number_rungs": 927045,
+        "place": 40310,
+        "street": 101208,
+        "road": 1287,
+        "poi": 88901
       }
     },
     "CE": {
       "name": "Ceará",
       "file": "sabia-CE.sqlite.zst",
-      "bytes": 5268812,
-      "sha256": "cf5c7e2af00bbb5749f0fb3e644c134dffc343c2b872562b296611c4e103aee0",
-      "bytes_db": 18538496,
+      "bytes": 11861248,
+      "sha256": "660a570d48fdc9e5c1674f889a3df0ddeb1f04aa670928bcfcbaf27faa42b56c",
+      "bytes_db": 42643456,
       "bbox": [
         -7.86,
         -41.43,
@@ -156,22 +166,24 @@
         -37.25
       ],
       "counts": {
-        "items": 75445,
-        "district": 1385,
-        "street_line": 87108,
+        "items": 124488,
+        "district": 1734,
+        "street_line": 87371,
         "municipality": 184,
-        "place": 5820,
-        "street": 43798,
+        "house_number": 29206,
+        "house_number_rungs": 570108,
+        "place": 13118,
+        "street": 43936,
         "road": 782,
-        "poi": 25045
+        "poi": 66652
       }
     },
     "DF": {
       "name": "Distrito Federal",
       "file": "sabia-DF.sqlite.zst",
-      "bytes": 1545351,
-      "sha256": "f12b1e15ae42a4457810f1454eb4aa7c84b9f0549d32aaa70178612f313d2855",
-      "bytes_db": 7409664,
+      "bytes": 2595478,
+      "sha256": "0627476b578ff9774d8848b78b0d25d6dafe9ea997105debdb7b3e00bde9e3b4",
+      "bytes_db": 11112448,
       "bbox": [
         -16.05,
         -48.29,
@@ -179,22 +191,24 @@
         -47.3
       ],
       "counts": {
-        "items": 30933,
-        "district": 622,
-        "street_line": 32510,
+        "items": 46307,
+        "district": 623,
+        "street_line": 32553,
         "municipality": 1,
-        "place": 709,
-        "street": 15420,
+        "house_number": 13,
+        "house_number_rungs": 29,
+        "place": 987,
+        "street": 15424,
         "road": 135,
-        "poi": 14669
+        "poi": 29761
       }
     },
     "ES": {
       "name": "Espírito Santo",
       "file": "sabia-ES.sqlite.zst",
-      "bytes": 4557342,
-      "sha256": "05958f654086265bc31cbf09c2d5274ba294515bf477559002cfe81ddd23d334",
-      "bytes_db": 16138240,
+      "bytes": 7957919,
+      "sha256": "bef5ebbc6dd3307dc5e6dd683db67e68c4f2de9ad0564dfd2fc37f55ff16fe37",
+      "bytes_db": 28344320,
       "bbox": [
         -21.31,
         -41.88,
@@ -202,22 +216,24 @@
         -29.29
       ],
       "counts": {
-        "items": 60213,
-        "district": 2115,
-        "street_line": 68432,
+        "items": 84568,
+        "district": 2112,
+        "street_line": 68536,
         "municipality": 78,
-        "place": 7993,
-        "street": 33209,
+        "house_number": 20709,
+        "house_number_rungs": 277244,
+        "place": 8422,
+        "street": 33217,
         "road": 398,
-        "poi": 18613
+        "poi": 42531
       }
     },
     "GO": {
       "name": "Goiás",
       "file": "sabia-GO.sqlite.zst",
-      "bytes": 6177221,
-      "sha256": "3ca5ecd2a23c46dac640c59e19a5bbfe099bedacd2298e6591d290dea6603c30",
-      "bytes_db": 23871488,
+      "bytes": 10873225,
+      "sha256": "8b5a1e0cc356de745e3276c86d4df1bd6aec521997caf340914a035493af0956",
+      "bytes_db": 40652800,
       "bbox": [
         -19.5,
         -53.25,
@@ -225,22 +241,24 @@
         -45.9
       ],
       "counts": {
-        "items": 92785,
-        "district": 3325,
-        "street_line": 142730,
+        "items": 138188,
+        "district": 3365,
+        "street_line": 142877,
         "municipality": 246,
-        "place": 4059,
-        "street": 74817,
+        "house_number": 27737,
+        "house_number_rungs": 291405,
+        "place": 4999,
+        "street": 74846,
         "road": 963,
-        "poi": 12946
+        "poi": 57380
       }
     },
     "MA": {
       "name": "Maranhão",
       "file": "sabia-MA.sqlite.zst",
-      "bytes": 3870730,
-      "sha256": "db82db894fb88128ff6c53ef22826305fe1de6aeb6d567d1d74516c9ff7627c0",
-      "bytes_db": 14438400,
+      "bytes": 7626188,
+      "sha256": "c320e2db56f67351aa53910f8fb9f41b6d5c2d2534fece75ed3db24082dfdddd",
+      "bytes_db": 28069888,
       "bbox": [
         -10.26,
         -48.76,
@@ -248,22 +266,24 @@
         -41.79
       ],
       "counts": {
-        "items": 62549,
-        "district": 912,
-        "street_line": 66937,
+        "items": 88265,
+        "district": 920,
+        "street_line": 67207,
         "municipality": 217,
-        "place": 5985,
-        "street": 38285,
-        "road": 470,
-        "poi": 17809
+        "house_number": 25685,
+        "house_number_rungs": 363573,
+        "place": 12737,
+        "street": 38430,
+        "road": 471,
+        "poi": 36627
       }
     },
     "MG": {
       "name": "Minas Gerais",
       "file": "sabia-MG.sqlite.zst",
-      "bytes": 22322387,
-      "sha256": "95d72c2587c84d803bb5aae2991fee0e5789531fc8e220edc32cf368c36cdccf",
-      "bytes_db": 76640256,
+      "bytes": 45565786,
+      "sha256": "a1bc9ec2ee296cd9cd5efb4c87c2a3bbc97d4e3b0d4557db7bfa005e09af8c29",
+      "bytes_db": 162578432,
       "bbox": [
         -22.93,
         -51.05,
@@ -271,22 +291,24 @@
         -39.85
       ],
       "counts": {
-        "items": 289528,
-        "district": 8720,
-        "street_line": 376195,
+        "items": 438299,
+        "district": 8741,
+        "street_line": 376500,
         "municipality": 853,
-        "place": 25879,
-        "street": 205461,
-        "road": 3655,
-        "poi": 54533
+        "house_number": 144980,
+        "house_number_rungs": 2428227,
+        "place": 32435,
+        "street": 205627,
+        "road": 3658,
+        "poi": 196579
       }
     },
     "MS": {
       "name": "Mato Grosso do Sul",
       "file": "sabia-MS.sqlite.zst",
-      "bytes": 3325796,
-      "sha256": "98b1f265f74ad10ec9704520c90b1435613998934c85431011bbe1500b7f7830",
-      "bytes_db": 10911744,
+      "bytes": 7291765,
+      "sha256": "7e0895543f4fff97d64ab86457eedd13e6d70a8389bd74ece5012d7bc8146c79",
+      "bytes_db": 26738688,
       "bbox": [
         -24.07,
         -58.17,
@@ -294,22 +316,24 @@
         -50.92
       ],
       "counts": {
-        "items": 34330,
-        "district": 1422,
-        "street_line": 57097,
+        "items": 67190,
+        "district": 1516,
+        "street_line": 57806,
         "municipality": 79,
-        "place": 2626,
-        "street": 23671,
+        "house_number": 16727,
+        "house_number_rungs": 375404,
+        "place": 3094,
+        "street": 23953,
         "road": 414,
-        "poi": 7619
+        "poi": 39729
       }
     },
     "MT": {
       "name": "Mato Grosso",
       "file": "sabia-MT.sqlite.zst",
-      "bytes": 3810728,
-      "sha256": "dd55db27a955f9f7b61f77ce991a8bf896c7cb77b4c8a2aaba53a104490d456c",
-      "bytes_db": 13295616,
+      "bytes": 7769860,
+      "sha256": "a2a2f72f9631f99e35820d77ada5fed32260b343635098730ae35f59b071f8e7",
+      "bytes_db": 28119040,
       "bbox": [
         -18.05,
         -61.64,
@@ -317,22 +341,24 @@
         -50.22
       ],
       "counts": {
-        "items": 50226,
-        "district": 1529,
-        "street_line": 80927,
+        "items": 83480,
+        "district": 1538,
+        "street_line": 81625,
         "municipality": 142,
-        "place": 4354,
-        "street": 33571,
+        "house_number": 20331,
+        "house_number_rungs": 334322,
+        "place": 5625,
+        "street": 33805,
         "road": 718,
-        "poi": 11583
+        "poi": 43332
       }
     },
     "PA": {
       "name": "Pará",
       "file": "sabia-PA.sqlite.zst",
-      "bytes": 4354738,
-      "sha256": "d562c04e7ff33ff155d385d4742ee2bb95454966b209f9b9ac39036962e28442",
-      "bytes_db": 14729216,
+      "bytes": 9010390,
+      "sha256": "0fb87a6c6e6e47a6efeb1f0268f98b91f59d3821686953b9b54f40a8e3591cb8",
+      "bytes_db": 32284672,
       "bbox": [
         -9.85,
         -58.9,
@@ -340,22 +366,24 @@
         -46.06
       ],
       "counts": {
-        "items": 56890,
-        "district": 1163,
-        "street_line": 70979,
+        "items": 92523,
+        "district": 1227,
+        "street_line": 71513,
         "municipality": 144,
-        "place": 6123,
-        "street": 38130,
+        "house_number": 24220,
+        "house_number_rungs": 438938,
+        "place": 9080,
+        "street": 38308,
         "road": 354,
-        "poi": 12283
+        "poi": 44781
       }
     },
     "PB": {
       "name": "Paraíba",
       "file": "sabia-PB.sqlite.zst",
-      "bytes": 3641138,
-      "sha256": "6f1a68e76c89c81cd72a0095f8a3eab0250b175780397fe35cdeec8003114449",
-      "bytes_db": 13066240,
+      "bytes": 6521246,
+      "sha256": "7324ea3871e9ad264b9e045129a330c0a65586ab65263b04143f6024b06e45c9",
+      "bytes_db": 23810048,
       "bbox": [
         -8.31,
         -38.77,
@@ -363,22 +391,24 @@
         -34.79
       ],
       "counts": {
-        "items": 51540,
-        "district": 1008,
-        "street_line": 55947,
+        "items": 69376,
+        "district": 1046,
+        "street_line": 55976,
         "municipality": 223,
-        "place": 7546,
-        "street": 30977,
-        "road": 573,
-        "poi": 12444
+        "house_number": 19903,
+        "house_number_rungs": 294338,
+        "place": 9493,
+        "street": 30931,
+        "road": 574,
+        "poi": 28378
       }
     },
     "PE": {
       "name": "Pernambuco",
       "file": "sabia-PE.sqlite.zst",
-      "bytes": 6132105,
-      "sha256": "22fdc6898d6a8b0031ae360cb086d334c9ad266b382090c78b81860f68042e10",
-      "bytes_db": 22835200,
+      "bytes": 12406043,
+      "sha256": "dea3de0b1e0f596a75fe74fd91735af23cb22b11fcc01e8f7bd28e75ed9967cf",
+      "bytes_db": 45228032,
       "bbox": [
         -9.49,
         -41.36,
@@ -386,22 +416,24 @@
         -32.39
       ],
       "counts": {
-        "items": 90957,
-        "district": 1926,
-        "street_line": 106293,
+        "items": 129625,
+        "district": 1934,
+        "street_line": 106495,
         "municipality": 185,
-        "place": 4798,
-        "street": 65056,
-        "road": 608,
-        "poi": 20495
+        "house_number": 43057,
+        "house_number_rungs": 626231,
+        "place": 9876,
+        "street": 65162,
+        "road": 612,
+        "poi": 53975
       }
     },
     "PI": {
       "name": "Piauí",
       "file": "sabia-PI.sqlite.zst",
-      "bytes": 3144003,
-      "sha256": "e266f092fcd375f4b3dd6fcee2d0e6c39fbf429a5fd5c2177da30f5e242edfc8",
-      "bytes_db": 11034624,
+      "bytes": 5517354,
+      "sha256": "c1e8423718259b837a8e04aa6b1493e62eec8f6f986f0c1d5dd28084bf25d414",
+      "bytes_db": 20054016,
       "bbox": [
         -10.93,
         -46.03,
@@ -409,22 +441,24 @@
         -40.37
       ],
       "counts": {
-        "items": 47666,
-        "district": 1020,
-        "street_line": 47724,
+        "items": 61956,
+        "district": 1042,
+        "street_line": 47866,
         "municipality": 224,
-        "place": 7935,
-        "street": 22017,
-        "road": 658,
-        "poi": 17056
+        "house_number": 13193,
+        "house_number_rungs": 254093,
+        "place": 10418,
+        "street": 22039,
+        "road": 657,
+        "poi": 28842
       }
     },
     "PR": {
       "name": "Paraná",
       "file": "sabia-PR.sqlite.zst",
-      "bytes": 9822336,
-      "sha256": "7e165fa96316613f5a74d92b24b29af4c9dc08166943e8f2419ddf54eef34ea2",
-      "bytes_db": 34689024,
+      "bytes": 25640678,
+      "sha256": "72a48796a2b8b29bdb65364b4a65c6162156030a12352c62729958a1fb1e2808",
+      "bytes_db": 93593600,
       "bbox": [
         -26.72,
         -54.62,
@@ -432,22 +466,24 @@
         -48.02
       ],
       "counts": {
-        "items": 137995,
-        "district": 2771,
-        "street_line": 181955,
+        "items": 273615,
+        "district": 2809,
+        "street_line": 182806,
         "municipality": 399,
-        "place": 5276,
-        "street": 96191,
+        "house_number": 70487,
+        "house_number_rungs": 1366290,
+        "place": 6917,
+        "street": 96510,
         "road": 1085,
-        "poi": 35443
+        "poi": 169103
       }
     },
     "RJ": {
       "name": "Rio de Janeiro",
       "file": "sabia-RJ.sqlite.zst",
-      "bytes": 9818149,
-      "sha256": "c1d7efc218077ade7dadc42e4b866da6edc20c6664d6aff24c7d786f9c58778d",
-      "bytes_db": 36986880,
+      "bytes": 22101495,
+      "sha256": "76604ef43f9fcc7a31602232fd624457a935c86eecf40d9748f479b9321120fc",
+      "bytes_db": 80367616,
       "bbox": [
         -23.37,
         -44.89,
@@ -455,22 +491,24 @@
         -40.95
       ],
       "counts": {
-        "items": 143713,
-        "district": 2957,
-        "street_line": 166645,
+        "items": 252581,
+        "district": 2958,
+        "street_line": 166795,
         "municipality": 92,
-        "place": 4659,
-        "street": 95050,
-        "road": 500,
-        "poi": 43504
+        "house_number": 64043,
+        "house_number_rungs": 864978,
+        "place": 5425,
+        "street": 95080,
+        "road": 503,
+        "poi": 151573
       }
     },
     "RN": {
       "name": "Rio Grande do Norte",
       "file": "sabia-RN.sqlite.zst",
-      "bytes": 2879782,
-      "sha256": "0446e839d909751114e95e26f7b17639c2543895c8ce814f2c072e1d1b83f563",
-      "bytes_db": 10600448,
+      "bytes": 6005972,
+      "sha256": "64d8275b19dc616a651e986628267955e131d55030bbf3746f156a7072a9f3c7",
+      "bytes_db": 21520384,
       "bbox": [
         -6.99,
         -38.59,
@@ -478,22 +516,24 @@
         -34.96
       ],
       "counts": {
-        "items": 42348,
-        "district": 1111,
-        "street_line": 50675,
+        "items": 59888,
+        "district": 1112,
+        "street_line": 50942,
         "municipality": 167,
-        "place": 1766,
-        "street": 28631,
+        "house_number": 20748,
+        "house_number_rungs": 307334,
+        "place": 2337,
+        "street": 28838,
         "road": 391,
-        "poi": 11560
+        "poi": 28322
       }
     },
     "RO": {
       "name": "Rondônia",
       "file": "sabia-RO.sqlite.zst",
-      "bytes": 1541535,
-      "sha256": "c931dd4b060d1aad6bc5af06af0d260e8eeab32ea1ea05259fecee6a5fb52769",
-      "bytes_db": 5128192,
+      "bytes": 3573231,
+      "sha256": "5013a330098cdba25fac9c48664a3a0f6e08dd1263f18b3447f1ea3858c1c332",
+      "bytes_db": 13324288,
       "bbox": [
         -13.7,
         -66.82,
@@ -501,22 +541,24 @@
         -59.77
       ],
       "counts": {
-        "items": 16143,
-        "district": 384,
-        "street_line": 26823,
+        "items": 30686,
+        "district": 395,
+        "street_line": 26861,
         "municipality": 52,
-        "place": 704,
-        "street": 11974,
+        "house_number": 8144,
+        "house_number_rungs": 208063,
+        "place": 1154,
+        "street": 11991,
         "road": 185,
-        "poi": 3280
+        "poi": 17356
       }
     },
     "RR": {
       "name": "Roraima",
       "file": "sabia-RR.sqlite.zst",
-      "bytes": 785627,
-      "sha256": "24c6157d31511fd5fe14cd43d6a8c4d1acd260911d3518a1221fd4ea5762cdcc",
-      "bytes_db": 2535424,
+      "bytes": 1460535,
+      "sha256": "7ed85b88a5bf8c3918aa53e9875137e76fa07fd15f1386b7f3aee7620a177f06",
+      "bytes_db": 5222400,
       "bbox": [
         -1.59,
         -64.83,
@@ -524,22 +566,24 @@
         -58.88
       ],
       "counts": {
-        "items": 8377,
-        "district": 253,
-        "street_line": 11501,
+        "items": 13550,
+        "district": 254,
+        "street_line": 11519,
         "municipality": 15,
-        "place": 1558,
-        "street": 3780,
+        "house_number": 2515,
+        "house_number_rungs": 61562,
+        "place": 2360,
+        "street": 3777,
         "road": 74,
-        "poi": 2965
+        "poi": 7339
       }
     },
     "RS": {
       "name": "Rio Grande do Sul",
       "file": "sabia-RS.sqlite.zst",
-      "bytes": 14441896,
-      "sha256": "287458ff048de3bc401a5a851b4f6cc55b7f301b762f6166fac7f7465e027b2b",
-      "bytes_db": 48197632,
+      "bytes": 30213862,
+      "sha256": "e6c0e3afaf1c365159f75f1c64f2b8bede136c67266ca9f54aaec85a265fb268",
+      "bytes_db": 107360256,
       "bbox": [
         -33.76,
         -57.65,
@@ -547,22 +591,24 @@
         -49.69
       ],
       "counts": {
-        "items": 168362,
-        "district": 6014,
-        "street_line": 209925,
+        "items": 309334,
+        "district": 6134,
+        "street_line": 211385,
         "municipality": 497,
-        "place": 12063,
-        "street": 98778,
-        "road": 1277,
-        "poi": 56244
+        "house_number": 67859,
+        "house_number_rungs": 1292681,
+        "place": 13758,
+        "street": 99306,
+        "road": 1281,
+        "poi": 194989
       }
     },
     "SC": {
       "name": "Santa Catarina",
       "file": "sabia-SC.sqlite.zst",
-      "bytes": 10600033,
-      "sha256": "099e9eee5237cc8b4c60fc1fdcc95c9bfc89ae76f4af7f05f7253c75a51a37c0",
-      "bytes_db": 37498880,
+      "bytes": 21842341,
+      "sha256": "70fcfd13bd5a02c443f59d9afa4bf6c481d80b466c5b132ec5b76813089f552f",
+      "bytes_db": 76750848,
       "bbox": [
         -29.36,
         -53.84,
@@ -570,22 +616,24 @@
         -48.35
       ],
       "counts": {
-        "items": 148629,
-        "district": 3754,
-        "street_line": 163834,
+        "items": 241317,
+        "district": 3798,
+        "street_line": 164500,
         "municipality": 295,
-        "place": 8392,
-        "street": 92603,
-        "road": 1078,
-        "poi": 46556
+        "house_number": 58435,
+        "house_number_rungs": 842021,
+        "place": 8933,
+        "street": 92933,
+        "road": 1083,
+        "poi": 138368
       }
     },
     "SE": {
       "name": "Sergipe",
       "file": "sabia-SE.sqlite.zst",
-      "bytes": 2028703,
-      "sha256": "1b42a2f730dc975cfdc265009292ceb5831064696dc2e2ab34ce41357187ff90",
-      "bytes_db": 7532544,
+      "bytes": 3692386,
+      "sha256": "0b9e4f7f2af31f46eb13f80cecb044229b34f771ac81ae832b3be63d4b14586b",
+      "bytes_db": 13602816,
       "bbox": [
         -11.57,
         -38.25,
@@ -593,22 +641,24 @@
         -36.39
       ],
       "counts": {
-        "items": 30734,
-        "district": 433,
-        "street_line": 31015,
+        "items": 38946,
+        "district": 435,
+        "street_line": 31159,
         "municipality": 75,
-        "place": 2424,
-        "street": 19469,
+        "house_number": 11663,
+        "house_number_rungs": 177592,
+        "place": 3816,
+        "street": 19619,
         "road": 279,
-        "poi": 8562
+        "poi": 15232
       }
     },
     "SP": {
       "name": "São Paulo",
       "file": "sabia-SP.sqlite.zst",
-      "bytes": 37815521,
-      "sha256": "c27cf99c741f8ed5df721f6f5623000c3e1a14abe1751d8539dabfb1ccba0c82",
-      "bytes_db": 133419008,
+      "bytes": 90168565,
+      "sha256": "07220ef81b8ddf185c76c49f6b4fae95bceb975d002edeb9bfc8fbd127f84aec",
+      "bytes_db": 323661824,
       "bbox": [
         -25.31,
         -53.12,
@@ -616,22 +666,24 @@
         -44.16
       ],
       "counts": {
-        "items": 531088,
-        "district": 18200,
-        "street_line": 690979,
+        "items": 976272,
+        "district": 18448,
+        "street_line": 691963,
         "municipality": 645,
-        "place": 22460,
-        "street": 370612,
-        "road": 3365,
-        "poi": 134651
+        "house_number": 254442,
+        "house_number_rungs": 4507276,
+        "place": 27400,
+        "street": 371007,
+        "road": 3375,
+        "poi": 574490
       }
     },
     "TO": {
       "name": "Tocantins",
       "file": "sabia-TO.sqlite.zst",
-      "bytes": 1611239,
-      "sha256": "c35247938496f78af81507e79662b2abb973d6e6f11b46736398dccbbd6cb055",
-      "bytes_db": 5799936,
+      "bytes": 3027215,
+      "sha256": "e9471d2897f09f1882aac5357e7bf563edff367199bc0c4bcdef39a6b76e4173",
+      "bytes_db": 10895360,
       "bbox": [
         -13.47,
         -50.75,
@@ -639,14 +691,16 @@
         -45.69
       ],
       "counts": {
-        "items": 22006,
-        "district": 233,
-        "street_line": 36132,
+        "items": 31383,
+        "district": 296,
+        "street_line": 36520,
         "municipality": 139,
-        "place": 1390,
-        "street": 16560,
+        "house_number": 8294,
+        "house_number_rungs": 124353,
+        "place": 2084,
+        "street": 16800,
         "road": 454,
-        "poi": 3602
+        "poi": 12045
       }
     }
   }
