@@ -263,10 +263,13 @@ def _parse(rules: _Rules, folded: str) -> _Parsed:
         if phrase in rules.municipalities:
             target, mun_words = rules.municipalities[phrase][0], set(words[i:])
             break
+    only_municipality = bool(words) and set(words) <= mun_words
     words = [w for w in words if w not in STOPWORDS] or words
     kinds: List[str] = []
     text = list(words)
     category_words: List[str] = []
+    if only_municipality:  # "feira de santana" é o município, não uma busca de feiras
+        return _Parsed(text, kinds, target, mun_words, words, category_words)
     # a frase de categoria primeiro, a mais longa ("posto de saude" antes de "posto"), sem as palavras vazias dela
     for phrase, tokens in rules.category_phrases:
         for i in range(len(text) - len(tokens) + 1):

@@ -162,10 +162,12 @@ DF, 30.847. A leitura do extrato regional (206 MB) leva ~20 s.
 A etapa `validate` não deixa montar o catálogo se:
 
 - **(a) buscas de verdade:** algum caso de [`buscas.json`](buscas.json) não traz o resultado esperado até a posição
-  `top` (nome igual ou contido, município, bairro e/ou um ponto com raio), pela busca de referência
-  (`sabia/search.py`, as regras de [`docs/CONSUMO.md`](../docs/CONSUMO.md)). Hoje: 49 casos de Goiás (as 50 buscas da
-  medição, menos a PUC, escrita "universidadfe" no OpenStreetMap) e 20 do DF; outros estados entram quando houver
-  casos para eles;
+  `top` (nome igual ou contido, município, bairro, tipo, número da casa e/ou um ponto com raio; com `near`, a busca
+  é feita dessa posição e `within_m` limita a distância), pela busca de referência (`sabia/search.py`, as regras de
+  [`docs/CONSUMO.md`](../docs/CONSUMO.md)). Hoje, 168 casos: em Goiás, as 50 buscas da medição (menos a PUC, escrita
+  "universidadfe" no OpenStreetMap), número da casa, erro de digitação e 18 buscas com a posição; 21 do DF; em cada
+  uma das outras 25 UFs, a capital, uma segunda cidade e uma avenida da capital. O `relatorio.json` traz também o
+  MRR (a média de 1/posição do resultado certo) e o placar de cada UF;
 - **(b) cobertura:** falta no banco do estado algum município do IBGE com polígono, ou falta ponto na base para um
   município de estado gerado;
 - **(e) SQLite antigo:** o esquema usa algo que o SQLite 3.22 (o do Android 10) não tem (FTS5, R-Tree, STRICT,

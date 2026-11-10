@@ -114,7 +114,8 @@ def validate_stage(states: List[str], packages: Dict[str, object]) -> List[str]:
     problems = list(dict.fromkeys(problems))
     validation.write_report(config.DIST / "relatorio.json", suspects, searches, problems, version)
     passed = sum(1 for s in searches if s["rank"] is not None and s["rank"] <= s["top"])
-    print(f"[validar] buscas: {passed} de {len(searches)}; ruas locais suspeitas: {len(suspects)}; "
+    mrr = sum(1 / s["rank"] for s in searches if s["rank"]) / len(searches) if searches else 0.0
+    print(f"[validar] buscas: {passed} de {len(searches)} (MRR {mrr:.3f}); ruas locais suspeitas: {len(suspects)}; "
           f"SQLite {version or 'antigo ausente'}; {len(problems)} problemas (data/dist/relatorio.json)")
     return problems
 

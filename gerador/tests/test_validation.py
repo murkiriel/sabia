@@ -65,17 +65,34 @@ class SearchGateTest(unittest.TestCase):
                                       "lat": LAT, "lng": LNG, "radius_m": 200, "top": 1})
         self.assertEqual(1, len(problems))
 
+    def test_a_case_with_the_position_the_kind_and_a_distance(self):
+        """`near` é a posição de quem busca; `kind` e `within_m` (distância até `near`) conferem o resultado."""
+        case = {"uf": "GO", "query": "posto", "near": [LAT - 0.19, LNG], "kind": "amenity=fuel", "within_m": 1500}
+        self.assertEqual([], self.run_cases(case)[0])
+        self.assertEqual(1, len(self.run_cases(dict(case, within_m=10))[0]))
+        self.assertEqual(1, len(self.run_cases(dict(case, kind="amenity=hospital"))[0]))
+
+    def test_a_case_with_the_house_number(self):
+        case = {"uf": "GO", "query": "rua 10 152 setor oeste", "name": "Rua 10", "house_number": 152}
+        self.assertEqual([], self.run_cases(case)[0])
+        self.assertEqual(1, len(self.run_cases(dict(case, house_number=153))[0]))
+
     def test_cases_file_is_well_formed(self):
         """O arquivo das buscas do projeto: cada caso com UF, busca, top e ao menos um critério."""
         cases = validation.load_cases(config.SEARCH_CASES, list(config.STATES))
         self.assertGreaterEqual(len([c for c in cases if c["uf"] == "GO"]), 45)
         self.assertGreaterEqual(len([c for c in cases if c["uf"] == "DF"]), 15)
+        for uf in config.STATES:  # item 11: casos em todas as UFs
+            self.assertGreaterEqual(len([c for c in cases if c["uf"] == uf]), 3, uf)
+        self.assertGreaterEqual(len([c for c in cases if "near" in c]), 10)
         for c in cases:
             self.assertIn(c["uf"], config.STATES)
             self.assertIn(c["top"], (1, 3, 5))
-            self.assertTrue({"name", "name_contains", "lat"} & set(c), c)
+            self.assertTrue({"name", "name_contains", "lat", "kind"} & set(c), c)
             if "lat" in c:
                 self.assertIn("radius_m", c)
+            if "within_m" in c:
+                self.assertIn("near", c)
         civica = next(c for c in cases if c["query"] == "praca civica goiania")
         self.assertLessEqual(civica["radius_m"], 200)
         self.assertEqual([], [c for c in validation.load_cases(config.SEARCH_CASES, ["DF"]) if c["uf"] != "DF"])
@@ -156,7 +173,9 @@ class OldSqliteTest(unittest.TestCase):
             pack = Pack(Path(tmp))
             cases = [{"uf": "GO", "query": "rua 10 setor oeste", "name": "Rua 10", "top": 1},
                      {"uf": "GO", "query": "r dr olinto", "name": "Rua Doutor Olinto Manso", "top": 1},
-                     {"uf": "GO", "query": "posto ipiranga anapolis", "name": "Ipiranga", "top": 1}]
+                     {"uf": "GO", "query": "posto ipiranga anapolis", "name": "Ipiranga", "top": 1},
+                     # com a posição: as duas pontas buscam dela (sem ela, "posto" dá outra lista)
+                     {"uf": "GO", "query": "posto", "near": [LAT - 0.19, LNG], "kind": "amenity=fuel", "top": 1}]
             problems, version = validation.old_sqlite_gate(pack.path, cases, lib)
         self.assertEqual("3.22.0", version)
         self.assertEqual([], problems)
@@ -167,12 +186,18 @@ class ReportTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp) / "relatorio.json"
             suspects = [{"uf": "GO", "name": "Rua Comprida", "extent_m": 4100.0}]
-            searches = [{"uf": "GO", "query": "x", "rank": 1}]
+            searches = [{"uf": "GO", "query": "x", "rank": 1, "top": 1},
+                        {"uf": "GO", "query": "y", "rank": 2, "top": 3},
+                        {"uf": "DF", "query": "z", "rank": None, "top": 1}]
             validation.write_report(dest, suspects, searches, ["um problema"], "3.22.0")
             data = json.loads(dest.read_text(encoding="utf-8"))
+        # item 11: a posição média do certo (MRR: 1/posição, 0 sem achar) e o placar de cada UF
+        self.assertAlmostEqual((1 + 0.5 + 0) / 3, data["searches"]["mrr"], places=3)
+        self.assertEqual({"DF": {"passed": 0, "total": 1}, "GO": {"passed": 2, "total": 2}},
+                         data["searches"]["by_state"])
         self.assertEqual({"GO": 1}, data["long_local_streets"]["count"])
         self.assertEqual("Rua Comprida", data["long_local_streets"]["streets"][0]["name"])
-        self.assertEqual(1, data["searches"]["passed"])
+        self.assertEqual(2, data["searches"]["passed"])
         self.assertEqual(["um problema"], data["problems"])
         self.assertEqual("3.22.0", data["oldest_sqlite"])
 

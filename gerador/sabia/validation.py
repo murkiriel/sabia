@@ -1,8 +1,10 @@
 """As travas de uma geração (G7). Nada é publicado se alguma falhar.
 
 (a) Buscas de verdade (`buscas.json`): cada caso diz a busca, o estado e o que tem de aparecer até a posição `top`:
-    nome (`name`, igual depois de dobrado, ou `name_contains`), município, bairro e/ou um ponto com raio. A busca é a
-    de referência (search.py), a mesma regra que quem consome aplica.
+    nome (`name`, igual depois de dobrado, ou `name_contains`), município, bairro, tipo (`kind`), número da casa
+    (`house_number`) e/ou um ponto com raio; com `near`, a busca é feita dessa posição, e `within_m` é a distância
+    máxima até ela. A busca é a de referência (search.py), a mesma regra que quem consome aplica. O relatório traz o
+    MRR e o placar por UF.
 (b) Cobertura: todos os municípios do IBGE do estado estão no banco do estado, com o registro do município; na base,
     só pode faltar ponto para um município de estado não gerado.
 (c) Queda de registros em relação à geração publicada (`drops`, aplicada na publicação, com --accept-drop).
@@ -49,20 +51,31 @@ def _matches(case: dict, r: search.Result) -> bool:
         return False
     if "lat" in case and geo.dist_m(case["lat"], case["lng"], r.lat, r.lng) > case["radius_m"]:
         return False
+    if "kind" in case and case["kind"] != r.kind:
+        return False
+    if "house_number" in case and case["house_number"] != r.house_number:
+        return False
+    if "within_m" in case and geo.dist_m(case["near"][0], case["near"][1], r.lat, r.lng) > case["within_m"]:
+        return False
     return True
+
+
+def _near(case: dict) -> Optional[Tuple[float, float]]:
+    return (case["near"][0], case["near"][1]) if "near" in case else None
 
 
 def search_gate(db, cases: Sequence[dict]) -> Tuple[List[str], List[dict]]:
     """(problemas, uma linha por caso com a posição achada e o primeiro resultado)."""
     problems, rows = [], []
     for case in cases:
-        found = search.search(db, case["query"], limit=max(case.get("top", 1), 5))
+        found = search.search(db, case["query"], near=_near(case), limit=max(case.get("top", 1), 5))
         rank = next((n for n, r in enumerate(found, 1) if _matches(case, r)), None)
         first = found[0].label if found else None
         rows.append({"uf": case["uf"], "query": case["query"], "rank": rank, "top": case.get("top", 1),
                      "first": first})
         if rank is None or rank > case.get("top", 1):
-            expected = case.get("name") or case.get("name_contains") or f"({case.get('lat')}, {case.get('lng')})"
+            expected = (case.get("name") or case.get("name_contains") or case.get("kind")
+                        or f"({case.get('lat')}, {case.get('lng')})")
             problems.append(f"{case['uf']}: busca '{case['query']}' não traz {expected} até a posição "
                             f"{case.get('top', 1)} (achou {rank or 'nada'}; primeiro: {first})")
     return problems, rows
@@ -142,8 +155,8 @@ def old_sqlite_gate(path: Path, cases: Sequence[dict], lib_path: Optional[Path] 
             problems.append(f"{path.name}: integrity_check no SQLite {lib.version}: {check[:3]}")
         with closing(sqlite3.connect(path)) as new:
             for case in cases:
-                a = [(r.id, r.name) for r in search.search(old, case["query"], limit=10)]
-                b = [(r.id, r.name) for r in search.search(new, case["query"], limit=10)]
+                a = [(r.id, r.name) for r in search.search(old, case["query"], near=_near(case), limit=10)]
+                b = [(r.id, r.name) for r in search.search(new, case["query"], near=_near(case), limit=10)]
                 if a != b:
                     problems.append(f"{path.name}: '{case['query']}' dá outro resultado no SQLite {lib.version}")
     except sqlite_old.SqliteError as e:
@@ -156,10 +169,21 @@ def old_sqlite_gate(path: Path, cases: Sequence[dict], lib_path: Optional[Path] 
 def write_report(dest: Path, suspects: Sequence[dict], searches: Sequence[dict], problems: Sequence[str],
                  oldest_sqlite: str) -> None:
     """data/dist/relatorio.json: o que conferir a cada geração."""
-    passed = sum(1 for s in searches if s["rank"] is not None and s["rank"] <= s.get("top", 1))
+    def ok(s: dict) -> bool:
+        return s["rank"] is not None and s["rank"] <= s.get("top", 1)
+
+    passed = sum(1 for s in searches if ok(s))
+    # a posição média do certo (MRR: 1/posição, 0 sem achar), para acompanhar a ordem de uma geração para outra
+    mrr = round(sum(1 / s["rank"] for s in searches if s["rank"]) / len(searches), 4) if searches else 0.0
+    by_state: Dict[str, Dict[str, int]] = {}
+    for s in searches:
+        row = by_state.setdefault(s["uf"], {"passed": 0, "total": 0})
+        row["total"] += 1
+        row["passed"] += ok(s)
     data = {
         "problems": list(problems),
-        "searches": {"passed": passed, "total": len(searches), "cases": list(searches)},
+        "searches": {"passed": passed, "total": len(searches), "mrr": mrr, "by_state": dict(sorted(by_state.items())),
+                     "cases": list(searches)},
         "long_local_streets": {"count": dict(sorted(Counter(s["uf"] for s in suspects).items())),
                                "streets": sorted(suspects, key=lambda s: (s["uf"], -s["extent_m"]))},
         "oldest_sqlite": oldest_sqlite,

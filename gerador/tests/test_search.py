@@ -14,7 +14,9 @@ from sabia.sources import Municipality  # noqa: E402
 from tests.osm_builder import ANAPOLIS, GOIANIA, OsmBuilder, east, north  # noqa: E402
 
 APARECIDA = Municipality("5201405", "Aparecida de Goiânia", "GO", box(-49.5, -17.0, -49.0, -16.9))
-MUNICIPALITIES = [GOIANIA, APARECIDA, ANAPOLIS]
+# um município cujo nome começa com palavra de categoria ("feira" é mercado), como Feira de Santana (BA)
+FEIRA = Municipality("5200059", "Feira Nova de Goiás", "GO", box(-49.0, -16.9, -48.9, -16.8))
+MUNICIPALITIES = [GOIANIA, APARECIDA, ANAPOLIS, FEIRA]
 LAT, LNG = -16.68, -49.26
 
 
@@ -70,6 +72,7 @@ def sample():
     osm.node(LAT + 0.17, LNG + 0.003, amenity="fuel", name="Posto Ipiranga Centro")
     osm.street((LAT + 0.175, LNG), 300, "Avenida Ipiranga", highway="primary")
     osm.node(LAT + 0.17, LNG + 0.011, amenity="fuel", brand="Shell")
+    osm.node(-16.85, -48.95, amenity="marketplace", name="Feira Nova do Centro")   # em Feira Nova de Goiás
     osm.street((LAT + 0.12, LNG - 0.1), 300, "Rua Soccorro")  # "socorro" a um erro: não pode virar "soccorro"
     return osm
 
@@ -276,6 +279,11 @@ class MoreOrderTest(unittest.TestCase):
     def test_the_start_of_the_name_beats_the_middle(self):
         """"rua das flor": a Rua das Flores (começa com a busca) antes da Avenida Rua das Flores, primária."""
         self.assertEqual("Rua das Flores", search.search(self.db, "rua das flor")[0].name)
+
+    def test_a_municipality_name_with_a_category_word(self):
+        """"feira nova de goias" é o município, não uma busca de feiras (mercados) com "nova goias" no nome."""
+        r = search.search(self.db, "feira nova de goias")[0]
+        self.assertEqual(("Feira Nova de Goiás", "municipality"), (r.name, r.kind))
 
     def test_same_name_in_the_bigger_municipality(self):
         """Duas "Praça Cívica" iguais, sem posição: a do município maior (Goiânia, 1,5 milhão) primeiro."""
