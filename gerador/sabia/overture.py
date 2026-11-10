@@ -176,4 +176,4 @@ def is_same(item: Item, point: Point) -> bool:
 def add(items: Dict[str, List[Item]], points: Sequence[Point], index: MunicipalityIndex,
         states: Sequence[str]) -> Tuple[int, int]:
     """Junta os lugares aos registros dos estados pedidos; devolve (entraram, já estavam)."""
-    return merge.add(items, points, index, states, DUPLICATE_M, is_same)
+    return merge.add(items, points, index, states, DUPLICATE_M, is_same, origin="overture")

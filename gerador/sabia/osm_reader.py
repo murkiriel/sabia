@@ -30,6 +30,7 @@ class Place:
     lat: float
     lng: float
     from_area: bool = False
+    population: int = 0
 
 
 @dataclass
@@ -81,6 +82,12 @@ def _named(tags) -> str:
     return (tags.get("name") or "").strip()
 
 
+def population(value: str) -> int:
+    """A tag population ("1536097", "1.536.097", "12 000"); 0 quando não é um número."""
+    digits = value.replace(".", "").replace(",", "").replace(" ", "").strip()
+    return int(digits) if digits.isdigit() else 0
+
+
 class _Reader:
     def __init__(self, bbox: Optional[BBox]) -> None:
         self.bbox = bbox
@@ -97,7 +104,7 @@ class _Reader:
         name = _named(tags)
         place = tags.get("place")
         if place in kinds.PLACE_KINDS and name:
-            self.data.places.append(Place(name, place, lat, lng))
+            self.data.places.append(Place(name, place, lat, lng, population=population(tags.get("population") or "")))
             return
         self._poi(tags, name, lat, lng)
 
@@ -159,7 +166,8 @@ class _Reader:
         if district is not None:
             self.data.district_areas.append(DistrictArea(name, district, geometry))
         if place in kinds.PLACE_KINDS:
-            self.data.places.append(Place(name, place, lat, lng, from_area=True))
+            self.data.places.append(Place(name, place, lat, lng, from_area=True,
+                                          population=population(tags.get("population") or "")))
         elif is_poi:
             self._poi(tags, name, lat, lng)
 

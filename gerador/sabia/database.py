@@ -5,7 +5,8 @@ Banco do estado (`format_version` 1; nomes em inglês, a convenção do projeto)
     meta          key, value: format_version, build_id, uf, osm_timestamp, attribution
     municipality  id (código do IBGE), name, lat, lng (a sede)
     district      id, municipality, name, kind, lat, lng, polygon (blob; NULL = bairro só com ponto)
-    item          id, cls (place, street, road, poi), kind, name, municipality, district, lat, lng, cell
+    item          id, cls (place, street, road, poi), kind, name, municipality, district, lat, lng, cell, rank
+                  (ranks.py; os ids vão do mais importante ao menos)
     item_text     FTS4 sem conteúdo (docid = item.id), tokenizador simples, prefix="2,3": name (e os nomes
                   alternativos, HS9); area
     street_line   item, cell, coords (blob)                       "que rua é esta?" (street_lines.py)
@@ -44,7 +45,7 @@ import zstandard
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
-from . import config, geo, search_rules
+from . import config, geo, ranks, search_rules
 from .districts import District
 from .records import Item
 from .sources import Municipality
@@ -63,7 +64,7 @@ CREATE TABLE district(id INTEGER PRIMARY KEY, municipality INTEGER NOT NULL, nam
                       lat INTEGER NOT NULL, lng INTEGER NOT NULL, polygon BLOB);
 CREATE TABLE item(id INTEGER PRIMARY KEY, cls TEXT NOT NULL, kind TEXT NOT NULL, name TEXT NOT NULL,
                   municipality INTEGER NOT NULL, district INTEGER, lat INTEGER NOT NULL, lng INTEGER NOT NULL,
-                  cell INTEGER NOT NULL);
+                  cell INTEGER NOT NULL, rank INTEGER NOT NULL DEFAULT 0);
 CREATE VIRTUAL TABLE item_text USING fts4(content="", name, area, tokenize=simple, prefix="2,3");
 CREATE TABLE street_line(item INTEGER NOT NULL, cell INTEGER NOT NULL, coords BLOB NOT NULL);
 CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NULL);
@@ -82,7 +83,7 @@ CREATE TABLE municipality(id INTEGER PRIMARY KEY, name TEXT NOT NULL, uf TEXT NO
                           lng INTEGER NOT NULL);
 CREATE TABLE item(id INTEGER PRIMARY KEY, cls TEXT NOT NULL, kind TEXT NOT NULL, name TEXT NOT NULL,
                   municipality INTEGER NOT NULL, district INTEGER, lat INTEGER NOT NULL, lng INTEGER NOT NULL,
-                  cell INTEGER NOT NULL);
+                  cell INTEGER NOT NULL, rank INTEGER NOT NULL DEFAULT 0);
 CREATE VIRTUAL TABLE item_text USING fts4(content="", name, area, tokenize=simple, prefix="2,3");
 CREATE TABLE road_state(item INTEGER NOT NULL, uf TEXT NOT NULL);
 CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NULL);
@@ -208,18 +209,26 @@ def write_state(path: Path, uf: str, items: Sequence[Item], districts: Sequence[
     db.executemany("INSERT INTO district VALUES(?,?,?,?,?,?,?)",
                    ((d.id, int(d.municipality), d.name, d.kind, _i(d.lat), _i(d.lng),
                      encode_polygon(d.polygon) if d.polygon is not None else None) for d in districts))
-    db.executemany("INSERT INTO item VALUES(?,?,?,?,?,?,?,?,?)",
-                   ((n, i.cls, i.kind, i.name, int(i.municipality), i.district_id, _i(i.lat), _i(i.lng),
-                     geo.cell(i.lat, i.lng)) for n, i in enumerate(items, 1)))
+    # os ids do mais importante ao menos (ranks.rank), no empate a ordem da geração: o FTS devolve em ordem de docid
+    # e o corte (LIMIT) de uma busca curta fica com os mais importantes
+    item_ranks = [ranks.rank(i) for i in items]
+    order = sorted(range(len(items)), key=lambda k: (-item_ranks[k], k))
+    new_id = {k: n for n, k in enumerate(order, 1)}
+    db.executemany("INSERT INTO item VALUES(?,?,?,?,?,?,?,?,?,?)",
+                   ((n, items[k].cls, items[k].kind, items[k].name, int(items[k].municipality), items[k].district_id,
+                     _i(items[k].lat), _i(items[k].lng), geo.cell(items[k].lat, items[k].lng), item_ranks[k])
+                    for n, k in enumerate(order, 1)))
     texts = [(index_text(" ".join([i.name, *i.aliases])), fold(f"{names.get(i.municipality, '')} {i.district or ''}"))
              for i in items]
     db.executemany("INSERT INTO item_text(docid, name, area) VALUES(?,?,?)",
-                   ((n, name, area) for n, (name, area) in enumerate(texts, 1)))
+                   ((n, *texts[k]) for n, k in enumerate(order, 1)))
     _vocab(db, texts)
-    db.executemany("INSERT INTO street_line VALUES(?,?,?)", ((x.item + 1, x.cell, x.coords) for x in lines))
-    db.executemany("INSERT INTO item_source VALUES(?,?)", ((n, i.source) for n, i in enumerate(items, 1) if i.source))
-    ladders = [(n, sorted((side, seg, number, _i(lat), _i(lng)) for side, seg, number, lat, lng in i.numbers))
-               for n, i in enumerate(items, 1) if i.numbers]
+    db.executemany("INSERT INTO street_line VALUES(?,?,?)", ((new_id[x.item], x.cell, x.coords) for x in lines))
+    db.executemany("INSERT INTO item_source VALUES(?,?)",
+                   sorted((new_id[k], i.source) for k, i in enumerate(items) if i.source))
+    ladders = sorted((new_id[k], sorted((side, seg, number, _i(lat), _i(lng)) for side, seg, number, lat, lng in
+                                        i.numbers))
+                     for k, i in enumerate(items) if i.numbers)
     db.executemany("INSERT INTO house_number VALUES(?,?)",
                    ((n, struct.pack(f"<{5 * len(r)}i", *(v for rung in r for v in rung))) for n, r in ladders))
     _search_tables(db)
@@ -245,6 +254,8 @@ def write_base(path: Path, municipalities: Sequence[Municipality], items_by_stat
     polígono) e as rodovias federais dos estados gerados. Devolve as contagens e os municípios sem ponto."""
     seats = {i.municipality: (i.lat, i.lng) for items in items_by_state.values() for i in items
              if i.kind == "municipality"}
+    people = {i.municipality: i.population for items in items_by_state.values() for i in items
+              if i.kind == "municipality"}
     rows: List[Tuple[int, str, str, float, float]] = []
     without_point: List[str] = []
     for m in sorted(municipalities, key=lambda m: m.code):
@@ -265,21 +276,27 @@ def write_base(path: Path, municipalities: Sequence[Municipality], items_by_stat
     db = _connect(path, BASE_TABLES)
     db.executemany("INSERT INTO municipality VALUES(?,?,?,?,?)",
                    ((code, name, uf, _i(lat), _i(lng)) for code, name, uf, lat, lng in rows))
-    item_rows, text_rows, road_states = [], [], []
-    for n, (code, name, uf, lat, lng) in enumerate(rows, 1):
-        item_rows.append((n, "place", "municipality", name, code, None, _i(lat), _i(lng), geo.cell(lat, lng)))
-        text_rows.append((n, index_text(name), fold(f"{config.STATES[uf]} {uf}")))
-    for n, ref in enumerate(sorted(federal), len(rows) + 1):
+    # (rank, linha de item sem id, texto, área, UFs da rodovia), na ordem da geração; os ids saem por importância
+    entries: List[Tuple[int, tuple, str, str, List[str]]] = []
+    for code, name, uf, lat, lng in rows:
+        population = people.get(str(code), 0)
+        rank = ranks.population_rank(population) if population > 1 else ranks.PLACE_RANKS["municipality"]
+        entries.append((rank, ("place", "municipality", name, code, None, _i(lat), _i(lng), geo.cell(lat, lng)),
+                        index_text(name), fold(f"{config.STATES[uf]} {uf}"), []))
+    for ref in sorted(federal):
         c = _central(federal[ref])
         ufs = sorted({i.uf for i in federal[ref]})
-        item_rows.append((n, "road", "road", ref, int(c.municipality), None, _i(c.lat), _i(c.lng),
-                          geo.cell(c.lat, c.lng)))
-        text_rows.append((n, index_text(ref), fold(" ".join(config.STATES[u] for u in ufs) + " " + " ".join(ufs))))
-        road_states += [(n, u) for u in ufs]
-    db.executemany("INSERT INTO item VALUES(?,?,?,?,?,?,?,?,?)", item_rows)
-    db.executemany("INSERT INTO item_text(docid, name, area) VALUES(?,?,?)", text_rows)
-    _vocab(db, [(name, area) for _, name, area in text_rows])
-    db.executemany("INSERT INTO road_state VALUES(?,?)", road_states)
+        entries.append((ranks.ROAD_RANK, ("road", "road", ref, int(c.municipality), None, _i(c.lat), _i(c.lng),
+                                          geo.cell(c.lat, c.lng)),
+                        index_text(ref), fold(" ".join(config.STATES[u] for u in ufs) + " " + " ".join(ufs)), ufs))
+    ordered = sorted(enumerate(entries), key=lambda e: (-e[1][0], e[0]))
+    db.executemany("INSERT INTO item VALUES(?,?,?,?,?,?,?,?,?,?)",
+                   ((n, *entry[1], entry[0]) for n, (_, entry) in enumerate(ordered, 1)))
+    db.executemany("INSERT INTO item_text(docid, name, area) VALUES(?,?,?)",
+                   ((n, entry[2], entry[3]) for n, (_, entry) in enumerate(ordered, 1)))
+    _vocab(db, [(entry[2], entry[3]) for entry in entries])
+    db.executemany("INSERT INTO road_state VALUES(?,?)",
+                   [(n, u) for n, (_, entry) in enumerate(ordered, 1) for u in entry[4]])
     _search_tables(db)
     _meta(db, "base", meta)
     _finish(db, BASE_INDEXES)

@@ -59,9 +59,9 @@ class _Grid:
 
 
 def add(items: Dict[str, List[Item]], points: Sequence[Point], index: MunicipalityIndex, states: Sequence[str],
-        radius_m: float, same: Callable[[Item, Point], bool], cls: str = "poi") -> Tuple[int, int]:
+        radius_m: float, same: Callable[[Item, Point], bool], cls: str = "poi", origin: str = "") -> Tuple[int, int]:
     """Junta os pontos dos estados pedidos aos registros (em `items`, por UF). Devolve (quantos entraram, quantos já
-    estavam registrados)."""
+    estavam registrados). `origin` marca os registros novos (Item.origin, só para a importância)."""
     wanted = set(states)
     codes = index.locate([p.lat for p in points], [p.lng for p in points])
     grids: Dict[str, _Grid] = {}
@@ -80,7 +80,8 @@ def add(items: Dict[str, List[Item]], points: Sequence[Point], index: Municipali
                for it in grid.near(point.lat, point.lng)):
             repeated += 1
             continue
-        item = Item(cls, point.kind, point.name, code, point.lat, point.lng, aliases=list(point.aliases))
+        item = Item(cls, point.kind, point.name, code, point.lat, point.lng, aliases=list(point.aliases),
+                    origin=origin)
         items.setdefault(state, []).append(item)
         grid.put(item)
         touched.add(state)

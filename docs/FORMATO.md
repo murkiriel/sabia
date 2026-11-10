@@ -15,7 +15,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 | `meta` | `key`, `value` | `format_version`, `build_id`, `uf`, `osm_timestamp`, `attribution` |
 | `municipality` | `id`, `name`, `lat`, `lng` | Os municípios do estado: `id` é o código do IBGE (7 dígitos), o ponto é a sede |
 | `district` | `id`, `municipality`, `name`, `kind`, `lat`, `lng`, `polygon` | Os bairros. `kind`: `suburb`, `quarter`, `neighbourhood`, `admin_level=10`, `admin_level=9`. `polygon` NULL: bairro conhecido só por um ponto |
-| `item` | `id`, `cls`, `kind`, `name`, `municipality`, `district`, `lat`, `lng`, `cell` | Os registros (abaixo) |
+| `item` | `id`, `cls`, `kind`, `name`, `municipality`, `district`, `lat`, `lng`, `cell`, `rank` | Os registros (abaixo), do mais importante ao menos |
 | `item_text` | `name`, `area` (FTS4, `docid` = `item.id`) | O índice de busca |
 | `street_line` | `item`, `cell`, `coords` | O traçado das ruas, para "que rua é esta?" |
 | `word_form` | `word`, `form`, `rule` | Abreviações, formas e números (regras de busca) |
@@ -47,6 +47,15 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 - Os registros de outras fontes que não o OpenStreetMap usam o `kind` do OpenStreetMap equivalente quando há um
   (a PRF é `amenity=police`; o CNES, `amenity=hospital`; um posto da Overture, `amenity=fuel`): as palavras de categoria e os ícones valem para eles sem mudar nada em quem consome.
 - `municipality`: código do IBGE do município do registro; `district`: o `district.id` do bairro, ou NULL.
+- `rank`: a importância do registro, de 0 a 255 (pacote anterior: sem a coluna, leia como 0). Com população (a tag
+  `population` do lugar no OpenStreetMap; o município, a da sede), `ln(população) / ln(1,1)`, como no Organic Maps:
+  1.000 habitantes dão 72, 100 mil 121, 1,5 milhão 149. Sem população, um valor fixo na mesma escala: lugar pelo tipo
+  (cidade 110, município 75, vila 60, bairro 55...), rua pela classe da via (primária 55, residencial 20), rodovia 60,
+  ponto de interesse pelo quanto serve de referência (aeroporto e rodoviária 60, hospital e shopping 55, posto 30,
+  marco de km 10, os outros 20; os da Overture 8 abaixo do mesmo tipo do mapa, e 12 os de categoria só dela). A
+  tabela inteira está em `gerador/sabia/ranks.py`. **Os ids seguem a importância** (o maior `rank` tem o menor `id`;
+  no empate, a ordem da geração): o FTS devolve em ordem de `docid`, e o `LIMIT` de uma busca curta fica com os mais
+  importantes. Na base, o mesmo (municípios e rodovias federais).
 - `lat`, `lng`: inteiros, graus × 100.000 (5 casas, ~1 m).
 - `cell`: o quadrado do mapa no zoom 13 (o tile dos mapas na web, ~4 a 5 km de lado no Brasil), como um número:
   `x × 8192 + y`, com `x = floor((lng + 180) / 360 × 8192)` e
@@ -107,7 +116,7 @@ Tudo dobrado. Ver as regras de uso em [`CONSUMO.md`](CONSUMO.md).
 |---|---|
 | `meta` | Como no estado, com `uf` = `base` |
 | `municipality` | `id`, `name`, `uf`, `lat`, `lng`: todos os municípios do país |
-| `item` | Os municípios (`cls` `place`, `kind` `municipality`) e as rodovias federais (`cls` `road`, um registro por sigla, no município do trecho mais central) |
+| `item` | Os municípios (`cls` `place`, `kind` `municipality`) e as rodovias federais (`cls` `road`, um registro por sigla, no município do trecho mais central), com `rank` e em ordem de importância como no estado |
 | `item_text` | Como no estado; `area` é o nome do estado e a sigla (`goias go`) |
 | `vocab` | Como no estado |
 | `road_state` | `item`, `uf`: os estados de cada rodovia federal |

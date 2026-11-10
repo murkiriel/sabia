@@ -10,7 +10,7 @@ import zstandard
 from shapely.geometry import box
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sabia import database, districts, geo, osm_reader, records, street_lines  # noqa: E402
+from sabia import database, districts, geo, osm_reader, ranks, records, street_lines  # noqa: E402
 from sabia.sources import Municipality  # noqa: E402
 from tests.osm_builder import ANAPOLIS, BRASILIA, GOIANIA, MUNICIPALITIES, OsmBuilder, north  # noqa: E402
 
@@ -82,9 +82,11 @@ class StateDatabaseTest(unittest.TestCase):
         self.assertIn('prefix="2,3"', sql.replace("'", '"'))
 
     def test_every_item_is_written_with_its_cell(self):
+        """Na ordem dos ids: do mais importante ao menos (ranks.rank), no empate a ordem da geração."""
         rows = self.db.execute("SELECT cls, name, lat, lng, cell FROM item ORDER BY id").fetchall()
         self.assertEqual(len(self.built.items["GO"]), len(rows))
-        for (cls, name, lat, lng, cell), item in zip(rows, self.built.items["GO"]):
+        by_rank = sorted(self.built.items["GO"], key=lambda i: -ranks.rank(i))
+        for (cls, name, lat, lng, cell), item in zip(rows, by_rank):
             self.assertEqual((item.cls, item.name), (cls, name))
             self.assertEqual((round(item.lat * 1e5), round(item.lng * 1e5)), (lat, lng))
             self.assertEqual(geo.cell(item.lat, item.lng), cell)

@@ -51,6 +51,8 @@ class Item:
     source: str = ""                                   # origem sem conferência no mapa: "anp" (HP5b1); "" = o mapa
     # a escada de números do CNEFE (SE1): (lado 0 par / 1 ímpar, pedaço, número, lat, lng); só nas ruas
     numbers: List[Tuple[int, int, int, float, float]] = field(default_factory=list)
+    population: int = 0                                # a população do lugar (tag population do OpenStreetMap)
+    origin: str = ""                                   # de que fonte veio, só para a importância: "overture"
 
     @property
     def uf(self) -> str:
@@ -165,15 +167,17 @@ def build(data: OsmData, municipalities: Sequence[Municipality], states: Sequenc
         else:  # município sem polígono: a sede é procurada no estado inteiro
             seat = _seat(m, ((i, data.places[i]) for i, code in enumerate(place_mun)
                              if code is not None and code[:2] == m.code[:2]))
+        people = 0
         if seat is not None:
             used.add(seat)
             lat, lng = data.places[seat].lat, data.places[seat].lng
+            people = data.places[seat].population
         elif m.geometry is not None:
             point = m.geometry.representative_point()
             lat, lng = point.y, point.x
         else:
             continue  # sem polígono e sem ponto: a trava de cobertura aponta
-        items.append(Item("place", "municipality", m.name, m.code, lat, lng))
+        items.append(Item("place", "municipality", m.name, m.code, lat, lng, population=people))
     node_names: Dict[Tuple[str, str], List[Tuple[float, float]]] = defaultdict(list)
     for i, place in enumerate(data.places):
         code = place_mun[i]
@@ -186,7 +190,8 @@ def build(data: OsmData, municipalities: Sequence[Municipality], states: Sequenc
         if place.from_area and any(geo.dist_m(place.lat, place.lng, lat, lng) <= AREA_PLACE_DUPLICATE_M
                                    for lat, lng in node_names.get((code, fold(place.name)), ())):
             continue
-        items.append(Item("place", f"place={place.kind}", place.name, code, place.lat, place.lng))
+        items.append(Item("place", f"place={place.kind}", place.name, code, place.lat, place.lng,
+                          population=place.population))
 
     # ruas e rodovias: o município é o do meio da via
     mids = [geo.midpoint(w.lats, w.lngs) for w in data.ways]
