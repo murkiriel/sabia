@@ -4,7 +4,8 @@ travas de buscas de verdade (G7a) medirem o pacote do jeito que ele vai ser usad
 `db` é qualquer coisa com `execute(sql, params)` que devolve linhas (sqlite3.Connection ou o SQLite 3.22 da trava
 G7e). Passos:
 
-1. Dobrar o texto (sem acento, minúsculo); tirar a expressão dispensável do começo (`word_form`, `drop_prefix`).
+1. Dobrar o texto (sem acento, minúsculo); trocar a palavra que não está no pacote pela mais parecida (`vocab`:
+   erros de digitação); tirar a expressão dispensável do começo (`word_form`, `drop_prefix`).
 2. Achar o município citado: a sequência de palavras que é o nome inteiro de um município (o mais longo) puxa os
    registros dele para cima.
 3. Tirar as palavras vazias ("de", "da", "do", "dos", "das", "e").
@@ -15,7 +16,8 @@ G7e). Passos:
    dele. Uma MATCH por combinação de alternativas, só com AND implícito (nunca OR: a precedência dele muda
    entre a sintaxe padrão e a estendida do FTS), juntadas por UNION. Toda palavra é prefixo (`termo*`), menos número e
    letra solta, que valem inteiros, exceto a última (quem digita ainda não terminou).
-6. Ordem: mais palavras no nome; do município citado; do tipo da categoria; classe (município e cidade, vila e
+6. Sem nenhum resultado, de novo com cada palavra trocada pela vizinha mais comum ("goiana" -> "goiania").
+7. Ordem: mais palavras no nome; do município citado; do tipo da categoria; classe (município e cidade, vila e
    bairro, rua, rodovia, ponto de interesse); o mais perto (com `near`) ou o nome mais curto.
 """
 from __future__ import annotations
@@ -50,6 +52,35 @@ NAME_NUMBER_WORDS = {
 HOUSE_NUMBER_CONNECTORS = {"n", "no", "nr", "num", "numero"}
 MAX_HOUSE_NUMBER = 99999
 
+# Erros de digitação: quantos aceitar pelo tamanho da palavra digitada (menos de 4 letras, nenhum), como no Organic
+# Maps; a primeira letra é a mesma ou do mesmo som (ou um h mudo no começo). A troca é pela mais perto, e entre as
+# mais perto pela mais comum no pacote.
+SOUND_GROUPS = ["ckqszx", "gj", "iy", "uvw"]
+
+
+def max_errors(length: int) -> int:
+    return 0 if length < 4 else 1 if length < 8 else 2
+
+
+def edit_distance(a: str, b: str) -> int:
+    """Letras a mais, a menos, trocadas, ou duas vizinhas trocadas de lugar (cada uma conta 1)."""
+    prev2: List[int] = []
+    prev = list(range(len(b) + 1))
+    for i in range(1, len(a) + 1):
+        cur = [i] + [0] * len(b)
+        for j in range(1, len(b) + 1):
+            cost = 0 if a[i - 1] == b[j - 1] else 1
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+            if i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                cur[j] = min(cur[j], prev2[j - 2] + 1)
+        prev2, prev = prev, cur
+    return prev[len(b)]
+
+
+def _same_sound(a: str, b: str) -> bool:
+    return a == b or any(a in g and b in g for g in SOUND_GROUPS)
+
+
 CLASS_RANK = {"municipality": 0, "place=city": 0, "place=town": 0, "place=village": 1, "place=suburb": 1,
               "place=neighbourhood": 1, "place=quarter": 1}
 CLS_RANK = {"place": 2, "street": 2, "road": 3, "poi": 4}
@@ -82,6 +113,8 @@ class _Rules:
     """As tabelas de busca do pacote, lidas uma vez."""
 
     def __init__(self, db) -> None:
+        self.db = db
+        self.has_vocab = _has_table(db, "vocab")
         # palavra -> {(alternativa, só a palavra inteira?)}
         self.alternatives: Dict[str, Set[Tuple[str, bool]]] = {}
         self.drop: List[str] = []
@@ -99,6 +132,66 @@ class _Rules:
         self.names = {mid: name for _, (mid, name) in self.municipalities.items()}
         self.districts: Dict[int, str] = (dict(db.execute("SELECT id, name FROM district"))
                                           if _has_table(db, "district") else {})
+        # palavras que a busca entende sem estar nos nomes: nunca são "corrigidas" e servem de candidatas
+        self.known: Set[str] = set(self.categories) | set(self.alternatives) | STOPWORDS | HOUSE_NUMBER_CONNECTORS
+        self.known |= {f for forms in self.alternatives.values() for f, _ in forms} | NAME_NUMBER_WORDS
+        self.known |= {w for phrase in self.drop for w in phrase.split()}
+
+    def correct_words(self, words: Sequence[str], force: bool = False) -> List[str]:
+        return [self.correct(w, n == len(words) - 1, force) for n, w in enumerate(words)]
+
+    def _in_vocab(self, word: str, prefix: bool) -> bool:
+        if word in self.known or (prefix and any(k.startswith(word) for k in self.known)):
+            return True
+        if prefix:
+            return bool(list(self.db.execute("SELECT 1 FROM vocab WHERE word >= ? AND word < ? LIMIT 1",
+                                             (word, word + "{"))))
+        return bool(list(self.db.execute("SELECT 1 FROM vocab WHERE word = ?", (word,))))
+
+    def _candidates(self, word: str, k: int, prefix: bool) -> List[Tuple[str, int]]:
+        """(palavra, registros) do pacote e das tabelas de busca que começam por uma letra do mesmo som, com o tamanho
+        perto o bastante (a palavra digitada pela metade é comparada com o começo das outras)."""
+        letters = next((g for g in SOUND_GROUPS if word[0] in g), word[0])
+        low, high = len(word) - k, len(word) + k
+        out: List[Tuple[str, int]] = []
+        for first in letters:
+            for start in (first, "h" + first):
+                params = (start, start[:-1] + chr(ord(start[-1]) + 1), low + len(start) - 1,
+                          10 ** 6 if prefix else high + len(start) - 1)
+                out += list(self.db.execute("SELECT word, n FROM vocab WHERE word >= ? AND word < ? "
+                                            "AND length(word) BETWEEN ? AND ?", params))
+        out += [(w, 0) for w in self.known if w and _same_sound(w[0], word[0]) and (prefix or low <= len(w) <= high)]
+        return out
+
+    def correct(self, word: str, prefix: bool, force: bool = False) -> str:
+        """A palavra digitada, ou a mais parecida do pacote se ela não existe nele (ver max_errors e SOUND_GROUPS).
+        Com `prefix` (a última palavra, ainda sendo digitada), vale o começo de uma palavra. Com `force` (a busca não
+        achou nada), também a palavra que existe no pacote vira a vizinha mais comum, menos as das tabelas de busca."""
+        k = max_errors(len(word))
+        if not self.has_vocab or k == 0 or not word.isalpha():
+            return word
+        if (word in self.known) if force else self._in_vocab(word, prefix):
+            return word
+        best: Optional[Tuple[int, int, bool, str]] = None
+        for cand, n in self._candidates(word, k, prefix):
+            bare = cand[1:] if cand[0] == "h" and word[0] != "h" else cand
+            lengths = range(max(1, len(word) - 1), len(word) + 2) if prefix else [len(bare)]
+            for length in lengths:
+                piece = bare[:length]
+                if not _same_sound(piece[0], word[0]):
+                    continue
+                d = edit_distance(word, piece)
+                if d <= k:
+                    chosen = cand[:length + (len(cand) - len(bare))] if prefix else cand
+                    if force and (chosen == word or cand == word):
+                        continue
+                    if force:  # a vizinha mais comum, não a mais perto (a mais perto é a própria palavra)
+                        d = 0
+                    # no empate, a palavra inteira (diz o município: "goiana" -> "goiania", não "goiani")
+                    option = (d, -n, chosen != cand, chosen)
+                    if best is None or option < best:
+                        best = option
+        return best[3] if best else word
 
     def options(self, word: str, last: bool) -> List[Tuple[str, bool]]:
         """(termo, inteiro?) de uma palavra digitada: ela mesma e as alternativas. Número e letra solta valem
@@ -112,9 +205,8 @@ def _has_table(db, name: str) -> bool:
     return bool(list(db.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (name,))))
 
 
-def _parse(rules: _Rules, query: str) -> Tuple[List[str], List[str], Optional[int], Set[str]]:
+def _parse(rules: _Rules, folded: str) -> Tuple[List[str], List[str], Optional[int], Set[str]]:
     """(palavras de texto, tipos da categoria, município citado, palavras do nome dele)."""
-    folded = fold(query)
     for prefix in sorted(rules.drop, key=len, reverse=True):
         if folded.startswith(prefix + " "):
             folded = folded[len(prefix) + 1:]
@@ -169,10 +261,11 @@ def _combinations(rules: _Rules, words: Sequence[str], prefix_last: bool = True)
 def match_strings(db, query: str) -> List[str]:
     """As MATCH que a busca faria (para conferir que nenhuma mistura OR e AND)."""
     rules = _Rules(db)
-    text, kinds, _, _ = _parse(rules, query)
+    folded = " ".join(rules.correct_words(fold(query).split()))
+    text, kinds, _, _ = _parse(rules, folded)
     out = _combinations(rules, text) if text else []
     if kinds:
-        out += _combinations(rules, text + [w for w in fold(query).split() if w in rules.categories][:1])
+        out += _combinations(rules, text + [w for w in folded.split() if w in rules.categories][:1])
     return out
 
 
@@ -195,9 +288,28 @@ def _rows(db, sql: str, params: Iterable) -> List[tuple]:
 ITEM_COLUMNS = "i.id, i.cls, i.kind, i.name, i.municipality, i.district, i.lat, i.lng"
 
 
+def corrected(db, query: str) -> str:
+    """A busca dobrada com cada palavra que não está no pacote trocada pela mais parecida (a última, ainda sendo
+    digitada, pelo começo de uma palavra)."""
+    return " ".join(_Rules(db).correct_words(fold(query).split()))
+
+
 def search(db, query: str, near: Optional[Tuple[float, float]] = None, limit: int = 10) -> List[Result]:
     rules = _Rules(db)
-    text, kinds, target, mun_words = _parse(rules, query)
+    words = fold(query).split()
+    # cada palavra que não está no pacote, trocada pela mais parecida (erro de digitação); daqui em diante, só esta
+    folded = " ".join(rules.correct_words(words))
+    found = _search(db, rules, folded, near, limit)
+    if not found and rules.has_vocab:
+        # nada: o erro pode ter dado outra palavra do pacote ("goiana" por "goiania"); de novo, com a vizinha mais comum
+        forced = " ".join(rules.correct_words(words, force=True))
+        if forced != folded:
+            found = _search(db, rules, forced, near, limit)
+    return found
+
+
+def _search(db, rules: _Rules, folded: str, near: Optional[Tuple[float, float]], limit: int) -> List[Result]:
+    text, kinds, target, mun_words = _parse(rules, folded)
     found: Dict[int, tuple] = {}
     for match in (_combinations(rules, text) if text else []):
         for row in _rows(db, f"SELECT {ITEM_COLUMNS} FROM item_text JOIN item i ON i.id = item_text.docid "
@@ -209,7 +321,7 @@ def search(db, query: str, near: Optional[Tuple[float, float]] = None, limit: in
     prefix_last = True
     if house_number is not None:
         text = house_number[1]
-        prefix_last = not fold(query).split()[-1].isdigit()
+        prefix_last = not folded.split()[-1].isdigit()
         for match in _combinations(rules, text, prefix_last):
             for row in _rows(db, f"SELECT {ITEM_COLUMNS} FROM item_text JOIN item i ON i.id = item_text.docid "
                                  f"WHERE item_text MATCH ? AND i.cls = 'street' LIMIT {MAX_ROWS}", [match]):
@@ -218,7 +330,7 @@ def search(db, query: str, near: Optional[Tuple[float, float]] = None, limit: in
         marks = ",".join("?" * len(kinds))
         if text:
             # a categoria também pode ser parte do nome ("Posto Cerrado"): as duas buscas valem
-            category_word = next(w for w in fold(query).split() if w in rules.categories)
+            category_word = next(w for w in folded.split() if w in rules.categories)
             for match in _combinations(rules, text + [category_word]):
                 for row in _rows(db, f"SELECT {ITEM_COLUMNS} FROM item_text JOIN item i ON i.id = item_text.docid "
                                      f"WHERE item_text MATCH ? LIMIT {MAX_ROWS}", [match]):
@@ -238,7 +350,7 @@ def search(db, query: str, near: Optional[Tuple[float, float]] = None, limit: in
             for row in _rows(db, sql + f" LIMIT {MAX_ROWS}", params):
                 found[row[0]] = row
 
-    category_words = [w for w in fold(query).split() if w in rules.categories][:1]
+    category_words = [w for w in folded.split() if w in rules.categories][:1]
     # O nome do município citado é palavra de área: não conta no nome de um registro ("Farmácia Central Goiânia"
     # não passa na frente do bairro Setor Central), a não ser que a busca seja só ele ("goiania", "rio verde").
     only_municipality = bool(text) and not kinds and all(w in mun_words for w in text)

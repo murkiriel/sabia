@@ -24,6 +24,18 @@ o estado da cidade não está instalado (e diz, pela `uf`, qual pacote baixar).
 
 1. **Dobrar o texto** como o gerador: minúsculas, sem acento (decomposição NFKD sem as marcas), tudo o que não é letra
    ou dígito vira espaço.
+   **Erros de digitação** (com a tabela `vocab`; pacote sem ela, pule): cada palavra só de letras que não está em
+   `vocab` nem nas tabelas de busca (`category`, as duas colunas de `word_form`, as palavras de `drop_prefix`, as
+   palavras vazias, `n`/`no`/`nr`/`num`/`numero` e as que levam número no nome) é trocada pela mais parecida. A última
+   palavra, ainda sendo digitada, existe se alguma palavra começa com ela (`word >= ? AND word < ?||'{'`), e a troca
+   é pelo começo de uma palavra (com 1 letra a mais ou a menos que a digitada). Erros aceitos: nenhum até 3 letras, 1
+   de 4 a 7, 2 a partir de 8, contando letra a mais, a menos, trocada e duas vizinhas trocadas de lugar. A primeira
+   letra é igual ou do mesmo som (`c k q s z x`, `g j`, `i y`, `u v w`), e um `h` mudo no começo da candidata não
+   conta ("otel" e "hotel"). As candidatas são as de `vocab` com essa primeira letra (`word >= 'c' AND word < 'd'`,
+   e o mesmo com `h` na frente) e tamanho perto, mais as palavras das tabelas de busca. Vence a de menos erros; no
+   empate, a mais comum (`n`; as das tabelas contam 0) e a palavra inteira antes do começo dela. Daqui em diante, a
+   busca é a do texto trocado. **Sem nenhum resultado**, refaça a busca uma vez com cada palavra (menos as das tabelas
+   de busca) trocada pela vizinha mais comum, mesmo existindo no pacote ("rua 90 goiana" → "goiania").
 2. **Expressão dispensável no começo:** as linhas `drop_prefix` de `word_form` ("cidade de goias" → "goias").
 3. **Município citado:** se a busca **termina** com o nome inteiro (dobrado) de um município da tabela
    `municipality`, ele é o município citado; vale o nome mais longo ("rua 10 aparecida de goiania" é Aparecida de

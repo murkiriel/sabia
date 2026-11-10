@@ -145,6 +145,22 @@ class StateDatabaseTest(unittest.TestCase):
         self.assertEqual(1, c["district"])
         self.assertGreater(c["street_line"], 0)
 
+    def test_vocab(self):
+        """`vocab`: as palavras do índice (nome e área), só letras, com 3 letras ou mais, e em quantos registros cada
+        uma aparece: o dicionário da correção de erros de digitação."""
+        vocab = dict(self.db.execute("SELECT word, n FROM vocab"))
+        self.assertEqual(1, vocab["goias"])
+        self.assertEqual(2, vocab["quatorze"])  # Rua Quatorze e Rua 14 ("14 quatorze catorze")
+        self.assertIn("oeste", vocab)         # da área (o bairro)
+        self.assertIn("goiania", vocab)       # da área (o município)
+        # por registro, não por vez: o município Goiânia tem "goiania" no nome e na área e conta 1
+        in_goiania = self.db.execute("SELECT count(*) FROM item WHERE municipality = ?", (int(GOIANIA.code),))
+        self.assertEqual(in_goiania.fetchone()[0], vocab["goiania"])
+        self.assertNotIn("10", vocab)
+        self.assertNotIn("br", vocab)
+        sql = self.db.execute("SELECT sql FROM sqlite_master WHERE name = 'vocab'").fetchone()[0]
+        self.assertIn("word TEXT PRIMARY KEY", sql)
+
     def test_not_wal(self):
         """Arquivo em modo rollback (o padrão), lido por qualquer SQLite desde o 3.0."""
         header = self.built.go.read_bytes()[:20]
@@ -240,6 +256,11 @@ class BaseDatabaseTest(unittest.TestCase):
     def test_meta(self):
         meta = dict(self.db.execute("SELECT key, value FROM meta"))
         self.assertEqual("base", meta["uf"])
+
+    def test_vocab(self):
+        vocab = dict(self.db.execute("SELECT word, n FROM vocab"))
+        self.assertEqual(1, vocab["anapolis"])
+        self.assertIn("goias", vocab)  # a área: o nome do estado
 
 
 class CompressionTest(unittest.TestCase):

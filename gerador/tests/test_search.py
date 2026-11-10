@@ -48,6 +48,7 @@ def sample():
     osm.street((-16.30, -48.97), 400, "Avenida Goiânia")  # em Anápolis
     osm.node(LAT - 0.031, LNG + 0.04, amenity="bus_station", name="Rodoviária de Campinas")
     osm.street((LAT - 0.16, LNG), 400, "Rua R-16")
+    osm.street((LAT - 0.17, LNG), 400, "Rua Goiana")
     return osm
 
 
@@ -270,6 +271,83 @@ class HouseNumberTest(unittest.TestCase):
         self.assertIsNone(search.house_position(self.db, street, 0))
         lat, lng = search.house_position(self.db, street, 2)
         self.assertLess(geo.dist_m(lat, lng, *RUA_10), 1)
+
+
+class TypoTest(unittest.TestCase):
+    """Erros de digitação (tabela `vocab`): a palavra que não está no pacote é trocada pela mais parecida, com até 1
+    erro de 4 a 7 letras e 2 a partir de 8 (letra a mais, a menos, trocada ou duas trocadas de lugar), a primeira letra
+    igual ou do mesmo som (c/k/q/s/z/x, g/j, i/y, u/v/w, h mudo); palavra conhecida e palavra curta ficam."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.pack = Pack(Path(cls._tmp.name))
+        cls.db = sqlite3.connect(cls.pack.path)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+        cls._tmp.cleanup()
+
+    def first(self, query, **kw):
+        found = search.search(self.db, query, **kw)
+        self.assertTrue(found, f"nada para {query!r}")
+        return found[0]
+
+    def test_two_letters_swapped(self):
+        self.assertEqual("Avenida Goiás", self.first("avenida goais").name)
+
+    def test_one_letter_wrong(self):
+        r = self.first("avenida independensia goiania")
+        self.assertEqual(("Avenida Independência", "highway=primary"), (r.name, r.kind))
+
+    def test_a_misspelled_municipality_still_says_the_municipality(self):
+        r = self.first("rua 90 goianai")
+        self.assertEqual(("Rua 90", "Goiânia"), (r.name, r.municipality))
+
+    def test_the_first_letter_by_the_sound_and_the_search_tables(self):
+        """"kapitao" -> "capitao" (da tabela de abreviações, que casa com "Cap." no nome)."""
+        self.assertEqual("R. Cap. Caldas", self.first("rua kapitao caldas").name)
+
+    def test_a_typo_in_the_word_being_typed(self):
+        """A última palavra ainda está sendo digitada: "indepemd" é o começo de "independencia" com um erro."""
+        self.assertEqual("Avenida Independência", self.first("avenida indepemd").name)
+
+    def test_known_and_short_words_are_kept(self):
+        self.assertEqual("rau 14", search.corrected(self.db, "rau 14"))
+        self.assertEqual("borracharia", search.corrected(self.db, "borracharia"))  # categoria, sem registro
+        self.assertEqual("setor marista", search.corrected(self.db, "Setor Marista"))
+        self.assertEqual("rua 10 n 152", search.corrected(self.db, "rua 10 n 152"))
+        self.assertEqual("avenida goias", search.corrected(self.db, "avenida goais"))
+
+    def test_a_typo_that_is_another_word_of_the_pack(self):
+        """"goiana" existe no pacote (Rua Goiana), mas "rua 90 goiana" não acha nada assim: sem resultado, a busca
+        tenta de novo com cada palavra trocada pela vizinha mais comum ("goiania")."""
+        self.assertEqual("goiana", search.corrected(self.db, "goiana"))
+        r = self.first("rua 90 goiana")
+        self.assertEqual(("Rua 90", "Goiânia"), (r.name, r.municipality))
+        self.assertEqual("Rua Goiana", self.first("rua goiana").name)
+
+    def test_a_misspelled_category_word(self):
+        """"farmacai" vira "farmacia", uma palavra de categoria: a busca segue como busca por tipo."""
+        r = self.first("farmacai central")
+        self.assertEqual(("Farmácia St. Central Goiânia", "amenity=pharmacy"), (r.name, r.kind))
+
+    def test_too_many_errors(self):
+        self.assertEqual("avenida guais", search.corrected(self.db, "avenida guais"))  # 2 erros em 5 letras
+
+    def test_a_pack_without_vocab(self):
+        """Pacote anterior, sem a tabela: sem correção, e a busca segue."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "velho.sqlite"
+            path.write_bytes(self.pack.path.read_bytes())
+            db = sqlite3.connect(path)
+            try:
+                db.execute("DROP TABLE vocab")
+                self.assertEqual([], search.search(db, "avenida goais"))
+                self.assertEqual("Avenida Goiás", search.search(db, "avenida goias")[0].name)
+            finally:
+                db.close()
 
 
 class WhichStreetTest(unittest.TestCase):

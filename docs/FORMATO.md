@@ -21,6 +21,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 | `word_form` | `word`, `form`, `rule` | Abreviações, formas e números (regras de busca) |
 | `category` | `word`, `kinds` | Palavras de categoria: "posto" → `amenity=fuel` |
 | `house_number` | `street`, `rungs` | O número das casas pelo CNEFE do IBGE: a escada de números de cada rua (veja abaixo). Pacote anterior: sem a tabela |
+| `vocab` | `word`, `n` | As palavras do índice (`item_text`, nome e área) só de letras, com 3 letras ou mais, e em quantos registros cada uma aparece: o dicionário da correção de erros de digitação ([`CONSUMO.md`](CONSUMO.md)). Pacote anterior: sem a tabela |
 | `item_source` | `item`, `source` | A origem dos registros cuja posição não foi conferida no mapa: `anp` (posto que só a ANP tem). Só os marcados; o registro que não está aqui veio do mapa. Pacote anterior: sem a tabela |
 
 Índices comuns: `item_cell` em `item(cell)` e `street_line_cell` em `street_line(cell)`.
@@ -108,6 +109,7 @@ Tudo dobrado. Ver as regras de uso em [`CONSUMO.md`](CONSUMO.md).
 | `municipality` | `id`, `name`, `uf`, `lat`, `lng`: todos os municípios do país |
 | `item` | Os municípios (`cls` `place`, `kind` `municipality`) e as rodovias federais (`cls` `road`, um registro por sigla, no município do trecho mais central) |
 | `item_text` | Como no estado; `area` é o nome do estado e a sigla (`goias go`) |
+| `vocab` | Como no estado |
 | `road_state` | `item`, `uf`: os estados de cada rodovia federal |
 | `word_form`, `category` | Como no estado |
 

@@ -13,6 +13,8 @@ Banco do estado (`format_version` 1; nomes em inglês, a convenção do projeto)
     category      word, kinds                                      "posto" -> amenity=fuel
     item_source   item, source                                     origem sem conferência no mapa: "anp" (HP5b1);
                   só os registros marcados (o que não está aqui veio do mapa); um leitor antigo não a lê
+    vocab         word, n                                          as palavras do índice e em quantos registros: a
+                  correção de erros de digitação (search.corrected); um leitor antigo não a lê
     house_number  street, rungs (blob)                              número das casas (SE1, docs/ENDERECOS.md): a
                   escada do CNEFE de cada rua numa linha (a chave é o rowid, sem índice à parte); os degraus em
                   int32 little-endian, de 5 em 5: lado (0 par, 1 ímpar), pedaço, número, lat, lng x 100.000, em
@@ -68,6 +70,7 @@ CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NUL
 CREATE TABLE category(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
 CREATE TABLE item_source(item INTEGER PRIMARY KEY, source TEXT NOT NULL);
 CREATE TABLE house_number(street INTEGER PRIMARY KEY, rungs BLOB NOT NULL);
+CREATE TABLE vocab(word TEXT PRIMARY KEY, n INTEGER NOT NULL);
 """
 STATE_INDEXES = """
 CREATE INDEX item_cell ON item(cell);
@@ -84,6 +87,7 @@ CREATE VIRTUAL TABLE item_text USING fts4(content="", name, area, tokenize=simpl
 CREATE TABLE road_state(item INTEGER NOT NULL, uf TEXT NOT NULL);
 CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NULL);
 CREATE TABLE category(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
+CREATE TABLE vocab(word TEXT PRIMARY KEY, n INTEGER NOT NULL);
 """
 BASE_INDEXES = """
 CREATE INDEX item_cell ON item(cell);
@@ -159,6 +163,21 @@ def _connect(path: Path, tables: str) -> sqlite3.Connection:
     return db
 
 
+def vocab_words(text: str) -> List[str]:
+    """As palavras de um texto do índice que vão para `vocab`: só letras, 3 ou mais (os números nunca se corrigem)."""
+    return [w for w in text.split() if len(w) >= 3 and w.isalpha()]
+
+
+def _vocab(db: sqlite3.Connection, texts: Sequence[Tuple[str, str]]) -> None:
+    """`vocab`: cada palavra do índice (nome e área) e em quantos registros ela aparece (a correção de erros de
+    digitação, em search.corrected, escolhe a mais comum entre as parecidas)."""
+    counts: Dict[str, int] = defaultdict(int)
+    for name, area in texts:
+        for w in set(vocab_words(name)) | set(vocab_words(area)):
+            counts[w] += 1
+    db.executemany("INSERT INTO vocab VALUES(?,?)", sorted(counts.items()))
+
+
 def _search_tables(db: sqlite3.Connection) -> None:
     db.executemany("INSERT INTO word_form VALUES(?,?,?)", search_rules.word_forms())
     db.executemany("INSERT INTO category VALUES(?,?)", search_rules.categories().items())
@@ -192,10 +211,11 @@ def write_state(path: Path, uf: str, items: Sequence[Item], districts: Sequence[
     db.executemany("INSERT INTO item VALUES(?,?,?,?,?,?,?,?,?)",
                    ((n, i.cls, i.kind, i.name, int(i.municipality), i.district_id, _i(i.lat), _i(i.lng),
                      geo.cell(i.lat, i.lng)) for n, i in enumerate(items, 1)))
+    texts = [(index_text(" ".join([i.name, *i.aliases])), fold(f"{names.get(i.municipality, '')} {i.district or ''}"))
+             for i in items]
     db.executemany("INSERT INTO item_text(docid, name, area) VALUES(?,?,?)",
-                   ((n, index_text(" ".join([i.name, *i.aliases])),
-                     fold(f"{names.get(i.municipality, '')} {i.district or ''}"))
-                    for n, i in enumerate(items, 1)))
+                   ((n, name, area) for n, (name, area) in enumerate(texts, 1)))
+    _vocab(db, texts)
     db.executemany("INSERT INTO street_line VALUES(?,?,?)", ((x.item + 1, x.cell, x.coords) for x in lines))
     db.executemany("INSERT INTO item_source VALUES(?,?)", ((n, i.source) for n, i in enumerate(items, 1) if i.source))
     ladders = [(n, sorted((side, seg, number, _i(lat), _i(lng)) for side, seg, number, lat, lng in i.numbers))
@@ -258,6 +278,7 @@ def write_base(path: Path, municipalities: Sequence[Municipality], items_by_stat
         road_states += [(n, u) for u in ufs]
     db.executemany("INSERT INTO item VALUES(?,?,?,?,?,?,?,?,?)", item_rows)
     db.executemany("INSERT INTO item_text(docid, name, area) VALUES(?,?,?)", text_rows)
+    _vocab(db, [(name, area) for _, name, area in text_rows])
     db.executemany("INSERT INTO road_state VALUES(?,?)", road_states)
     _search_tables(db)
     _meta(db, "base", meta)
