@@ -75,7 +75,7 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
         added, repeated = added + a, repeated + r
     print(f"[build] {added} lugares da Overture juntados ({repeated} já estavam registrados)", flush=True)
     # HS6: um marco por km das rodovias federais, pelo SNV do DNIT
-    added, repeated = snv.add(items, snv.markers(snv.load(config.RAW / sources.SNV_FILE)), index, states)
+    added, repeated = snv.add(items, snv.load_markers(config.RAW / sources.SNV_FILE), index, states)
     print(f"[build] {added} marcos de km das rodovias federais juntados ({repeated} repetidos)", flush=True)
     # HS8: os aeródromos públicos e privados da ANAC que o OpenStreetMap não tem
     aerodromes = (anac.load(config.RAW / sources.ANAC_PUBLIC_FILE) + anac.load(config.RAW / sources.ANAC_PRIVATE_FILE))

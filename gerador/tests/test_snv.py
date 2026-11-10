@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sabia import config, geo, snv, sources  # noqa: E402
@@ -28,6 +29,14 @@ def segment(br="060", uf="GO", start=10.0, end=12.0, coords=None, kind="B", surf
 
 def one_per_state():
     return [segment(uf=uf) for uf in config.STATES]
+
+
+def one_marker_per_state():
+    """Os marcos de um trecho curto (km 10 a 10,5) por UF: 27 marcos "BR-060 km 10"."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "snv.json"
+        write_snv(path, [segment(uf=uf, end=10.5) for uf in config.STATES])
+        return snv.markers(snv.load(path))
 
 
 def write_snv(path: Path, features, copies=1):
@@ -160,10 +169,36 @@ class DownloadTest(unittest.TestCase):
         self.assertEqual(("vgeo:vw_snv_rod", "application/json"), (query["typeNames"], query["outputFormat"]))
         self.assertEqual("dt_ini<='2026-10-07' AND dt_fim>='2026-10-07' AND Sigla_Tipo_Trecho='B' "
                          "AND Superficie_Federal<>'PLA'", query["CQL_FILTER"])
-        self.assertEqual("dnit_snv.json", sources.SNV_FILE)
+        self.assertEqual("dnit_snv_marcos.json", sources.SNV_FILE)
 
     def test_the_credit(self):
         self.assertIn("quilômetros das rodovias federais: DNIT (SNV)", config.ATTRIBUTION)
+
+
+class MarkersCopyTest(unittest.TestCase):
+    """A cópia versionada guarda os marcos já calculados (snv.markers), não o SNV inteiro: versão, data e a lista."""
+
+    def test_markers_json_roundtrip(self):
+        points = one_marker_per_state()
+        body = snv.markers_json(points, "202610A", "2026-10-21")
+        self.assertEqual(body, snv.markers_json(points, "202610A", "2026-10-21"))  # sempre os mesmos bytes
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "m.json"
+            path.write_bytes(body)
+            back = snv.load_markers(path)
+            self.assertEqual(("202610A", "2026-10-21"), snv.markers_version(path))
+            with mock.patch.object(snv, "MIN_MARKERS", 27):
+                self.assertIsNone(snv.markers_problem(path))
+            with mock.patch.object(snv, "MIN_MARKERS", 28):
+                self.assertIn("marcos", snv.markers_problem(path))
+            path.write_text(json.dumps({"version": "202610A", "date": "2026-10-21",
+                                        "markers": [["Rua 10", -16.7, -49.2]] * 30}), encoding="utf-8")
+            with mock.patch.object(snv, "MIN_MARKERS", 27):
+                self.assertIn("formato", snv.markers_problem(path))
+            path.write_text("<html>erro</html>", encoding="utf-8")
+            self.assertIn("JSON", snv.markers_problem(path))
+        self.assertEqual([(p.name, p.kind, round(p.lat, 6), round(p.lng, 6)) for p in points],
+                         [(p.name, p.kind, p.lat, p.lng) for p in back])
 
 
 if __name__ == "__main__":

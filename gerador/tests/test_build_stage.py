@@ -16,6 +16,7 @@ from sabia import config, database, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
+from sabia import snv  # noqa: E402
 from tests import test_anac, test_anp, test_cnes, test_cnefe, test_geonames, test_overture, test_snv  # noqa: E402
 from tests.test_prf import unit, write_prf  # noqa: E402
 
@@ -46,9 +47,12 @@ def write_ibge(raw: Path):
         test_overture.place("Loja do Teste", -16.62, -49.15, category="clothing_store"),
         test_overture.place("Posto Cerrado", -16.6805, -49.2502, category="gas_station"),
         test_overture.place("Duvidosa", -16.63, -49.15, confidence=0.3)])
-    # HS6: um trecho da BR-153 de 2 km em Goiânia (do km 500 ao 502) e um acesso (não entra)
-    test_snv.write_snv(raw / "dnit_snv.json", [test_snv.segment(br="153", start=500.0, end=502.0),
-                                               test_snv.segment(br="153", start=0.0, end=3.0, kind="A")])
+    # HS6: um trecho da BR-153 de 2 km em Goiânia (do km 500 ao 502) e um acesso (não entra), já como a cópia dos
+    # marcos (o que sources.snv_roads põe em data/raw/)
+    test_snv.write_snv(raw / "snv_bruto.json", [test_snv.segment(br="153", start=500.0, end=502.0),
+                                                test_snv.segment(br="153", start=0.0, end=3.0, kind="A")])
+    (raw / "dnit_snv_marcos.json").write_bytes(
+        snv.markers_json(snv.markers(snv.load(raw / "snv_bruto.json")), "202607A", "2026-07-28"))
     # HS8: um aeródromo público em Goiânia (entra), um interditado (não) e um privado (entra)
     test_anac.write_list(raw / "anac_aerodromos_publicos.json",
                          [test_anac.aerodrome("Aeroporto do Teste", "SBTT", lat="-16.55", lng="-49.45"),

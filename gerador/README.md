@@ -24,6 +24,7 @@ python generate.py --from validate      # só as travas (e o catálogo) sobre os
 python scripts/publish.py               # confere a geração (não publica nada)
 python scripts/publish.py --release     # sobe os pacotes numa release e grava o catalogo.json na raiz
 python scripts/due.py                   # está na hora de gerar de novo? (só responde; não gera)
+python scripts/update_copies.py         # renova as cópias do IBGE, do SNV e da ANAC (de uma conexão no Brasil)
 python -m unittest discover -s tests -t .
 python -m ruff check .
 python -m mypy .
@@ -43,18 +44,20 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Postos da PRF (ANTT, dados abertos, conjunto "PRF", JSON, ~50 kB) | `antt_postos_prf.json` | As unidades da Polícia Rodoviária Federal nas rodovias concedidas (HS2) |
 | CNES (Ministério da Saúde, CSV nacional num zip, ~56 MB, refeito todo dia) | `cnes_estabelecimentos.zip` | Hospitais, UPAs e prontos-socorros abertos 24 horas (HS3) |
 | Overture Maps, lugares (versão mais nova pela listagem do S3 público; recorte do Brasil, ~190 MB, ~6 min daqui) | `overture_lugares.parquet` | Comércio e serviços que faltam no OpenStreetMap (HS4) |
-| SNV do DNIT (WFS do DNITGeo, a versão em vigor no dia, só eixo principal construído, GeoJSON, ~130 MB) | `dnit_snv.json` | Os quilômetros das rodovias federais (HS6) |
-| Aeródromos públicos e privados da ANAC (dados abertos, JSON, ~0,3 e ~2,5 MB) | `anac_aerodromos_publicos.json`, `anac_aerodromos_privados.json` | Aeroportos e pistas (HS8) |
+| SNV do DNIT (WFS do DNITGeo, a versão em vigor, só eixo principal construído; **cópia versionada** dos marcos já calculados, `gerador/dnit_snv_marcos.json.gz`, 0,9 MB) | `dnit_snv_marcos.json` | Os quilômetros das rodovias federais (HS6) |
+| Aeródromos públicos e privados da ANAC (dados abertos, JSON, ~0,3 e ~2,5 MB; **cópias versionadas** `gerador/anac_aerodromos_*.json.gz`) | `anac_aerodromos_publicos.json`, `anac_aerodromos_privados.json` | Aeroportos e pistas (HS8) |
 | GeoNames, o Brasil e os nomes alternativos do Brasil (CC BY 4.0, ~7 e ~3 MB) | `geonames_lugares.zip`, `geonames_nomes.zip` | Nomes alternativos em português e pontos turísticos (HS9) |
 | Wikidata, consulta SPARQL dos pontos turísticos do Brasil (CC0, JSON) | `wikidata_turismo.json` | Pontos turísticos e os apelidos deles (HS9) |
 | API de revendedores da ANP (sem conta; UF por UF, com 5 s entre pedidos por causa do limite do Cloudflare; ~46 mil postos, ~3 min) | `anp_postos.json` | Postos de combustível em operação, com a posição geográfica (HS10) |
 
-A malha municipal e a lista de municípios **não são baixadas**: a geração usa as cópias versionadas no repositório
-(gzip), baixadas da API do IBGE em 2026-11-10 e conferidas pelo sha256 do conteúdo (`config.IBGE_MESH_COPY_SHA256`,
-`config.IBGE_NAMES_COPY_SHA256`) e pelo país inteiro (JSON, as 27 UFs, pelo menos 5.570 municípios); só então vão
-para `data/raw/`. De 2026-11-04 a 2026-11-09 todas as gerações agendadas caíram no download da malha: a API não
-respondia aos executores do GitHub Actions. Para trocar uma cópia (município novo, limite mudado), o caminho está no
-comentário do `config.py`. A lista tem 5.571 municípios e a malha 5.570: Boa Esperança do Norte (MT), criado em
+A malha municipal, a lista de municípios, o SNV e as listas da ANAC **não são baixadas**: a geração usa as cópias
+versionadas no repositório (gzip), conferidas pelo sha256 do conteúdo (`config.*_COPY_SHA256`) e pela regra de cada
+uma (o país inteiro; o mínimo de marcos e de aeródromos); só então vão para `data/raw/`. De 2026-11-04 a 2026-11-09
+todas as gerações agendadas caíram no download da malha: a API do IBGE não respondia aos executores do GitHub
+Actions; uma sonda de 2026-11-10 mostrou o mesmo no WFS do DNIT e nos dados abertos da ANAC (as outras fontes
+responderam). Do SNV (128 MB) a cópia guarda só os marcos de km já calculados. Para renovar as cópias (município
+novo, versão nova do SNV, aeródromos novos): `python scripts/update_copies.py` de uma conexão que alcance as fontes,
+que confere cada uma e imprime os sha256 para o `config.py`; depois, testes e uma geração local. A lista tem 5.571 municípios e a malha 5.570: Boa Esperança do Norte (MT), criado em
 2025, ainda não tem polígono; os registros do território dele caem nos municípios de onde ele saiu, até a malha
 trazer o polígono.
 

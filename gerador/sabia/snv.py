@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
@@ -146,6 +147,65 @@ def markers(segments: Sequence[Segment]) -> List[Point]:
             lat, lng = _at(s.parts, fraction)
             out.append(Point(f"BR-{s.road} km {km}", KIND, lat, lng))
     return out
+
+
+# A cópia versionada (config.SNV_COPY) guarda os marcos já calculados, não o SNV inteiro (128 MB; os marcos, ~1 MB):
+# desde 2026-11-10 o WFS do DNIT não responde aos executores do GitHub Actions. Menos marcos que isto é cópia
+# quebrada (a versão 202610A dá 81.601).
+MIN_MARKERS = 70000
+_MARKER_NAME = re.compile(r"^BR-\d{3} km \d+$")
+
+
+def markers_json(points: Sequence[Point], version: str, day: str) -> bytes:
+    """Os marcos como vão para a cópia: a versão do SNV, a data de início dela e [nome, lat, lng] de cada um (6
+    casas), sempre os mesmos bytes para os mesmos marcos."""
+    rows = [[p.name, round(p.lat, 6), round(p.lng, 6)] for p in points]
+    return json.dumps({"version": version, "date": day, "markers": rows}, ensure_ascii=False,
+                      separators=(",", ":")).encode("utf-8")
+
+
+def _markers_data(path: Path) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or not isinstance(data.get("markers"), list):
+        raise ValueError("sem a lista markers")
+    return data
+
+
+def markers_version(path: Path) -> Tuple[str, str]:
+    """(versão do SNV, data de início dela) da cópia dos marcos."""
+    return markers_version_of_bytes(path.read_bytes())
+
+
+def markers_version_of_bytes(body: bytes) -> Tuple[str, str]:
+    data = json.loads(body.decode("utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("não é a cópia dos marcos")
+    return str(data.get("version", "")), str(data.get("date", ""))
+
+
+def markers_problem(path: Path) -> Optional[str]:
+    """O que há de errado com a cópia dos marcos, ou None se ela tem a versão e pelo menos MIN_MARKERS marcos."""
+    try:
+        data = _markers_data(path)
+    except (OSError, UnicodeDecodeError) as e:
+        return f"não deu para ler ({e.__class__.__name__})"
+    except json.JSONDecodeError as e:
+        return f"não é JSON ({e.__class__.__name__})"
+    except ValueError:
+        return "não é a cópia dos marcos (sem a lista markers)"
+    if not data.get("version") or not data.get("date"):
+        return "sem a versão do SNV"
+    rows = data["markers"]
+    if any(not (isinstance(r, list) and len(r) == 3 and _MARKER_NAME.match(str(r[0]))) for r in rows):
+        return "marco fora do formato [\"BR-060 km 120\", lat, lng]"
+    if len(rows) < MIN_MARKERS:
+        return f"só {len(rows)} marcos (mínimo {MIN_MARKERS})"
+    return None
+
+
+def load_markers(path: Path) -> List[Point]:
+    """Os marcos da cópia, na ordem dela."""
+    return [Point(name, KIND, float(lat), float(lng)) for name, lat, lng in _markers_data(path)["markers"]]
 
 
 def is_same(item: Item, point: Point) -> bool:

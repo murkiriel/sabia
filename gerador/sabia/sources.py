@@ -50,7 +50,7 @@ LOCALITIES_FILE = "ibge_localidades.zip"
 PRF_FILE = "antt_postos_prf.json"
 CNES_FILE = "cnes_estabelecimentos.zip"
 OVERTURE_FILE = "overture_lugares.parquet"
-SNV_FILE = "dnit_snv.json"
+SNV_FILE = "dnit_snv_marcos.json"
 ANAC_PUBLIC_FILE = "anac_aerodromos_publicos.json"
 ANAC_PRIVATE_FILE = "anac_aerodromos_privados.json"
 GEONAMES_PLACES_FILE = "geonames_lugares.zip"
@@ -240,9 +240,11 @@ def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[st
 
 
 def _versioned_copy(copy: Path, sha256: str, sha256_name: str, name: str, url: str,
-                    problem: Callable[[Path], Optional[str]], label: str) -> Path:
+                    problem: Callable[[Path], Optional[str]], label: str, day: str = "",
+                    extra: Optional[Dict[str, str]] = None) -> Path:
     """data/raw/<name> a partir da cópia versionada `copy` (gzip): o sha256 do conteúdo tem de ser o do config e o
-    conteúdo tem de passar em `problem`. Nada vai para a rede; um data/raw/<name> de outra geração é trocado."""
+    conteúdo tem de passar em `problem`. Nada vai para a rede; um data/raw/<name> de outra geração é trocado. O
+    registro da fonte leva a data `day` (padrão: a das cópias do IBGE) e `extra`."""
     body = gzip.decompress(copy.read_bytes())
     found = hashlib.sha256(body).hexdigest()
     if found != sha256:
@@ -257,8 +259,8 @@ def _versioned_copy(copy: Path, sha256: str, sha256_name: str, name: str, url: s
         updated.unlink()
         raise RuntimeError(f"{label} em {copy.name} não serve ({bad})")
     updated.replace(dest)
-    _write_record(name, {"url": url, "date": config.IBGE_COPIES_DATE, "copy": copy.name})
-    print(f"[ibge] {label}: {copy.name}, sha256 confere")
+    _write_record(name, {"url": url, "date": day or config.IBGE_COPIES_DATE, "copy": copy.name, **(extra or {})})
+    print(f"[cópia] {label}: {copy.name}, sha256 confere")
     return dest
 
 
@@ -329,28 +331,31 @@ def overture_places() -> Path:
 
 
 def snv_roads() -> Path:
-    """data/raw/dnit_snv.json: os trechos de eixo principal do SNV em vigor hoje, do WFS do DNIT, conferidos (HS6;
-    snv.problem). A data da fonte é o começo da versão do SNV (não há Last-Modified), e a versão vai junto."""
+    """data/raw/dnit_snv_marcos.json: os marcos de km das rodovias federais do SNV (HS6), da cópia versionada
+    (config.SNV_COPY, feita por scripts/update_copies.py a partir do WFS do DNIT); a data da fonte é o começo da
+    versão do SNV, e a versão vai junto. Desde 2026-11-10 o DNIT não responde aos executores do Actions."""
     from . import snv
-    path = _checked_download(snv.url(datetime.now(timezone.utc).strftime("%Y-%m-%d")), SNV_FILE, snv.problem,
-                             "a malha do SNV", "dnit", "do DNIT")
-    record = source_record(SNV_FILE)
-    if record is not None and "version" not in record:
-        record["version"], record["date"] = snv.version(path)
-        _write_record(SNV_FILE, record)
-    return path
+    copy_version, copy_date = "", ""
+    try:
+        copy_version, copy_date = snv.markers_version_of_bytes(gzip.decompress(config.SNV_COPY.read_bytes()))
+    except (OSError, ValueError):
+        pass  # a conferência abaixo diz o que há de errado
+    return _versioned_copy(config.SNV_COPY, config.SNV_COPY_SHA256, "SNV_COPY_SHA256", SNV_FILE,
+                           config.SNV_WFS_URL, snv.markers_problem, "os marcos do SNV do DNIT", copy_date,
+                           {"version": copy_version})
 
 
 def anac_aerodromes() -> List[Path]:
-    """data/raw/anac_aerodromos_publicos.json e anac_aerodromos_privados.json: as listas de aeródromos da ANAC,
-    conferidas cada uma com o seu mínimo (HS8; anac.problem)."""
+    """data/raw/anac_aerodromos_publicos.json e anac_aerodromos_privados.json: as listas de aeródromos da ANAC, das
+    cópias versionadas (config.ANAC_*_COPY), conferidas cada uma com o seu mínimo (HS8; anac.problem). Desde
+    2026-11-10 a ANAC não responde aos executores do Actions."""
     from . import anac
-    return [_checked_download(config.ANAC_PUBLIC_URL, ANAC_PUBLIC_FILE,
-                              lambda p: anac.problem(p, anac.MIN_PUBLIC), "a lista de aeródromos públicos", "anac",
-                              "da ANAC"),
-            _checked_download(config.ANAC_PRIVATE_URL, ANAC_PRIVATE_FILE,
-                              lambda p: anac.problem(p, anac.MIN_PRIVATE), "a lista de aeródromos privados", "anac",
-                              "da ANAC")]
+    return [_versioned_copy(config.ANAC_PUBLIC_COPY, config.ANAC_PUBLIC_COPY_SHA256, "ANAC_PUBLIC_COPY_SHA256",
+                            ANAC_PUBLIC_FILE, config.ANAC_PUBLIC_URL, lambda p: anac.problem(p, anac.MIN_PUBLIC),
+                            "a lista de aeródromos públicos da ANAC", config.ANAC_COPIES_DATE),
+            _versioned_copy(config.ANAC_PRIVATE_COPY, config.ANAC_PRIVATE_COPY_SHA256, "ANAC_PRIVATE_COPY_SHA256",
+                            ANAC_PRIVATE_FILE, config.ANAC_PRIVATE_URL, lambda p: anac.problem(p, anac.MIN_PRIVATE),
+                            "a lista de aeródromos privados da ANAC", config.ANAC_COPIES_DATE)]
 
 
 def geonames_files() -> List[Path]:

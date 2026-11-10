@@ -507,80 +507,100 @@ class CnesDownloadTest(unittest.TestCase):
         self.assertIn(sources.CNES_FILE, sources.CHECKED_FILES)
 
 
-class SnvDownloadTest(unittest.TestCase):
-    """O SNV do DNIT (HS6), conferido como os arquivos do IBGE, com a versão no registro da geração."""
+class SnvCopyTest(unittest.TestCase):
+    """O SNV do DNIT (HS6) vem da cópia versionada dos marcos de km (gzip), conferida pelo sha256 e pelo mínimo de
+    marcos, com a versão do SNV no registro da geração; nada vai para a rede. Desde 2026-11-10: o WFS do DNIT não
+    responde aos executores do GitHub Actions (timeout), e o SNV inteiro tem 128 MB (os marcos, ~1 MB)."""
 
     def setUp(self):
         from sabia import snv
-        from tests.test_snv import one_per_state, write_snv
+        from tests.test_snv import one_marker_per_state
 
         self._tmp = tempfile.TemporaryDirectory()
-        self.raw = Path(self._tmp.name)
-        good = self.raw / "bom.json"
-        write_snv(good, one_per_state())
-        self.server = FakeServer().__enter__()
-        self.server.files["/snv.json"] = good.read_bytes()
+        tmp = Path(self._tmp.name)
+        self.raw = tmp / "raw"
+        self.copy = tmp / "dnit_snv_marcos.json.gz"
+        self.body = snv.markers_json(one_marker_per_state(), "202607A", "2026-07-28")
         self._patches = [mock.patch.object(config, "RAW", self.raw),
-                         mock.patch.object(snv, "url", lambda day: self.server.url("/snv.json")),
-                         mock.patch.object(snv, "MIN_SEGMENTS", 27),
-                         mock.patch.object(sources, "RETRY_DELAY", 0),
-                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+                         mock.patch.object(config, "SNV_COPY", self.copy),
+                         mock.patch.object(config, "SNV_COPY_SHA256", write_copy(self.copy, self.body)),
+                         mock.patch.object(snv, "MIN_MARKERS", 27),
+                         mock.patch.object(sources.net, "download", side_effect=AssertionError("foi à rede"))]
         for p in self._patches:
             p.start()
 
     def tearDown(self):
         for p in self._patches:
             p.stop()
-        self.server.__exit__(None, None, None)
         self._tmp.cleanup()
 
-    def test_a_good_file_is_saved_with_the_snv_version(self):
+    def test_the_copy_is_used_with_the_snv_version(self):
+        from sabia import snv
+
         path = sources.snv_roads()
         self.assertEqual(self.raw / sources.SNV_FILE, path)
+        self.assertEqual(self.body, path.read_bytes())
         record = sources.source_record(sources.SNV_FILE)
         self.assertEqual(("202607A", "2026-07-28"), (record["version"], record["date"]))
+        self.assertEqual(self.copy.name, record["copy"])
         self.assertIn(sources.SNV_FILE, sources.CHECKED_FILES)
+        self.assertEqual(27, len(snv.load_markers(path)))
 
-    def test_an_error_page_is_not_saved_and_the_error_names_the_dnit(self):
-        self.server.files["/snv.json"] = ERROR_PAGE
+    def test_a_changed_copy_is_refused(self):
+        from sabia import snv
+
+        write_copy(self.copy, snv.markers_json([], "202607A", "2026-07-28"))
         with self.assertRaises(RuntimeError) as ctx:
             sources.snv_roads()
-        self.assertFalse((self.raw / sources.SNV_FILE).exists())
-        self.assertIn("DNIT", str(ctx.exception))
+        self.assertIn("SNV_COPY_SHA256", str(ctx.exception))
+
+    def test_too_few_markers_is_refused(self):
+        from sabia import snv
+
+        body = snv.markers_json([], "202607A", "2026-07-28")
+        with mock.patch.object(config, "SNV_COPY_SHA256", write_copy(self.copy, body)), \
+                self.assertRaises(RuntimeError) as ctx:
+            sources.snv_roads()
+        self.assertIn("marcos", str(ctx.exception))
 
 
-class AnacDownloadTest(unittest.TestCase):
-    """As duas listas de aeródromos da ANAC (HS8), conferidas como os arquivos do IBGE."""
+class AnacCopyTest(unittest.TestCase):
+    """As duas listas de aeródromos da ANAC (HS8) vêm das cópias versionadas (gzip), conferidas pelo sha256 e cada
+    uma pelo seu mínimo; nada vai para a rede (desde 2026-11-10: a ANAC não responde aos executores do Actions)."""
 
     def setUp(self):
         from sabia import anac
         from tests.test_anac import aerodrome, write_list
 
         self._tmp = tempfile.TemporaryDirectory()
-        self.raw = Path(self._tmp.name)
-        good = self.raw / "bom.json"
+        tmp = Path(self._tmp.name)
+        self.raw = tmp / "raw"
+        good = tmp / "bom.json"
         write_list(good, [aerodrome()], copies=3)
-        self.server = FakeServer().__enter__()
-        self.server.files["/publicos.json"] = good.read_bytes()
-        self.server.files["/privados.json"] = good.read_bytes()
+        self.body = good.read_bytes()
+        self.public, self.private = tmp / "publicos.json.gz", tmp / "privados.json.gz"
+        sha = write_copy(self.public, self.body)
+        write_copy(self.private, self.body)
         self._patches = [mock.patch.object(config, "RAW", self.raw),
-                         mock.patch.object(config, "ANAC_PUBLIC_URL", self.server.url("/publicos.json")),
-                         mock.patch.object(config, "ANAC_PRIVATE_URL", self.server.url("/privados.json")),
+                         mock.patch.object(config, "ANAC_PUBLIC_COPY", self.public),
+                         mock.patch.object(config, "ANAC_PUBLIC_COPY_SHA256", sha),
+                         mock.patch.object(config, "ANAC_PRIVATE_COPY", self.private),
+                         mock.patch.object(config, "ANAC_PRIVATE_COPY_SHA256", sha),
                          mock.patch.object(anac, "MIN_PUBLIC", 3), mock.patch.object(anac, "MIN_PRIVATE", 3),
-                         mock.patch.object(sources, "RETRY_DELAY", 0),
-                         mock.patch.object(sources, "IBGE_RETRY_DELAY", 0)]
+                         mock.patch.object(sources.net, "download", side_effect=AssertionError("foi à rede"))]
         for p in self._patches:
             p.start()
 
     def tearDown(self):
         for p in self._patches:
             p.stop()
-        self.server.__exit__(None, None, None)
         self._tmp.cleanup()
 
-    def test_both_lists_are_saved(self):
-        self.assertEqual([self.raw / sources.ANAC_PUBLIC_FILE, self.raw / sources.ANAC_PRIVATE_FILE],
-                         sources.anac_aerodromes())
+    def test_both_lists_come_from_the_copies(self):
+        paths = sources.anac_aerodromes()
+        self.assertEqual([self.raw / sources.ANAC_PUBLIC_FILE, self.raw / sources.ANAC_PRIVATE_FILE], paths)
+        self.assertEqual([self.body, self.body], [p.read_bytes() for p in paths])
+        self.assertEqual(config.ANAC_COPIES_DATE, sources.source_record(sources.ANAC_PUBLIC_FILE)["date"])
 
     def test_each_list_has_its_own_minimum(self):
         from sabia import anac
@@ -589,7 +609,20 @@ class AnacDownloadTest(unittest.TestCase):
             sources.anac_aerodromes()
         self.assertTrue((self.raw / sources.ANAC_PUBLIC_FILE).exists())
         self.assertFalse((self.raw / sources.ANAC_PRIVATE_FILE).exists())
-        self.assertIn("ANAC", str(ctx.exception))
+        self.assertIn("aeródromos privados", str(ctx.exception))
+
+
+class RealCopiesTest(unittest.TestCase):
+    """As cópias do SNV e da ANAC no repositório: o sha256 do config e o mínimo de cada uma."""
+
+    def test_the_versioned_copies_pass(self):
+        from sabia import snv
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(config, "RAW", Path(tmp)):
+            markers = snv.load_markers(sources.snv_roads())
+            public, private = sources.anac_aerodromes()
+            self.assertTrue(public.exists() and private.exists())
+        self.assertGreaterEqual(len(markers), snv.MIN_MARKERS)
 
 
 class GeonamesDownloadTest(unittest.TestCase):

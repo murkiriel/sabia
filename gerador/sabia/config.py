@@ -70,6 +70,16 @@ IBGE_MESH_COPY_SHA256 = "4bae3d8d9c8dd5ec520c94a35dadf0d273f5f661a63cf0b5e95e9ef
 IBGE_NAMES_COPY = GENERATOR_DIR / "ibge_municipios.json.gz"
 IBGE_NAMES_COPY_SHA256 = "77bf68d9f5b1237522bcd28c39b8857725ebb25e913a5b13aa4a740ce67041b4"
 IBGE_COPIES_DATE = "2026-11-10"
+# Na sonda de 2026-11-10, o WFS do DNIT e os dados abertos da ANAC também não responderam ao Actions: o SNV vem da
+# cópia dos marcos de km já calculados (o SNV 202610A inteiro tem 128 MB; os 81.601 marcos, 0,9 MB em gzip) e a ANAC
+# das cópias das duas listas. Todas as cópias se renovam com scripts/update_copies.py (sabia/copies.py).
+SNV_COPY = GENERATOR_DIR / "dnit_snv_marcos.json.gz"
+SNV_COPY_SHA256 = "7f7ba1819f706d6991376308d3a4685d95c1e6ec8ed2d744bda95e98ac8fb468"
+ANAC_PUBLIC_COPY = GENERATOR_DIR / "anac_aerodromos_publicos.json.gz"
+ANAC_PUBLIC_COPY_SHA256 = "76ac00e3dddc0e813e769b287127a589e4aaba2b918e9c41c91bc916615bd1bd"
+ANAC_PRIVATE_COPY = GENERATOR_DIR / "anac_aerodromos_privados.json.gz"
+ANAC_PRIVATE_COPY_SHA256 = "dc2babf91b43794ace1bdbd1d2f9c8537d606b77469979ac7c5ae49d2a0d7957"
+ANAC_COPIES_DATE = "2026-11-10"
 # Menos que isso na malha ou na lista é resposta quebrada da API, não o Brasil.
 MIN_MUNICIPALITIES = 5570
 
