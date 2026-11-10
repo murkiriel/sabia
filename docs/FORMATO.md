@@ -67,9 +67,11 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
 FTS4 sem conteúdo (`content=""`), tokenizador `simple`, prefixos de 2 e 3 letras (`prefix="2,3"`). O texto já vem
 **dobrado**: sem acento, minúsculo, pontuação virando espaço ("Avenida T-63" → `avenida t 63`).
 
-- `name`: o nome dobrado (e os nomes alternativos do GeoNames e do Wikidata, quando há: "bonfim" acha Silvânia; o
-  nome mostrado continua o de `item.name`), com cada número também na outra forma logo depois ("Rua 14" → `rua 14 quatorze catorze`;
-  "Rua Quatorze" → `rua quatorze 14`).
+- `name`: o nome dobrado (e os nomes alternativos, quando há, até 5: os do OpenStreetMap, `alt_name`, `short_name`,
+  `old_name`, `official_name`, `loc_name`, `name:pt`, `reg_name` e `nickname`, de todos os trechos de uma rua, "eixao"
+  acha o Eixo Rodoviário; os do mesmo lugar repetido que virou um registro; e os do GeoNames e do Wikidata,
+  "bonfim" acha Silvânia; o nome mostrado continua o de `item.name`), com cada número também na outra forma logo
+  depois ("Rua 14" → `rua 14 quatorze catorze`; "Rua Quatorze" → `rua quatorze 14`).
 - `area`: o município e o bairro, dobrados (`goiania setor oeste`).
 
 Como a tabela não guarda o texto, leia o nome em `item.name` (`JOIN item ON item.id = item_text.docid`).

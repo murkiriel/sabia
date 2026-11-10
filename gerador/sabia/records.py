@@ -20,7 +20,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from . import config, geo, kinds
 from .municipalities import MunicipalityIndex
-from .osm_reader import OsmData, Way
+from .osm_reader import MAX_ALIASES, OsmData, Way
 from .sources import Municipality
 from .text import fold
 
@@ -134,6 +134,19 @@ def split_refs(ref: str) -> List[str]:
     return list(dict.fromkeys(out))
 
 
+def _merged_aliases(name: str, groups: Iterable[Sequence[str]]) -> List[str]:
+    """Os nomes alternativos de várias fontes (os trechos de uma rua, a sede do município), sem repetir o nome nem
+    outro alternativo, até osm_reader.MAX_ALIASES."""
+    seen = {fold(name)}
+    out: List[str] = []
+    for group in groups:
+        for alias in group:
+            if fold(alias) not in seen and len(out) < MAX_ALIASES:
+                seen.add(fold(alias))
+                out.append(alias)
+    return out
+
+
 def _seat(municipality: Municipality, places: Iterable[Tuple[int, object]]) -> Optional[int]:
     """Índice do lugar do OpenStreetMap que é a sede: mesmo nome dobrado, o de maior posto (cidade antes de vila)."""
     target = fold(municipality.name)
@@ -167,17 +180,18 @@ def build(data: OsmData, municipalities: Sequence[Municipality], states: Sequenc
         else:  # município sem polígono: a sede é procurada no estado inteiro
             seat = _seat(m, ((i, data.places[i]) for i, code in enumerate(place_mun)
                              if code is not None and code[:2] == m.code[:2]))
-        people = 0
+        people, seat_aliases = 0, []
         if seat is not None:
             used.add(seat)
             lat, lng = data.places[seat].lat, data.places[seat].lng
             people = data.places[seat].population
+            seat_aliases = _merged_aliases(m.name, [data.places[seat].aliases])
         elif m.geometry is not None:
             point = m.geometry.representative_point()
             lat, lng = point.y, point.x
         else:
             continue  # sem polígono e sem ponto: a trava de cobertura aponta
-        items.append(Item("place", "municipality", m.name, m.code, lat, lng, population=people))
+        items.append(Item("place", "municipality", m.name, m.code, lat, lng, population=people, aliases=seat_aliases))
     node_names: Dict[Tuple[str, str], List[Tuple[float, float]]] = defaultdict(list)
     for i, place in enumerate(data.places):
         code = place_mun[i]
@@ -191,7 +205,7 @@ def build(data: OsmData, municipalities: Sequence[Municipality], states: Sequenc
                                    for lat, lng in node_names.get((code, fold(place.name)), ())):
             continue
         items.append(Item("place", f"place={place.kind}", place.name, code, place.lat, place.lng,
-                          population=place.population))
+                          population=place.population, aliases=list(place.aliases)))
 
     # ruas e rodovias: o município é o do meio da via
     mids = [geo.midpoint(w.lats, w.lngs) for w in data.ways]
@@ -219,7 +233,8 @@ def build(data: OsmData, municipalities: Sequence[Municipality], states: Sequenc
             local = all(w.highway in kinds.LOCAL_HIGHWAYS for w in ways)
             items.append(Item("street", f"highway={highway}", name, code, lat, lng,
                               ways=[idxs[g] for g in group], extent_m=round(extent, 1),
-                              suspect_long=local and extent > LONG_LOCAL_STREET_M))
+                              suspect_long=local and extent > LONG_LOCAL_STREET_M,
+                              aliases=_merged_aliases(name, (w.aliases for w in ways))))
     for (code, ref), idxs in roads.items():
         lat, lng = _central_point([data.ways[i] for i in idxs])
         items.append(Item("road", "road", ref, code, lat, lng, ways=list(idxs)))
@@ -228,7 +243,7 @@ def build(data: OsmData, municipalities: Sequence[Municipality], states: Sequenc
     poi_mun = index.locate([p.lat for p in data.pois], [p.lng for p in data.pois])
     for poi, code in zip(data.pois, poi_mun):
         if code is not None:
-            items.append(Item("poi", poi.kind, poi.name, code, poi.lat, poi.lng))
+            items.append(Item("poi", poi.kind, poi.name, code, poi.lat, poi.lng, aliases=list(poi.aliases)))
 
     out: Dict[str, List[Item]] = {uf: [] for uf in sorted(wanted)}
     for item in sorted(items, key=order_key):

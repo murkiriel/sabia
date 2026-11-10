@@ -15,12 +15,16 @@ import shapely.wkb
 from shapely.geometry.base import BaseGeometry
 
 from . import config, kinds
+from .text import fold
 
 BBox = Tuple[float, float, float, float]  # lat mín, lng mín, lat máx, lng máx
 
 # Só objetos com uma destas chaves chegam ao Python. Tudo o que entra sem nome é posto, pedágio e parecidos
 # (amenity, shop, barrier) ou rodovia (ref).
 KEYS = ("name", "amenity", "shop", "barrier", "ref")
+# Nomes alternativos (item 9): só para o índice de busca do registro; cada tag pode trazer vários, separados por ";".
+ALIAS_TAGS = ("alt_name", "short_name", "old_name", "official_name", "loc_name", "name:pt", "reg_name", "nickname")
+MAX_ALIASES = 5
 
 
 @dataclass
@@ -31,6 +35,7 @@ class Place:
     lng: float
     from_area: bool = False
     population: int = 0
+    aliases: Tuple[str, ...] = ()
 
 
 @dataclass
@@ -39,6 +44,7 @@ class Poi:
     kind: str          # "amenity=fuel"
     lat: float
     lng: float
+    aliases: Tuple[str, ...] = ()
 
 
 @dataclass
@@ -50,6 +56,7 @@ class Way:
     nodes: array       # ids dos nós ('q')
     lats: array        # ('d')
     lngs: array
+    aliases: Tuple[str, ...] = ()
 
 
 @dataclass
@@ -82,6 +89,22 @@ def _named(tags) -> str:
     return (tags.get("name") or "").strip()
 
 
+def aliases(tags, name: str) -> Tuple[str, ...]:
+    """Os nomes alternativos das ALIAS_TAGS que servem para buscar (escrita latina, com letra, 3 caracteres ou mais),
+    sem repetir o nome nem outro alternativo (sem acento e minúsculo), até MAX_ALIASES."""
+    seen = {fold(name)}
+    out: List[str] = []
+    for tag in ALIAS_TAGS:
+        for value in (tags.get(tag) or "").split(";"):
+            value = value.strip()
+            if (len(value) < 3 or not any(c.isalpha() for c in value) or any(ord(c) >= 0x250 for c in value)
+                    or fold(value) in seen):
+                continue
+            seen.add(fold(value))
+            out.append(value)
+    return tuple(out[:MAX_ALIASES])
+
+
 def population(value: str) -> int:
     """A tag population ("1536097", "1.536.097", "12 000"); 0 quando não é um número."""
     digits = value.replace(".", "").replace(",", "").replace(" ", "").strip()
@@ -104,7 +127,8 @@ class _Reader:
         name = _named(tags)
         place = tags.get("place")
         if place in kinds.PLACE_KINDS and name:
-            self.data.places.append(Place(name, place, lat, lng, population=population(tags.get("population") or "")))
+            self.data.places.append(Place(name, place, lat, lng, population=population(tags.get("population") or ""),
+                                          aliases=aliases(tags, name)))
             return
         self._poi(tags, name, lat, lng)
 
@@ -116,7 +140,7 @@ class _Reader:
             name = (tags.get("brand") or "").strip()
         elif not name:
             return
-        self.data.pois.append(Poi(name, kind, lat, lng))
+        self.data.pois.append(Poi(name, kind, lat, lng, aliases(tags, name)))
 
     def way(self, w) -> None:
         tags = w.tags
@@ -142,7 +166,7 @@ class _Reader:
             if _inside(self.bbox, lat, lng):
                 self._poi(tags, name, lat, lng)
         elif len(lats) >= 2 and _crosses(self.bbox, lats, lngs):
-            self.data.ways.append(Way(name, highway, ref, ids, lats, lngs))
+            self.data.ways.append(Way(name, highway, ref, ids, lats, lngs, aliases(tags, name) if name else ()))
 
     def area(self, a) -> None:
         tags = a.tags
@@ -167,7 +191,8 @@ class _Reader:
             self.data.district_areas.append(DistrictArea(name, district, geometry))
         if place in kinds.PLACE_KINDS:
             self.data.places.append(Place(name, place, lat, lng, from_area=True,
-                                          population=population(tags.get("population") or "")))
+                                          population=population(tags.get("population") or ""),
+                                          aliases=aliases(tags, name)))
         elif is_poi:
             self._poi(tags, name, lat, lng)
 
