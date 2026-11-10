@@ -3,12 +3,19 @@ pontos de interesse (pontos, vias e relações) e as áreas de lugar.
 
 O pyosmium guarda a coordenada de cada nó (config.NODE_STORAGE) e monta as áreas das relações multipolygon. Um filtro
 de chaves no C++ descarta antes do Python o que não interessa (prédios sem nome, endereços, árvores, postes).
+
+Duas passadas (`write_reduced`): a primeira grava uma cópia reduzida do extrato, só com os objetos que a leitura
+usa (os com uma chave de KEYS, as relações de área) e os nós e vias que eles referenciam; a segunda lê a cópia. Sem
+isso, o pyosmium guardava a coordenada de todos os nós do Brasil (~7 GB, no executor do Actions de 7,8 GB) para usar
+a de poucos.
 """
 from __future__ import annotations
 
+import tempfile
 from array import array
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
 import osmium
 import shapely.wkb
@@ -22,6 +29,8 @@ BBox = Tuple[float, float, float, float]  # lat mín, lng mín, lat máx, lng m�
 # Só objetos com uma destas chaves chegam ao Python. Tudo o que entra sem nome é posto, pedágio e parecidos
 # (amenity, shop, barrier) ou rodovia (ref).
 KEYS = ("name", "amenity", "shop", "barrier", "ref")
+# As relações que viram área (as do AreaManager do pyosmium); as outras (linhas de ônibus, rotas) a leitura não usa.
+AREA_RELATIONS = ("multipolygon", "boundary")
 # Nomes alternativos (item 9): só para o índice de busca do registro; cada tag pode trazer vários, separados por ";".
 ALIAS_TAGS = ("alt_name", "short_name", "old_name", "official_name", "loc_name", "name:pt", "reg_name", "nickname")
 MAX_ALIASES = 5
@@ -197,8 +206,29 @@ class _Reader:
             self._poi(tags, name, lat, lng)
 
 
-def read(path, bbox: Optional[BBox] = None) -> OsmData:
-    """Lê o extrato. Com `bbox`, guarda só o que cai dentro (o meio da via, o centro da área)."""
+def write_reduced(src: Union[str, Path], dest: Path) -> None:
+    """Grava em `dest` a cópia reduzida de `src`: os objetos com uma chave de KEYS (sem as relações que não são de
+    área) e, sem mudar nada, os nós, vias e membros que eles referenciam."""
+    with osmium.BackReferenceWriter(str(dest), ref_src=str(src), overwrite=True, remove_tags=False) as writer:
+        for obj in osmium.FileProcessor(str(src)).with_filter(osmium.filter.KeyFilter(*KEYS)):
+            if isinstance(obj, osmium.osm.Relation) and obj.tags.get("type") not in AREA_RELATIONS:
+                continue
+            writer.add(obj)
+
+
+def read(path: Union[str, Path], bbox: Optional[BBox] = None, reduce: bool = True,
+         workdir: Optional[Path] = None) -> OsmData:
+    """Lê o extrato. Com `bbox`, guarda só o que cai dentro (o meio da via, o centro da área). Com `reduce`, lê a cópia
+    reduzida (gravada e apagada numa pasta temporária em `workdir`): o mesmo resultado, com bem menos memória."""
+    if not reduce:
+        return _read(path, bbox)
+    with tempfile.TemporaryDirectory(dir=workdir) as tmp:
+        reduced = Path(tmp) / "reduzido.osm.pbf"
+        write_reduced(path, reduced)
+        return _read(reduced, bbox)
+
+
+def _read(path: Union[str, Path], bbox: Optional[BBox]) -> OsmData:
     reader = _Reader(bbox)
     fp = (osmium.FileProcessor(str(path))
           .with_locations(config.NODE_STORAGE)

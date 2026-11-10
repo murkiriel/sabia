@@ -50,7 +50,7 @@ def run(states: List[str], osm: Dict[str, object], today: Optional[str] = None) 
     index = MunicipalityIndex([m for m in municipalities if m.uf in states])
     bbox = index.bbox()
     print(f"[build] lendo {osm['path']} ({len(states)} estados)...", flush=True)
-    data = osm_reader.read(str(osm["path"]), bbox)
+    data = osm_reader.read(str(osm["path"]), bbox, workdir=config.BUILD)
     print(f"[build] lido em {time.time() - t0:.0f} s: {len(data.places)} lugares, {len(data.pois)} pontos de "
           f"interesse, {len(data.ways)} vias, {len(data.district_areas)} áreas de bairro", flush=True)
     items = records.build(data, municipalities, states)
