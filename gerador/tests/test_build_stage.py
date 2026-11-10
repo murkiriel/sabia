@@ -13,7 +13,7 @@ from unittest import mock
 from shapely.geometry import mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sabia import config, database, sqlite_old  # noqa: E402
+from sabia import config, database, memory, sqlite_old  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
@@ -186,6 +186,17 @@ class BuildStageTest(StageFixture):
                              list(db.execute("SELECT name FROM item WHERE kind = 'amenity=fuel' ORDER BY name")))
             self.assertIn("ANP", dict(db.execute("SELECT key, value FROM meta"))["attribution"])
         self.assertEqual(back.stat().st_size, go["bytes_db"])
+
+    def test_every_step_logs_the_memory_after_giving_back_the_free_one(self):
+        out = io.StringIO()
+        with mock.patch.object(memory, "usage", return_value="memória 1.0 GB, pico 2.0 GB"), \
+                mock.patch.object(memory, "release") as release, redirect_stdout(out):
+            self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        lines = [ln for ln in out.getvalue().splitlines() if ln.startswith("[build]")]
+        self.assertGreater(len(lines), 10)
+        for line in lines:
+            self.assertTrue(line.endswith("(memória 1.0 GB, pico 2.0 GB)"), line)
+        self.assertGreaterEqual(release.call_count, len(lines))
 
     def test_base_has_every_municipality_even_for_a_partial_run(self):
         packages = self.script.build_stage(["DF"], self.osm, today="2026-09-30")
