@@ -161,19 +161,11 @@ class ScheduledGenerationTest(unittest.TestCase):
         """O corpo de uma resposta ruim do IBGE (data/raw/*.invalido) vai para o artefato: a falha diz a causa."""
         self.assertIn("gerador/data/raw/*.invalido", self.step("Guardar logs e medições"))
 
-    def test_ibge_files_are_cached_by_month(self):
-        """Os arquivos do IBGE mudam raramente: guardados no cache do Actions por mês, um dia ruim do IBGE no meio do
-        mês não impede a geração. Salvos mesmo se a geração falhar depois, e só se existirem."""
-        restore = self.generate.find("- uses: actions/cache/restore@")
-        save = self.generate.find("- uses: actions/cache/save@")
-        self.assertGreater(restore, 0)
-        self.assertLess(restore, self.generate.find("python generate.py"))
-        self.assertGreater(save, self.generate.find("python generate.py"))
-        self.assertEqual(2, self.generate.count("key: ibge-${{ steps.month.outputs.month }}"))
-        self.assertEqual(2, self.generate.count("path: gerador/data/raw/ibge_*.json"))
-        self.assertIn("hashFiles('gerador/data/raw/ibge_*.json') != ''", self.generate[save:save + 300])
-        self.assertIn("if: always() && steps.ibge.outputs.cache-hit != 'true'", self.generate[save:save + 300])
-        self.assertNotRegex(self.generate, r"(?m)^\s+restore-keys:")
+    def test_no_ibge_cache(self):
+        """A malha e a lista de municípios vêm das cópias versionadas (2026-11-10): o cache por mês do Actions, que
+        guardava as duas, saiu (em novembro não havia cache e a API não respondia ao executor)."""
+        self.assertNotIn("actions/cache", self.generate)
+        self.assertNotIn("ibge_*.json", self.generate)
 
     def test_one_generation_at_a_time(self):
         self.assertRegex(self.text, r"(?m)^concurrency:\n  group: generate\n  cancel-in-progress: false")

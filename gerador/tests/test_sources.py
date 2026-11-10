@@ -1,5 +1,6 @@
 """As fontes: o extrato do OpenStreetMap (baixado ou local) e os municípios do IBGE (malha e nomes)."""
 import contextlib
+import gzip
 import hashlib
 import io
 import json
@@ -141,8 +142,106 @@ def fake_names(exclude=(), extra=()):
     return json.dumps(rows, ensure_ascii=False).encode()
 
 
+def mesh_download() -> Path:
+    """O download conferido de um arquivo do IBGE (o mesmo das outras fontes), pela URL da malha: a malha e a lista de
+    municípios vêm das cópias versionadas desde 2026-11-10, mas a conferência do download segue valendo para trocar
+    as cópias e para as outras fontes."""
+    return sources._checked_download(config.IBGE_MESH_URL, sources.MESH_FILE, sources.mesh_problem,
+                                     "a malha municipal")
+
+
+def names_download() -> Path:
+    return sources._checked_download(config.IBGE_NAMES_URL, sources.NAMES_FILE, sources.names_problem,
+                                     "a lista de municípios")
+
+
+def write_copy(path: Path, body: bytes) -> str:
+    """Grava `body` como cópia versionada (gzip) e devolve o sha256 do conteúdo."""
+    path.write_bytes(gzip.compress(body, mtime=0))
+    return hashlib.sha256(body).hexdigest()
+
+
+class VersionedIbgeTest(unittest.TestCase):
+    """A malha municipal e a lista de municípios vêm das cópias versionadas no repositório (gzip), conferidas pelo
+    sha256 do conteúdo e pelo país inteiro, sem nenhum acesso à rede.
+
+    De 2026-11-04 a 2026-11-09 todas as gerações agendadas caíram no download da malha: a API do IBGE não respondia
+    aos executores do GitHub Actions (timeout nas 5 tentativas). Da mesma URL, numa conexão no Brasil, ~1,6 s."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        tmp = Path(self._tmp.name)
+        self.raw = tmp / "raw"
+        self.mesh_copy = tmp / "ibge_malha_municipios.json.gz"
+        self.names_copy = tmp / "ibge_municipios.json.gz"
+        self.mesh_body, self.names_body = fake_mesh(), fake_names()
+        self._patches = [mock.patch.object(config, "RAW", self.raw),
+                         mock.patch.object(config, "IBGE_MESH_COPY", self.mesh_copy),
+                         mock.patch.object(config, "IBGE_MESH_COPY_SHA256", write_copy(self.mesh_copy, self.mesh_body)),
+                         mock.patch.object(config, "IBGE_NAMES_COPY", self.names_copy),
+                         mock.patch.object(config, "IBGE_NAMES_COPY_SHA256",
+                                           write_copy(self.names_copy, self.names_body)),
+                         mock.patch.object(config, "MIN_MUNICIPALITIES", 27),
+                         mock.patch.object(sources.net, "download", side_effect=AssertionError("foi à rede"))]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patches:
+            p.stop()
+        self._tmp.cleanup()
+
+    def test_the_copies_are_used_without_the_network(self):
+        mesh, names = sources.municipal_mesh(), sources.municipality_names()
+        self.assertEqual((self.raw / sources.MESH_FILE, self.raw / sources.NAMES_FILE), (mesh, names))
+        self.assertEqual(self.mesh_body, mesh.read_bytes())
+        self.assertEqual(self.names_body, names.read_bytes())
+
+    def test_a_changed_copy_is_refused(self):
+        """Uma malha nova muda o município de muitos registros: trocar a cópia é feito à mão, com o sha256 novo."""
+        write_copy(self.mesh_copy, fake_mesh(extra=("5101837",)))
+        with self.assertRaises(RuntimeError) as ctx:
+            sources.municipal_mesh()
+        self.assertIn("IBGE_MESH_COPY_SHA256", str(ctx.exception))
+        self.assertFalse((self.raw / sources.MESH_FILE).exists())
+
+    def test_a_copy_without_the_whole_country_is_refused(self):
+        body = fake_names(exclude=("52",))
+        with mock.patch.object(config, "IBGE_NAMES_COPY_SHA256", write_copy(self.names_copy, body)):
+            with self.assertRaises(RuntimeError) as ctx:
+                sources.municipality_names()
+        self.assertIn("GO", str(ctx.exception))
+        self.assertFalse((self.raw / sources.NAMES_FILE).exists())
+
+    def test_a_stale_file_in_raw_is_replaced_by_the_copy(self):
+        """data/raw/ pode ter uma malha de outra geração (cache, geração local): vale sempre a cópia versionada."""
+        self.raw.mkdir(parents=True)
+        (self.raw / sources.MESH_FILE).write_bytes(fake_mesh(extra=("5101837",)))
+        self.assertEqual(self.mesh_body, sources.municipal_mesh().read_bytes())
+
+    def test_the_record_has_the_date_of_the_copy(self):
+        sources.municipal_mesh()
+        sources.municipality_names()
+        mesh, names = sources.source_record(sources.MESH_FILE), sources.source_record(sources.NAMES_FILE)
+        self.assertEqual((config.IBGE_MESH_URL, config.IBGE_COPIES_DATE), (mesh["url"], mesh["date"]))
+        self.assertEqual((config.IBGE_NAMES_URL, config.IBGE_COPIES_DATE), (names["url"], names["date"]))
+        self.assertEqual(self.mesh_copy.name, mesh["copy"])
+
+
+class RealIbgeCopiesTest(unittest.TestCase):
+    """As cópias do repositório: o sha256 do config e o país inteiro (5.570 polígonos, 5.571 municípios)."""
+
+    def test_the_versioned_copies_pass(self):
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(config, "RAW", Path(tmp)):
+            mesh, names = sources.municipal_mesh(), sources.municipality_names()
+            municipalities = sources.load_municipalities(mesh, names)
+        self.assertGreaterEqual(len(municipalities), config.MIN_MUNICIPALITIES)
+        self.assertGreaterEqual(sum(1 for m in municipalities if m.geometry is not None), 5570)
+
+
 class IbgeTest(unittest.TestCase):
-    """Malha municipal e nomes: só grava (e só aceita do cache) um arquivo com o país inteiro."""
+    """O download conferido dos arquivos do IBGE: só grava (e só aceita do cache) um arquivo com o país inteiro.
+    Exercitado pelas URLs da malha e dos nomes (até 2026-11-10 eram baixados assim; hoje, as outras fontes)."""
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
@@ -169,8 +268,8 @@ class IbgeTest(unittest.TestCase):
         return sum(1 for p, _ in self.server.requests if p == path)
 
     def test_good_files_are_saved(self):
-        mesh = sources.municipal_mesh()
-        names = sources.municipality_names()
+        mesh = mesh_download()
+        names = names_download()
         self.assertEqual(27, len(json.loads(mesh.read_text(encoding="utf-8"))["features"]))
         self.assertEqual(27, len(json.loads(names.read_text(encoding="utf-8"))))
 
@@ -178,7 +277,7 @@ class IbgeTest(unittest.TestCase):
         """Nunca com o nome final; o corpo de cada tentativa fica em <nome>.<tentativa>.invalido, para o artefato."""
         self.server.files["/malha"] = ERROR_PAGE
         with self.assertRaises(RuntimeError):
-            sources.municipal_mesh()
+            mesh_download()
         self.assertFalse((self.raw / sources.MESH_FILE).exists())
         self.assertEqual([f"{sources.MESH_FILE}.{i}.invalido" for i in (1, 2, 3)],
                          sorted(p.name for p in self.raw.iterdir()))
@@ -187,7 +286,7 @@ class IbgeTest(unittest.TestCase):
     def test_invalid_content_is_retried_until_valid(self):
         answers = [ERROR_PAGE, fake_mesh()]
         self.server.files["/malha"] = lambda: answers.pop(0) if len(answers) > 1 else answers[0]
-        mesh = sources.municipal_mesh()
+        mesh = mesh_download()
         self.assertEqual(2, self.downloads("/malha"))
         self.assertIsNone(sources.mesh_problem(mesh))
         self.assertEqual(ERROR_PAGE, (self.raw / f"{sources.MESH_FILE}.1.invalido").read_bytes())
@@ -195,7 +294,7 @@ class IbgeTest(unittest.TestCase):
     def test_gives_up_after_three_attempts(self):
         self.server.files["/nomes"] = b""
         with self.assertRaises(RuntimeError) as ctx:
-            sources.municipality_names()
+            names_download()
         self.assertEqual(3, self.downloads("/nomes"))
         self.assertIn("3 tentativas", str(ctx.exception))
 
@@ -204,7 +303,7 @@ class IbgeTest(unittest.TestCase):
         self.server.content_type["/malha"] = "text/html; charset=utf-8"
         out = io.StringIO()
         with contextlib.redirect_stdout(out), self.assertRaises(RuntimeError):
-            sources.municipal_mesh()
+            mesh_download()
         log = out.getvalue()
         self.assertIn("HTTP 200", log)
         self.assertIn("text/html; charset=utf-8", log)
@@ -216,7 +315,7 @@ class IbgeTest(unittest.TestCase):
         self.server.files["/malha"] = ERROR_PAGE
         with mock.patch.object(sources, "IBGE_RETRY_DELAY", 7), mock.patch.object(sources.time, "sleep") as sleep:
             with self.assertRaises(RuntimeError):
-                sources.municipal_mesh()
+                mesh_download()
         self.assertEqual([mock.call(7), mock.call(14)], sleep.call_args_list)
 
     def test_bad_status_is_retried_and_logged(self):
@@ -224,7 +323,7 @@ class IbgeTest(unittest.TestCase):
         self.server.codes["/malha"] = [403]
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            mesh = sources.municipal_mesh()
+            mesh = mesh_download()
         self.assertIsNone(sources.mesh_problem(mesh))
         self.assertEqual(2, self.downloads("/malha"))
         self.assertIn("HTTP 403", out.getvalue())
@@ -232,27 +331,27 @@ class IbgeTest(unittest.TestCase):
     def test_mesh_missing_a_state_is_rejected(self):
         self.server.files["/malha"] = fake_mesh(exclude=("53",))
         with self.assertRaises(RuntimeError) as ctx:
-            sources.municipal_mesh()
+            mesh_download()
         self.assertIn("DF", str(ctx.exception))
 
     def test_too_few_municipalities_is_rejected(self):
         with mock.patch.object(config, "MIN_MUNICIPALITIES", 5570):
             with self.assertRaises(RuntimeError) as ctx:
-                sources.municipality_names()
+                names_download()
         self.assertIn("5570", str(ctx.exception))
 
     def test_names_missing_a_state_is_rejected(self):
         self.server.files["/nomes"] = fake_names(exclude=("52",))
         with self.assertRaises(RuntimeError) as ctx:
-            sources.municipality_names()
+            names_download()
         self.assertIn("GO", str(ctx.exception))
 
     def test_valid_cache_does_not_download_and_invalid_is_replaced(self):
-        sources.municipal_mesh()
-        sources.municipal_mesh()
+        mesh_download()
+        mesh_download()
         self.assertEqual(1, self.downloads("/malha"))
         (self.raw / "ibge_malha_municipios.json").write_text("<html>erro</html>", encoding="utf-8")
-        sources.municipal_mesh()
+        mesh_download()
         self.assertEqual(2, self.downloads("/malha"))
         kept = self.raw / "ibge_malha_municipios.json.guardado.invalido"
         self.assertEqual("<html>erro</html>", kept.read_text(encoding="utf-8"))
@@ -261,8 +360,8 @@ class IbgeTest(unittest.TestCase):
         """O nome e a UF vêm da lista de nomes (a fonte dos municípios); o polígono, da malha. Município novo que a
         malha ainda não tem fica sem polígono, e nunca some."""
         self.server.files["/nomes"] = fake_names(extra=("5101837",))
-        found = {m.code: m for m in sources.load_municipalities(sources.municipal_mesh(),
-                                                                 sources.municipality_names())}
+        found = {m.code: m for m in sources.load_municipalities(mesh_download(),
+                                                                 names_download())}
         self.assertEqual(28, len(found))
         go = found["5200001"]
         self.assertEqual(("Município GO", "GO"), (go.name, go.uf))
@@ -296,28 +395,28 @@ class SourceRecordTest(unittest.TestCase):
 
     def test_the_date_comes_from_last_modified(self):
         self.server.headers["/malha"] = {"Last-Modified": "Fri, 28 Aug 2026 18:27:01 GMT"}
-        sources.municipal_mesh()
+        mesh_download()
         record = sources.source_record(sources.MESH_FILE)
         self.assertEqual("2026-08-28", record["date"])
         self.assertEqual(self.server.url("/malha"), record["url"])
         self.assertIn("downloaded_at", record)
 
     def test_without_last_modified_the_date_is_the_download_day(self):
-        sources.municipal_mesh()
+        mesh_download()
         record = sources.source_record(sources.MESH_FILE)
         self.assertEqual(record["downloaded_at"][:10], record["date"])
 
     def test_a_cached_file_keeps_its_record_and_a_file_never_downloaded_has_none(self):
         self.server.headers["/malha"] = {"Last-Modified": "Fri, 28 Aug 2026 18:27:01 GMT"}
-        sources.municipal_mesh()
+        mesh_download()
         self.server.headers["/malha"] = {"Last-Modified": "Sat, 29 Aug 2026 18:27:01 GMT"}
-        sources.municipal_mesh()
+        mesh_download()
         self.assertEqual("2026-08-28", sources.source_record(sources.MESH_FILE)["date"])
         self.assertIsNone(sources.source_record("nao_existe.json"))
 
     def test_the_records_of_a_generation(self):
         self.server.headers["/malha"] = {"Last-Modified": "Fri, 28 Aug 2026 18:27:01 GMT"}
-        sources.municipal_mesh()
+        mesh_download()
         osm = {"url": "local", "timestamp": "2026-09-29T20:22:51Z", "path": "x", "md5": "ab", "size": 1}
         found = sources.generation_sources(osm)
         self.assertEqual({"url": "local", "date": "2026-09-29T20:22:51Z"}, found["openstreetmap"])

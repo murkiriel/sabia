@@ -7,7 +7,9 @@ e, se mudaram, a versão nova é baixada uma vez; se não mudaram, o arquivo vei
 
 Para gerar aqui sem baixar o Brasil, `local_extract` usa um extrato já baixado (a data vem do cabeçalho do .pbf).
 
-Os arquivos do IBGE ficam guardados em data/raw/ e são conferidos sempre, no cache e no download: uma API pode
+A malha municipal e a lista de municípios do IBGE vêm de cópias versionadas no repositório (gzip, sha256 no config),
+sem rede: desde 2026-11-04 a API do IBGE não responde aos executores do GitHub Actions. Os outros arquivos ficam
+guardados em data/raw/ e são conferidos sempre, no cache e no download: uma API pode
 responder 200 com uma página de erro, e sem a conferência ela quebraria todas as gerações seguintes. Uma resposta
 ruim é tentada de novo, com espera, e registrada no log (status, tipo, tamanho, começo do corpo); o corpo fica em
 data/raw/ como `.invalido`, para o artefato do workflow. As fontes novas são baixadas e conferidas do mesmo jeito.
@@ -17,6 +19,8 @@ A data de cada fonte conferida (o Last-Modified do site; sem ele, o dia do downl
 """
 from __future__ import annotations
 
+import gzip
+import hashlib
 import json
 import time
 from dataclasses import dataclass
@@ -235,14 +239,41 @@ def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[st
     raise RuntimeError(f"{label} {origin} veio inválida nas {IBGE_ATTEMPTS} tentativas ({failure}): {url}")
 
 
+def _versioned_copy(copy: Path, sha256: str, sha256_name: str, name: str, url: str,
+                    problem: Callable[[Path], Optional[str]], label: str) -> Path:
+    """data/raw/<name> a partir da cópia versionada `copy` (gzip): o sha256 do conteúdo tem de ser o do config e o
+    conteúdo tem de passar em `problem`. Nada vai para a rede; um data/raw/<name> de outra geração é trocado."""
+    body = gzip.decompress(copy.read_bytes())
+    found = hashlib.sha256(body).hexdigest()
+    if found != sha256:
+        raise RuntimeError(f"{copy.name} mudou (sha256 {found}, o config espera {sha256}): uma cópia nova muda o "
+                           f"município de registros; confira e atualize o {sha256_name}")
+    config.RAW.mkdir(parents=True, exist_ok=True)
+    dest = config.RAW / name
+    updated = dest.with_name(name + ".novo")
+    updated.write_bytes(body)
+    bad = problem(updated)
+    if bad is not None:
+        updated.unlink()
+        raise RuntimeError(f"{label} em {copy.name} não serve ({bad})")
+    updated.replace(dest)
+    _write_record(name, {"url": url, "date": config.IBGE_COPIES_DATE, "copy": copy.name})
+    print(f"[ibge] {label}: {copy.name}, sha256 confere")
+    return dest
+
+
 def municipal_mesh() -> Path:
-    """data/raw/ibge_malha_municipios.json: o polígono de cada município (código em `codarea`)."""
-    return _checked_download(config.IBGE_MESH_URL, MESH_FILE, mesh_problem, "a malha municipal")
+    """data/raw/ibge_malha_municipios.json: o polígono de cada município (código em `codarea`), da cópia versionada
+    (config.IBGE_MESH_COPY). Desde 2026-11-04 a API do IBGE não responde aos executores do Actions."""
+    return _versioned_copy(config.IBGE_MESH_COPY, config.IBGE_MESH_COPY_SHA256, "IBGE_MESH_COPY_SHA256", MESH_FILE,
+                           config.IBGE_MESH_URL, mesh_problem, "a malha municipal")
 
 
 def municipality_names() -> Path:
-    """data/raw/ibge_municipios.json: código, nome oficial e UF de cada município."""
-    return _checked_download(config.IBGE_NAMES_URL, NAMES_FILE, names_problem, "a lista de municípios")
+    """data/raw/ibge_municipios.json: código, nome oficial e UF de cada município, da cópia versionada
+    (config.IBGE_NAMES_COPY)."""
+    return _versioned_copy(config.IBGE_NAMES_COPY, config.IBGE_NAMES_COPY_SHA256, "IBGE_NAMES_COPY_SHA256",
+                           NAMES_FILE, config.IBGE_NAMES_URL, names_problem, "a lista de municípios")
 
 
 def ibge_localities() -> Path:

@@ -37,8 +37,8 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Fonte | Arquivo em `data/raw/` | Para quê |
 |---|---|---|
 | Extrato do Brasil no OpenStreetMap (openstreetmap.fr, ~2,3 GB) | `brazil-latest.osm.pbf` | Todos os registros. Só é baixado de novo quando há versão nova (md5 publicado ao lado); o md5 é conferido |
-| Malha municipal do IBGE (API de malhas v3, qualidade intermediária, ~12 MB) | `ibge_malha_municipios.json` | O município de cada registro, por polígono |
-| Municípios do IBGE (API de localidades, ~2 MB) | `ibge_municipios.json` | Nome oficial e UF de cada município; é a lista dos municípios |
+| Malha municipal do IBGE (API de malhas v3, qualidade intermediária, ~12 MB; **cópia versionada** `gerador/ibge_malha_municipios.json.gz`) | `ibge_malha_municipios.json` | O município de cada registro, por polígono |
+| Municípios do IBGE (API de localidades, ~2 MB; **cópia versionada** `gerador/ibge_municipios.json.gz`) | `ibge_municipios.json` | Nome oficial e UF de cada município; é a lista dos municípios |
 | Base de Localidades do IBGE (2022, GeoPackage num zip, ~6 MB) | `ibge_localidades.zip` | Povoados, vilas, aldeias, quilombos e outras localidades (HS1) |
 | Postos da PRF (ANTT, dados abertos, conjunto "PRF", JSON, ~50 kB) | `antt_postos_prf.json` | As unidades da Polícia Rodoviária Federal nas rodovias concedidas (HS2) |
 | CNES (Ministério da Saúde, CSV nacional num zip, ~56 MB, refeito todo dia) | `cnes_estabelecimentos.zip` | Hospitais, UPAs e prontos-socorros abertos 24 horas (HS3) |
@@ -49,15 +49,21 @@ cabeçalho do arquivo, e o catálogo sai com `osm.url` = `local` (não serve par
 | Wikidata, consulta SPARQL dos pontos turísticos do Brasil (CC0, JSON) | `wikidata_turismo.json` | Pontos turísticos e os apelidos deles (HS9) |
 | API de revendedores da ANP (sem conta; UF por UF, com 5 s entre pedidos por causa do limite do Cloudflare; ~46 mil postos, ~3 min) | `anp_postos.json` | Postos de combustível em operação, com a posição geográfica (HS10) |
 
-Os dois arquivos do IBGE são conferidos no cache e no download (JSON, as 27 UFs, pelo menos 5.570 municípios): uma
-API pode responder 200 com uma página de erro. Com resposta ruim (status de erro ou conteúdo que não passa), são até
-3 tentativas, com 60 s e depois 120 s de espera; cada uma vai para o log com o status, o `Content-Type`, o tamanho e
-o começo do corpo, e o corpo fica em `data/raw/<arquivo>.<tentativa>.invalido` (o workflow leva esses arquivos para o
-artefato). No Actions, os dois arquivos ficam no cache, um por mês. A lista de nomes tinha 5.571 municípios em
-2026-10-05 e a malha 5.570: Boa Esperança do Norte (MT), criado em 2025, ainda não tem polígono; os registros do
-território dele caem nos municípios de onde ele saiu, até a malha trazer o polígono.
+A malha municipal e a lista de municípios **não são baixadas**: a geração usa as cópias versionadas no repositório
+(gzip), baixadas da API do IBGE em 2026-11-10 e conferidas pelo sha256 do conteúdo (`config.IBGE_MESH_COPY_SHA256`,
+`config.IBGE_NAMES_COPY_SHA256`) e pelo país inteiro (JSON, as 27 UFs, pelo menos 5.570 municípios); só então vão
+para `data/raw/`. De 2026-11-04 a 2026-11-09 todas as gerações agendadas caíram no download da malha: a API não
+respondia aos executores do GitHub Actions. Para trocar uma cópia (município novo, limite mudado), o caminho está no
+comentário do `config.py`. A lista tem 5.571 municípios e a malha 5.570: Boa Esperança do Norte (MT), criado em
+2025, ainda não tem polígono; os registros do território dele caem nos municípios de onde ele saiu, até a malha
+trazer o polígono.
 
-As fontes novas (Parte 9 da pesquisa) são baixadas e conferidas do mesmo jeito que os arquivos do IBGE, cada uma com
+As outras fontes são conferidas no cache e no download: uma API pode responder 200 com uma página de erro. Com
+resposta ruim (status de erro ou conteúdo que não passa), são até 3 tentativas, com 60 s e depois 120 s de espera;
+cada uma vai para o log com o status, o `Content-Type`, o tamanho e o começo do corpo, e o corpo fica em
+`data/raw/<arquivo>.<tentativa>.invalido` (o workflow leva esses arquivos para o artefato).
+
+As fontes novas (Parte 9 da pesquisa) são baixadas e conferidas desse jeito, cada uma com
 a sua regra (formato, colunas, um mínimo de registros). A data de cada fonte conferida (o `Last-Modified` do site;
 sem ele, o dia do download) fica ao lado do arquivo, em `data/raw/<arquivo>.fonte.json`; a etapa sources junta todas,
 com a data do extrato, em `data/build/fontes.json`, e o registro da geração (`data/dist/geracao.json`) as leva em

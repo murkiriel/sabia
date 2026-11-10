@@ -59,6 +59,17 @@ IBGE_MESH_URL = ("https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR"
 # Nomes oficiais e UF de cada município (API de localidades do IBGE). É a lista dos municípios: em 2026-10-05 tinha
 # 5.571, um a mais que a malha (Boa Esperança do Norte, MT, criado em 2025, ainda sem polígono).
 IBGE_NAMES_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado"
+# A geração usa só as cópias da malha e da lista versionadas no repositório (gzip), baixadas das URLs acima em
+# 2026-11-10 (malha: 5.570 municípios, 12.307.459 bytes; lista: 5.571, 2.372.050 bytes). Até então a geração baixava
+# as duas; de 2026-11-04 em diante a API não respondia aos executores do GitHub Actions. Para trocar uma cópia
+# (município novo, limite mudado): baixar da URL, conferir com `sources.mesh_problem` ou `sources.names_problem`,
+# gravar com `gzip -9 -n` e atualizar o sha256 do conteúdo (descompactado) e a data; o município de registros pode
+# mudar.
+IBGE_MESH_COPY = GENERATOR_DIR / "ibge_malha_municipios.json.gz"
+IBGE_MESH_COPY_SHA256 = "4bae3d8d9c8dd5ec520c94a35dadf0d273f5f661a63cf0b5e95e9efdb3047588"
+IBGE_NAMES_COPY = GENERATOR_DIR / "ibge_municipios.json.gz"
+IBGE_NAMES_COPY_SHA256 = "77bf68d9f5b1237522bcd28c39b8857725ebb25e913a5b13aa4a740ce67041b4"
+IBGE_COPIES_DATE = "2026-11-10"
 # Menos que isso na malha ou na lista é resposta quebrada da API, não o Brasil.
 MIN_MUNICIPALITIES = 5570
 

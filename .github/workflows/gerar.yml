@@ -100,19 +100,6 @@ jobs:
           df -h / /mnt 2>/dev/null || df -h /
           echo "CPUs: $(nproc)"
 
-      # Os arquivos do IBGE (malha e nomes) mudam raramente: ficam no cache do Actions, um por mês. O gerador confere
-      # o que veio do cache e baixa de novo se não passar. Sem restore-keys de propósito: com eles, um arquivo velho
-      # passaria de mês em mês sem nunca ser baixado de novo.
-      - name: Mês, para o cache do IBGE
-        id: month
-        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/cache/restore@v6
-        id: ibge
-        with:
-          path: gerador/data/raw/ibge_*.json
-          key: ibge-${{ steps.month.outputs.month }}
-
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -135,14 +122,6 @@ jobs:
               sleep 30
             done ) > data/recursos.log 2>&1 &
           /usr/bin/time -v -o data/tempo.txt python generate.py
-
-      # Salvo mesmo se a geração falhar depois das fontes; só os arquivos que passaram na conferência têm o nome
-      # final (os ruins ficam como .invalido).
-      - uses: actions/cache/save@v6
-        if: always() && steps.ibge.outputs.cache-hit != 'true' && hashFiles('gerador/data/raw/ibge_*.json') != ''
-        with:
-          path: gerador/data/raw/ibge_*.json
-          key: ibge-${{ steps.month.outputs.month }}
 
       - name: Guardar logs e medições
         if: always()
