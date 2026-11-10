@@ -20,10 +20,10 @@ import io
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Dict, Iterator, List, Sequence, Tuple
+from typing import Dict, Iterable, Iterator, List, Mapping, Sequence, Tuple
 
 from . import geo
-from .records import Item
+from .records import Item, Ladder, Rung
 from .search_rules import ABBREVIATIONS
 from .text import fold, title_pt
 
@@ -32,7 +32,6 @@ GAP_M = 300.0
 MATCH_M = 2_000.0
 BUCKETS = 64
 
-Rung = Tuple[int, int, int, float, float]   # (lado 0 par / 1 ímpar, pedaço, número, lat, lng)
 _TYPES = {"rua", "avenida", "alameda", "travessa", "rodovia", "estrada", "praca", "largo", "viela", "via", "beco",
           "viaduto", "ponte"}
 
@@ -96,11 +95,11 @@ def _rows(path: Path) -> Iterator[Tuple[str, str, int, float, float]]:
                     yield r["COD_MUNICIPIO"], name, number, lat, lng
 
 
-def read(path: Path) -> Dict[Tuple[str, str], Tuple[str, List[Rung]]]:
+def read(path: Path) -> Dict[Tuple[str, str], Tuple[str, Ladder]]:
     """{(município, nome dobrado): (nome em caixa de título, degraus)} do arquivo de uma UF. O arquivo não vem agrupado
     por município (as linhas se intercalam): uma passada as separa em BUCKETS arquivos temporários pelo código do
-    município, e cada um é agrupado na memória e vira escada; só os degraus ficam."""
-    out: Dict[Tuple[str, str], Tuple[str, List[Rung]]] = {}
+    município, e cada um é agrupado na memória e vira escada; só os degraus ficam, compactos (records.Ladder)."""
+    out: Dict[Tuple[str, str], Tuple[str, Ladder]] = {}
     with tempfile.TemporaryDirectory() as tmp:
         files = [open(Path(tmp) / f"{n}.tsv", "w", encoding="utf-8", newline="") for n in range(BUCKETS)]
         try:
@@ -116,11 +115,11 @@ def read(path: Path) -> Dict[Tuple[str, str], Tuple[str, List[Rung]]]:
                     m, nm, num, la, lo = line.rstrip("\n").split("\t")
                     streets.setdefault((m, fold(nm)), (nm, []))[1].append((int(num), float(la), float(lo)))
             for key, (name, addrs) in streets.items():
-                out[key] = (title_pt(name), ladder(addrs))
+                out[key] = (title_pt(name), Ladder(ladder(addrs)))
     return out
 
 
-def add(items: Dict[str, List[Item]], groups: Dict[Tuple[str, str], Tuple[str, List[Rung]]],
+def add(items: Dict[str, List[Item]], groups: Mapping[Tuple[str, str], Tuple[str, Iterable[Rung]]],
         uf: str) -> Tuple[int, int]:
     """Põe cada pedaço da escada na rua do pacote de mesmo nome no município mais perto dele (a até MATCH_M); o pedaço
     sem rua fica de fora. Na rua, o pedaço ganha o próximo número livre do seu lado (duas grafias do CNEFE na mesma rua
@@ -130,7 +129,8 @@ def add(items: Dict[str, List[Item]], groups: Dict[Tuple[str, str], Tuple[str, L
         if it.cls == "street":
             by_name.setdefault((it.municipality, core(it.name)), []).append(it)
     matched = unmatched = 0
-    for (mun, key), (_name, rungs) in sorted(groups.items()):
+    for (mun, key), (_name, compact) in sorted(groups.items()):
+        rungs = list(compact)
         candidates = by_name.get((mun, core(key)), [])
         for side, seg in sorted({(r[0], r[1]) for r in rungs}):
             piece = [r for r in rungs if (r[0], r[1]) == (side, seg)]

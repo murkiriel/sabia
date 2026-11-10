@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sabia import cnefe  # noqa: E402
+from sabia import records  # noqa: E402
 from sabia.records import Item  # noqa: E402
 from tests.osm_builder import east  # noqa: E402
 
@@ -81,6 +82,8 @@ class Read(unittest.TestCase):
             got = cnefe.read(_zip(Path(tmp) / "52_GO.zip", rows))
         self.assertEqual([1, 21, 41, 61, 81, 101, 119], [r[2] for r in got[(GYN, "rua 9")][1]])
         self.assertEqual([1, 21, 41, 61, 81, 101, 119], [r[2] for r in got[("5201108", "rua 1")][1]])
+        # compacto desde a leitura (SP: 1,1 milhão de pedaços)
+        self.assertIsInstance(got[(GYN, "rua 9")][1], records.Ladder)
 
 
 class Add(unittest.TestCase):

@@ -27,7 +27,7 @@ ALIAS_TAGS = ("alt_name", "short_name", "old_name", "official_name", "loc_name",
 MAX_ALIASES = 5
 
 
-@dataclass
+@dataclass(slots=True)
 class Place:
     name: str
     kind: str          # o valor de place= ("suburb")
@@ -38,7 +38,7 @@ class Place:
     aliases: Tuple[str, ...] = ()
 
 
-@dataclass
+@dataclass(slots=True)
 class Poi:
     name: str
     kind: str          # "amenity=fuel"
@@ -47,7 +47,7 @@ class Poi:
     aliases: Tuple[str, ...] = ()
 
 
-@dataclass
+@dataclass(slots=True)
 class Way:
     """Uma via com nome (rua) ou com `ref` (rodovia), com os nós e as coordenadas."""
     name: str
@@ -59,7 +59,7 @@ class Way:
     aliases: Tuple[str, ...] = ()
 
 
-@dataclass
+@dataclass(slots=True)
 class DistrictArea:
     """Um bairro desenhado como área (relação ou via fechada)."""
     name: str

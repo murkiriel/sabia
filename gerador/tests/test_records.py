@@ -26,6 +26,40 @@ def named(items, name, cls=None):
     return [i for i in items if i.name == name and (cls is None or i.cls == cls)]
 
 
+class MemoryTest(unittest.TestCase):
+    """O Brasil tem ~3 milhões de registros, ~3 milhões de vias e ~11 milhões de degraus do CNEFE na memória ao mesmo
+    tempo: cada objeto sem __dict__ e os degraus num array (a geração passava de 15 GB com o swap no Actions)."""
+
+    def test_the_many_objects_have_no_dict(self):
+        from array import array
+        objects = [records.Item("street", "highway=residential", "Rua 1", "5208707", -16.7, -49.2),
+                   osm_reader.Way("Rua 1", "residential", "", array("q", [1, 2]), array("d", [0, 1]),
+                                  array("d", [0, 1])),
+                   osm_reader.Poi("Posto", "amenity=fuel", -16.7, -49.2),
+                   osm_reader.Place("Centro", "suburb", -16.7, -49.2)]
+        for obj in objects:
+            self.assertFalse(hasattr(obj, "__dict__"), type(obj).__name__)
+
+    def test_ladder_keeps_the_rungs_compact_and_the_same(self):
+        rungs = [(k % 2, k // 100, 2 * k + 1, -16.7 - k * 1e-6, -49.2 + k * 1e-6) for k in range(10_000)]
+        ladder = records.Ladder(rungs)
+        self.assertEqual(rungs, list(ladder))
+        self.assertEqual(10_000, len(ladder))
+        self.assertTrue(all(type(v) is int for r in ladder for v in r[:3]))
+        self.assertLess(sys.getsizeof(ladder), 10_000 * 48)  # ~240 bytes por degrau numa lista de tuplas
+        ladder.extend([(1, 7, 99, -16.0, -49.0)])
+        self.assertEqual((1, 7, 99, -16.0, -49.0), list(ladder)[-1])
+
+    def test_an_empty_ladder_is_empty_and_each_item_has_its_own(self):
+        a = records.Item("street", "highway=residential", "Rua 1", "5208707", -16.7, -49.2)
+        b = records.Item("street", "highway=residential", "Rua 2", "5208707", -16.7, -49.2)
+        self.assertFalse(a.numbers)
+        self.assertEqual([], a.numbers)
+        a.numbers.extend([(0, 0, 2, -16.7, -49.2)])
+        self.assertEqual([], b.numbers)
+        self.assertEqual([(0, 0, 2, -16.7, -49.2)], a.numbers)
+
+
 class TextTest(unittest.TestCase):
     def test_fold(self):
         self.assertEqual("avenida goias", text.fold("Avenida Goiás"))

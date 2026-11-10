@@ -14,9 +14,11 @@ from __future__ import annotations
 
 import math
 import re
+import sys
+from array import array
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
 
 from . import config, geo, kinds
 from .municipalities import MunicipalityIndex
@@ -33,8 +35,46 @@ AREA_PLACE_DUPLICATE_M = 2000.0
 
 CLS_ORDER = {"place": 0, "street": 1, "road": 2, "poi": 3}
 
+Rung = Tuple[int, int, int, float, float]   # um degrau do CNEFE: (lado 0 par / 1 ímpar, pedaço, número, lat, lng)
 
-@dataclass
+
+class Ladder:
+    """Os degraus do CNEFE de uma rua, compactos: os 5 valores de cada degrau num array de double (40 bytes por degrau;
+    numa lista de tuplas eram ~240, e o Brasil tem ~11 milhões de degraus). Devolve as mesmas tuplas, com os 3
+    primeiros valores inteiros; o array só existe depois do primeiro degrau (a maioria dos registros não tem)."""
+    __slots__ = ("_v",)
+
+    def __init__(self, rungs: Iterable[Rung] = ()) -> None:
+        self._v: Optional[array] = None
+        self.extend(rungs)
+
+    def extend(self, rungs: Iterable[Rung]) -> None:
+        for rung in rungs:
+            if self._v is None:
+                self._v = array("d")
+            self._v.extend(rung)
+
+    def __iter__(self) -> Iterator[Rung]:
+        v = self._v or ()
+        for k in range(0, len(v), 5):
+            yield int(v[k]), int(v[k + 1]), int(v[k + 2]), v[k + 3], v[k + 4]
+
+    def __len__(self) -> int:
+        return len(self._v) // 5 if self._v is not None else 0
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, (Ladder, list, tuple)) and list(self) == list(other)
+
+    __hash__ = None  # type: ignore[assignment]
+
+    def __sizeof__(self) -> int:
+        return object.__sizeof__(self) + (sys.getsizeof(self._v) if self._v is not None else 0)
+
+    def __repr__(self) -> str:
+        return f"Ladder({list(self)!r})"
+
+
+@dataclass(slots=True)
 class Item:
     cls: str
     kind: str
@@ -50,7 +90,7 @@ class Item:
     aliases: List[str] = field(default_factory=list)   # nomes alternativos: só no índice de busca (HS9)
     source: str = ""                                   # origem sem conferência no mapa: "anp" (HP5b1); "" = o mapa
     # a escada de números do CNEFE (SE1): (lado 0 par / 1 ímpar, pedaço, número, lat, lng); só nas ruas
-    numbers: List[Tuple[int, int, int, float, float]] = field(default_factory=list)
+    numbers: Ladder = field(default_factory=Ladder)
     population: int = 0                                # a população do lugar (tag population do OpenStreetMap)
     origin: str = ""                                   # de que fonte veio, só para a importância: "overture"
 
