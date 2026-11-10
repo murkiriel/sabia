@@ -26,7 +26,7 @@ sys.path.insert(0, str(HERE))
 if (HERE / ".pylib").exists():
     sys.path.insert(0, str(HERE / ".pylib"))
 
-from sabia import build, catalog, config, run_record, sources, sqlite_old, validation  # noqa: E402
+from sabia import build, catalog, config, copies, run_record, sources, sqlite_old, validation  # noqa: E402
 
 STAGES = ["sources", "build", "validate", "catalog"]
 
@@ -87,9 +87,10 @@ def build_stage(states: List[str], osm: Dict[str, object], today: Optional[str] 
     return build.run(states, osm, today)
 
 
-def validate_stage(states: List[str], packages: Dict[str, object]) -> List[str]:
+def validate_stage(states: List[str], packages: Dict[str, object], today: Optional[str] = None) -> List[str]:
     """As travas (sabia/validation.py) sobre os bancos de data/build/; grava data/dist/relatorio.json. Devolve os
-    problemas (vazio = pode montar o catálogo)."""
+    problemas (vazio = pode montar o catálogo). As cópias versionadas velhas (copies.stale, em `today`, padrão hoje
+    em UTC) não travam: vão para o relatório e viram aviso no log do Actions."""
     municipalities = sources.load_municipalities(config.RAW / sources.MESH_FILE, config.RAW / sources.NAMES_FILE)
     cases = validation.load_cases(config.SEARCH_CASES, states)
     lib = sqlite_old.library_path()
@@ -112,7 +113,10 @@ def validate_stage(states: List[str], packages: Dict[str, object]) -> List[str]:
     suspects_file = config.BUILD / "ruas_suspeitas.json"
     suspects = json.loads(suspects_file.read_text(encoding="utf-8")) if suspects_file.exists() else []
     problems = list(dict.fromkeys(problems))
-    validation.write_report(config.DIST / "relatorio.json", suspects, searches, problems, version)
+    old_copies = copies.stale(today or datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    validation.write_report(config.DIST / "relatorio.json", suspects, searches, problems, version, old_copies)
+    for warning in old_copies:
+        print(f"::warning::{warning}")
     passed = sum(1 for s in searches if s["rank"] is not None and s["rank"] <= s["top"])
     mrr = sum(1 / s["rank"] for s in searches if s["rank"]) / len(searches) if searches else 0.0
     print(f"[validar] buscas: {passed} de {len(searches)} (MRR {mrr:.3f}); ruas locais suspeitas: {len(suspects)}; "

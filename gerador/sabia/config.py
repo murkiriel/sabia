@@ -75,6 +75,7 @@ IBGE_COPIES_DATE = "2026-11-10"
 # das cópias das duas listas. Todas as cópias se renovam com scripts/update_copies.py (sabia/copies.py).
 SNV_COPY = GENERATOR_DIR / "dnit_snv_marcos.json.gz"
 SNV_COPY_SHA256 = "7f7ba1819f706d6991376308d3a4685d95c1e6ec8ed2d744bda95e98ac8fb468"
+SNV_COPY_DATE = "2026-11-10"  # o dia da cópia; a versão do SNV vai dentro dela
 ANAC_PUBLIC_COPY = GENERATOR_DIR / "anac_aerodromos_publicos.json.gz"
 ANAC_PUBLIC_COPY_SHA256 = "76ac00e3dddc0e813e769b287127a589e4aaba2b918e9c41c91bc916615bd1bd"
 ANAC_PRIVATE_COPY = GENERATOR_DIR / "anac_aerodromos_privados.json.gz"

@@ -167,8 +167,9 @@ def old_sqlite_gate(path: Path, cases: Sequence[dict], lib_path: Optional[Path] 
 
 
 def write_report(dest: Path, suspects: Sequence[dict], searches: Sequence[dict], problems: Sequence[str],
-                 oldest_sqlite: str) -> None:
-    """data/dist/relatorio.json: o que conferir a cada geração."""
+                 oldest_sqlite: str, old_copies: Sequence[str] = ()) -> None:
+    """data/dist/relatorio.json: o que conferir a cada geração. `old_copies`: os avisos de cópia versionada velha
+    (copies.stale), que não travam."""
     def ok(s: dict) -> bool:
         return s["rank"] is not None and s["rank"] <= s.get("top", 1)
 
@@ -187,6 +188,7 @@ def write_report(dest: Path, suspects: Sequence[dict], searches: Sequence[dict],
         "long_local_streets": {"count": dict(sorted(Counter(s["uf"] for s in suspects).items())),
                                "streets": sorted(suspects, key=lambda s: (s["uf"], -s["extent_m"]))},
         "oldest_sqlite": oldest_sqlite,
+        "old_copies": list(old_copies),
     }
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

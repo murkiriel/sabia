@@ -93,5 +93,39 @@ class RefreshTest(unittest.TestCase):
         self.assertFalse(list(self.dest.glob("*.gz")))
 
 
+class StaleTest(unittest.TestCase):
+    """O aviso de cópia velha: a geração não trava, mas o relatório e o log do Actions dizem que é hora de renovar."""
+
+    def test_fresh_copies_say_nothing(self):
+        self.assertEqual([], copies.stale("2026-11-10"))
+
+    def test_every_copy_older_than_the_limit(self):
+        found = copies.stale("2027-06-01")  # 203 dias depois de 2026-11-10
+        self.assertEqual(4, len(found), found)  # IBGE, SNV, ANAC e PRF
+        for text in found:
+            self.assertIn("2026-11-10", text)
+            self.assertIn("203 dias", text)
+            self.assertIn("scripts/update_copies.py", text)
+        self.assertTrue(any("IBGE" in t for t in found))
+        self.assertTrue(any("SNV" in t for t in found))
+        self.assertTrue(any("ANAC" in t for t in found))
+        self.assertTrue(any("PRF" in t for t in found))
+
+    def test_the_limit_is_inclusive(self):
+        self.assertEqual(180, copies.STALE_DAYS)
+        with mock.patch.multiple(config, IBGE_COPIES_DATE="2026-01-01", SNV_COPY_DATE="2026-11-10",
+                                 ANAC_COPIES_DATE="2026-11-10", PRF_COPY_DATE="2026-11-10"):
+            self.assertEqual([], copies.stale("2026-06-30"))  # 180 dias
+            found = copies.stale("2026-07-01")  # 181
+        self.assertEqual(1, len(found))
+        self.assertIn("IBGE", found[0])
+
+    def test_config_lines_bring_the_dates(self):
+        lines = copies.config_lines({"SNV_COPY_SHA256": "abc"}, "2027-01-05")
+        self.assertIn('SNV_COPY_SHA256 = "abc"', lines)
+        for constant in ("IBGE_COPIES_DATE", "SNV_COPY_DATE", "ANAC_COPIES_DATE", "PRF_COPY_DATE"):
+            self.assertIn(f'{constant} = "2027-01-05"', lines)
+
+
 if __name__ == "__main__":
     unittest.main()

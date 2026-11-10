@@ -24,7 +24,7 @@ python generate.py --from validate      # só as travas (e o catálogo) sobre os
 python scripts/publish.py               # confere a geração (não publica nada)
 python scripts/publish.py --release     # sobe os pacotes numa release e grava o catalogo.json na raiz
 python scripts/due.py                   # está na hora de gerar de novo? (só responde; não gera)
-python scripts/update_copies.py         # renova as cópias do IBGE, do SNV e da ANAC (de uma conexão no Brasil)
+python scripts/update_copies.py         # renova as cópias do IBGE, do SNV, da ANAC e da PRF (de uma conexão no Brasil)
 python -m unittest discover -s tests -t .
 python -m ruff check .
 python -m mypy .
@@ -57,8 +57,10 @@ de cada uma (o país inteiro; o mínimo de marcos e de aeródromos; a lista da P
 executores do GitHub Actions; uma sonda de 2026-11-10 mostrou o mesmo no WFS do DNIT e nos dados abertos da ANAC (as
 outras fontes responderam), e na tarde do mesmo dia a ANTT passou a recusar também. Do SNV (128 MB) a cópia guarda só
 os marcos de km já calculados. Para renovar as cópias (município novo, versão nova do SNV, aeródromos novos):
-`python scripts/update_copies.py` de uma conexão que alcance as fontes, que confere cada uma e imprime os sha256 para
-o `config.py`; depois, testes e uma geração local.
+`python scripts/update_copies.py` de uma conexão que alcance as fontes, que confere cada uma e imprime os sha256 e as
+datas para o `config.py`; depois, testes e uma geração local. As fontes mudam pouco (a malha uma vez por ano, o SNV
+algumas vezes por ano), então 2 a 4 renovações por ano bastam; uma cópia com mais de 180 dias não trava a geração,
+mas vira aviso no log do Actions e no `relatorio.json` (`old_copies`).
 
 As outras fontes são conferidas no cache e no download: uma API pode responder 200 com uma página de erro. Com
 resposta ruim (status de erro ou conteúdo que não passa), são até 3 tentativas, com 60 s e depois 120 s de espera;
@@ -178,6 +180,8 @@ E registra no `relatorio.json`:
 
 - **(d) ruas locais longas:** as ruas só de vias locais juntadas com mais de 3 km de ponta a ponta, suspeitas de
   junção errada (não travam; confira as que mudarem de uma geração para outra);
+- **cópias velhas:** cada cópia versionada com mais de 180 dias (`old_copies`, `copies.stale`; não trava, e também
+  sai como aviso no log do Actions);
 - o resultado de cada busca e os problemas.
 
 A **(c) queda de registros** em relação à geração publicada (mais de 5% no total de um estado, ou numa classe com pelo

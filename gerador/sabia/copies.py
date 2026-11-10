@@ -3,7 +3,9 @@ DNIT e a ANAC na sonda de 2026-11-10; a ANTT na tarde do mesmo dia): a geração
 (sources._versioned_copy), conferidas pelo sha256 do config. `refresh` as baixa de novo de uma conexão que alcança as
 fontes (scripts/update_copies.py), confere cada uma como a geração conferia o download e grava em gzip sem data no
 cabeçalho (os mesmos bytes para o mesmo conteúdo); depois, os sha256 novos vão para o config à mão (a cópia nova muda
-o resultado da geração).
+o resultado da geração). `stale` avisa (no relatorio.json e no log do Actions, sem travar) quando uma cópia passa de
+STALE_DAYS dias: as fontes mudam pouco (a malha uma vez por ano, o SNV algumas vezes por ano), mas não devem ficar
+esquecidas.
 
 | Cópia | Fonte | Conteúdo |
 |---|---|---|
@@ -20,10 +22,38 @@ import gzip
 import hashlib
 import shutil
 import tempfile
+from datetime import date
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 from . import anac, config, snv, sources
+
+# Cópia mais velha que isso (em dias) entra no aviso da geração.
+STALE_DAYS = 180
+
+# (constante da data no config, de que é a cópia)
+DATES = (("IBGE_COPIES_DATE", "da malha e da lista de municípios do IBGE"),
+         ("SNV_COPY_DATE", "dos marcos de km do SNV do DNIT"),
+         ("ANAC_COPIES_DATE", "das listas de aeródromos da ANAC"),
+         ("PRF_COPY_DATE", "da lista de postos da PRF da ANTT"))
+
+
+def stale(today: str, max_days: int = STALE_DAYS) -> List[str]:
+    """Um aviso para cada cópia com mais de `max_days` dias em `today` (AAAA-MM-DD); vazio se todas estão em dia."""
+    out = []
+    for constant, label in DATES:
+        day = getattr(config, constant)
+        age = (date.fromisoformat(today) - date.fromisoformat(day)).days
+        if age > max_days:
+            out.append(f"a cópia {label} é de {day} ({age} dias): renovar com python scripts/update_copies.py "
+                       "de uma conexão no Brasil")
+    return out
+
+
+def config_lines(found: Dict[str, str], today: str) -> List[str]:
+    """As linhas para o sabia/config.py depois de `refresh`: os sha256 e as datas das cópias."""
+    return ([f'{constant} = "{sha256}"' for constant, sha256 in sorted(found.items())]
+            + [f'{constant} = "{today}"' for constant, _ in DATES])
 
 
 def write_copy(body: bytes, path: Path) -> str:

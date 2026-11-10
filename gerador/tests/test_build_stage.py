@@ -1,8 +1,9 @@
 """A etapa build do generate.py de ponta a ponta, com um extrato e arquivos do IBGE de mentira: os bancos, os
 pacotes .sqlite.zst e o pacotes.json com as contagens."""
+import io
 import json
 import sqlite3
-from contextlib import closing
+from contextlib import closing, redirect_stdout
 import sys
 import tempfile
 import unittest
@@ -220,6 +221,16 @@ class ValidateStageTest(StageFixture):
         self.assertIn("rua 10 goiania", problems[0])
         report = json.loads((self.dist / "relatorio.json").read_text(encoding="utf-8"))
         self.assertEqual(problems, report["problems"])
+
+    def test_old_copies_warn_without_blocking(self):
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        out = io.StringIO()
+        with self.cases({"uf": "GO", "query": "rua 10 goiania", "name": "Rua 11"}), redirect_stdout(out):
+            problems = self.script.validate_stage(["GO"], packages, today="2027-12-01")
+        self.assertEqual(1, len(problems))  # só a busca: cópia velha não trava
+        report = json.loads((self.dist / "relatorio.json").read_text(encoding="utf-8"))
+        self.assertEqual(4, len(report["old_copies"]))
+        self.assertEqual(4, out.getvalue().count("::warning::"))
 
     def test_without_the_old_sqlite_it_blocks(self):
         packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")

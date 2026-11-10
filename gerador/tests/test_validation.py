@@ -200,6 +200,15 @@ class ReportTest(unittest.TestCase):
         self.assertEqual(2, data["searches"]["passed"])
         self.assertEqual(["um problema"], data["problems"])
         self.assertEqual("3.22.0", data["oldest_sqlite"])
+        self.assertEqual([], data["old_copies"])
+
+    def test_report_lists_old_copies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "relatorio.json"
+            validation.write_report(dest, [], [], [], "3.22.0", old_copies=["a cópia do IBGE é velha"])
+            data = json.loads(dest.read_text(encoding="utf-8"))
+        self.assertEqual(["a cópia do IBGE é velha"], data["old_copies"])
+        self.assertEqual([], data["problems"])  # não trava
 
 
 if __name__ == "__main__":
