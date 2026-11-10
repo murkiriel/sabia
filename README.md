@@ -4,9 +4,9 @@
 interesse (postos, borracharias, hospitais, pedágios…) num banco SQLite pequeno por estado, pronto para buscar no
 celular sem sinal. O nome vem do trocadilho: o Sabiá **sabia** onde fica.
 
-> **Situação (2026-10-05): em construção.** O gerador está sendo escrito; **nenhum pacote foi publicado ainda**. O
-> formato abaixo é o planejado e pode mudar até a primeira geração. As decisões e as medições que levaram a ele estão
-> em [`docs/DECISOES.md`](docs/DECISOES.md).
+> **Situação (2026-11-10): publicado.** Uma geração nova a cada 29 dias, com todas as fontes abaixo. O formato está
+> em [`docs/FORMATO.md`](docs/FORMATO.md) (tabelas novas são acrescentadas sem mudar a versão); as decisões e as
+> medições que levaram a ele, em [`docs/DECISOES.md`](docs/DECISOES.md).
 
 > **Aviso.** Os dados vêm do OpenStreetMap e podem estar incompletos ou errados.
 
@@ -49,7 +49,7 @@ Geração **2026-10-06-93a54bc6**: OpenStreetMap de 2026-10-05, formato 1. Baixe
 
 ## O que resolve
 
-1. **Buscar sem internet:** "Rua 10, Setor Oeste", "posto ipiranga anápolis", "br-153 anápolis".
+1. **Buscar sem internet:** "Rua 10, Setor Oeste", "posto ipiranga anápolis", "br-153 anápolis", "BR-060 km 120".
 2. **Dizer "que rua é esta?"** a partir de uma coordenada (o traçado simplificado de cada rua vai no pacote).
 3. **Achar o mais perto** por categoria: "posto", "borracharia", "hospital".
 
@@ -57,7 +57,8 @@ Geração **2026-10-06-93a54bc6**: OpenStreetMap de 2026-10-05, formato 1. Baixe
 
 ```
 sabia-base.sqlite.zst    os 5.570 municípios (nome, UF, ponto da sede, código do IBGE) e as rodovias federais
-sabia-<UF>.sqlite.zst    o estado: registros, índice de busca, traçados das ruas, bairros, tabelas de busca
+sabia-<UF>.sqlite.zst    o estado: registros, índice de busca, traçados das ruas, bairros, números das casas,
+                         tabelas de busca
 catalogo.json            o índice: tamanho, sha256, retângulo e contagens de cada pacote, e a versão do formato
 ```
 
@@ -144,7 +145,7 @@ O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
 
 ## English
 
-**Sabiá** (work in progress, nothing published yet) builds offline place search packs for Brazil from OpenStreetMap:
-one small SQLite database per state with an FTS4 index (readable by Android's built-in SQLite), with cities,
-neighbourhoods, streets, highways and points of interest, plus simplified street lines for reverse lookup. Data under
-the ODbL 1.0 (© OpenStreetMap contributors); generator code under MIT.
+**Sabiá** builds offline place search packs for Brazil from OpenStreetMap and Brazilian open data (published, rebuilt
+every 29 days): one small SQLite database per state with an FTS4 index (readable by Android's built-in SQLite), with
+cities, neighbourhoods, streets, highways, points of interest and house numbers, plus simplified street lines for
+reverse lookup. Data under the ODbL 1.0 (© OpenStreetMap contributors); generator code under MIT.

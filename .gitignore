@@ -8,3 +8,7 @@ gerador/data/
 gerador/.pylib/
 # anotações de pesquisa anteriores ao repositório: ficam só na pasta local; o que vale para o projeto está em docs/
 PESQUISA.md
+# planos de trabalho e relatórios de conferência locais: citam caminhos e projetos de fora do repositório
+docs/PLANO_*.md
+docs/RELATORIO_*.md
+docs/MODULARIZACAO__*.md
