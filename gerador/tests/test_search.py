@@ -63,6 +63,14 @@ def sample():
              name="Universidade de Goiânia - Campus Sul Avenida Principal")
     osm.street((LAT + 0.05, LNG + 0.05), 300, "Rua das Flores")
     osm.street((LAT + 0.06, LNG + 0.05), 300, "Avenida Rua das Flores", highway="primary")
+    # item 10: frases de categoria e marcas, a ~1 km de (LAT + 0.17, LNG)
+    osm.node(LAT + 0.17, LNG + 0.005, amenity="clinic", name="Unidade Básica de Saúde Vila Nova")
+    osm.node(LAT + 0.17, LNG + 0.007, amenity="hospital", name="Hospital Municipal")
+    osm.node(LAT + 0.17, LNG + 0.009, amenity="atm", name="Banco 24 Horas")
+    osm.node(LAT + 0.17, LNG + 0.003, amenity="fuel", name="Posto Ipiranga Centro")
+    osm.street((LAT + 0.175, LNG), 300, "Avenida Ipiranga", highway="primary")
+    osm.node(LAT + 0.17, LNG + 0.011, amenity="fuel", brand="Shell")
+    osm.street((LAT + 0.12, LNG - 0.1), 300, "Rua Soccorro")  # "socorro" a um erro: não pode virar "soccorro"
     return osm
 
 
@@ -278,6 +286,56 @@ class MoreOrderTest(unittest.TestCase):
         r = search.search(self.db, "aeroporto", near=(LAT, LNG))
         self.assertTrue(r)
         self.assertEqual("Aeroporto de Goiânia", r[0].name)
+
+
+class CategoryPhraseTest(unittest.TestCase):
+    """Item 10: frases de categoria ("posto de saude" é clínica, não posto de combustível; "pronto socorro";
+    "caixa eletronico") e marcas ("ipiranga", "shell": a palavra fica no texto e puxa o tipo da marca)."""
+
+    HERE = (LAT + 0.17, LNG)
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.pack = Pack(Path(cls._tmp.name))
+        cls.db = sqlite3.connect(cls.pack.path)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+        cls._tmp.cleanup()
+
+    def first(self, query, **kw):
+        found = search.search(self.db, query, **kw)
+        self.assertTrue(found, f"nada para {query!r}")
+        return found[0]
+
+    def test_a_phrase_beats_its_first_word(self):
+        self.assertEqual("amenity=clinic", self.first("posto de saude", near=self.HERE).kind)
+        self.assertEqual("amenity=fuel", self.first("posto", near=self.HERE).kind)
+
+    def test_more_phrases(self):
+        self.assertEqual("Hospital Municipal", self.first("pronto socorro", near=self.HERE).name)
+        self.assertEqual("amenity=atm", self.first("caixa eletronico", near=self.HERE).kind)
+        self.assertEqual("amenity=fuel", self.first("posto de gasolina", near=self.HERE).kind)
+
+    def test_the_longest_phrase_first(self):
+        lengths = [len(tokens) for _, tokens in search._Rules(self.db).category_phrases]
+        self.assertEqual(sorted(lengths, reverse=True), lengths)
+        self.assertGreater(lengths[0], lengths[-1])
+
+    def test_the_words_of_a_phrase_are_not_typos(self):
+        self.assertEqual("pronto socorro", search.corrected(self.db, "pronto socorro"))
+
+    def test_a_brand_pulls_its_kind(self):
+        """"ipiranga": os postos antes da Avenida Ipiranga, primária, que viria antes do "Posto Ipiranga Centro" pela
+        importância."""
+        names = [r.name for r in search.search(self.db, "ipiranga", limit=50)]
+        self.assertLess(names.index("Posto Ipiranga Centro"), names.index("Avenida Ipiranga"))
+
+    def test_a_brand_with_the_position(self):
+        r = self.first("shell", near=self.HERE)
+        self.assertEqual(("Shell", "amenity=fuel"), (r.name, r.kind))
 
 
 class HouseNumberTest(unittest.TestCase):

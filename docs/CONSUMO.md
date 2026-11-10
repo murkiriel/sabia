@@ -42,7 +42,12 @@ o estado da cidade não está instalado (e diz, pela `uf`, qual pacote baixar).
    Goiânia, não Goiânia). No meio da busca, o nome de um município é só uma palavra ("avenida anhanguera goiania":
    Anhanguera também é município).
 4. **Palavras vazias:** tire "de", "da", "do", "dos", "das", "e" (a não ser que a busca seja só elas).
-5. **Categoria:** a primeira palavra que está em `category` vira filtro de `kind` (os valores separados por vírgula).
+5. **Categoria:** primeiro as frases de `category` (as linhas com espaço, comparadas sem as palavras vazias, da mais
+   longa à mais curta: "posto de saude" é clínica, não posto de combustível; "pronto socorro"; "caixa eletronico");
+   senão, a primeira palavra que está em `category` vira filtro de `kind` (os valores separados por vírgula). Sem
+   categoria, uma palavra de `brand` ("ipiranga", "shell", "drogasil") dá os tipos da marca, mas **fica no texto**
+   (casa no nome) e o tipo dela vem antes no critério 4 da ordem. As palavras das frases e as marcas também são
+   "conhecidas" para a correção de erros (passo 1).
    As outras palavras continuam como texto. Busque dos dois jeitos e junte: com o filtro de tipo (e sem a palavra da
    categoria no texto) e sem o filtro (com a palavra no texto: "Posto Cerrado" tem "posto" no nome). Só a categoria,
    sem mais nada ("posto"), é uma busca por perto: os registros do tipo nos 9 quadrados em volta, do mais perto.
@@ -72,8 +77,8 @@ o estado da cidade não está instalado (e diz, pela `uf`, qual pacote baixar).
    ```
 
 9. **Ordenar**, nesta ordem de critérios:
-   1. quantas palavras da busca casam com uma palavra do **nome** (com as alternativas; a palavra da categoria conta
-      uma vez pelo `kind` e mais uma se estiver no nome, menos na busca só pela categoria com a posição conhecida).
+   1. quantas palavras da busca casam com uma palavra do **nome** (com as alternativas; a categoria conta uma vez,
+      pelo `kind` ou pela palavra dela no nome, menos na busca só pela categoria com a posição conhecida).
       As palavras do município citado não contam aqui, a não ser que a busca seja só o nome dele; o número da casa
       também não;
    2. a rua que tem o número da casa na escada;

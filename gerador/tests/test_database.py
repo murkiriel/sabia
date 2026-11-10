@@ -130,6 +130,9 @@ class StateDatabaseTest(unittest.TestCase):
         self.assertIn(("cidade de", "", "drop_prefix"), forms)
         categories = dict(self.db.execute("SELECT word, kinds FROM category"))
         self.assertEqual("amenity=fuel", categories["posto"])
+        self.assertIn("amenity=clinic", categories["posto de saude"].split(","))  # frase (item 10)
+        brands = dict(self.db.execute("SELECT word, kinds FROM brand"))
+        self.assertEqual("amenity=fuel", brands["ipiranga"])
         self.assertIn("shop=tyres", categories["borracharia"].split(","))
 
     def test_meta(self):

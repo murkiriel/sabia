@@ -10,8 +10,12 @@ busca sem trocar o código de quem consome.
 | `number`      | número e número por extenso casam ("14" e "quatorze"); o gerador já grava os dois no índice |
 | `drop_prefix` | a expressão no começo da busca pode ser ignorada: "cidade de goias" -> "goias" |
 
-`category` (palavra, tipos): a palavra vira filtro de `kind` (separados por vírgula) e a busca passa a ser por
-distância: "posto ipiranga" -> postos (`amenity=fuel`) com "ipiranga" no nome.
+`category` (palavra ou frase, tipos): a palavra vira filtro de `kind` (separados por vírgula) e a busca passa a ser por
+distância: "posto ipiranga" -> postos (`amenity=fuel`) com "ipiranga" no nome. A frase ("posto de saude") vale antes
+da palavra sozinha.
+
+`brand` (marca, tipos): a marca fica no texto e o tipo dela vem antes: "ipiranga" -> os postos antes da Avenida
+Ipiranga.
 """
 from __future__ import annotations
 
@@ -76,6 +80,31 @@ CATEGORIES = {
     "faculdade": ["amenity=college", "amenity=university"], "teatro": ["amenity=theatre"],
     "cinema": ["amenity=cinema"], "zoologico": ["tourism=zoo"], "feira": ["amenity=marketplace"],
     "praia": ["natural=beach"],
+    # frases (item 10): valem antes da palavra sozinha ("posto de saude" não é posto de combustível); comparadas sem
+    # as palavras vazias ("de", "da", "do"...)
+    "posto de saude": ["amenity=clinic", "healthcare=clinic", "healthcare=centre", "amenity=doctors"],
+    "unidade basica de saude": ["amenity=clinic", "healthcare=clinic", "healthcare=centre", "amenity=doctors"],
+    "ubs": ["amenity=clinic", "healthcare=clinic", "healthcare=centre", "amenity=doctors"],
+    "pronto socorro": ["amenity=hospital"], "pronto atendimento": ["amenity=hospital", "amenity=clinic"],
+    "posto de gasolina": ["amenity=fuel"], "posto de combustivel": ["amenity=fuel"],
+    "caixa eletronico": ["amenity=atm"], "caixa 24 horas": ["amenity=atm"], "atm": ["amenity=atm"],
+    "lava jato": ["amenity=car_wash"], "lavajato": ["amenity=car_wash"], "lava rapido": ["amenity=car_wash"],
+    "loja de conveniencia": ["shop=convenience"], "conveniencia": ["shop=convenience"],
+    "oficina de moto": ["shop=motorcycle_repair"], "mecanica de moto": ["shop=motorcycle_repair"],
+    "moto pecas": ["shop=motorcycle"], "loja de moto": ["shop=motorcycle"],
+    "pneu": ["shop=tyres"], "pneus": ["shop=tyres"],
+    "posto de policia": ["amenity=police"], "posto policial": ["amenity=police"],
+    "posto de recarga": ["amenity=charging_station"],
+    "area de descanso": ["highway=rest_area", "highway=services"],
+}
+
+# Marcas (item 10): a palavra fica no texto (casa no nome) e o tipo da marca vem antes ("ipiranga": os postos antes
+# da Avenida Ipiranga). Só as que quase sempre são a marca; "br" fica de fora (é sigla de rodovia).
+BRANDS = {
+    "ipiranga": ["amenity=fuel"], "shell": ["amenity=fuel"], "petrobras": ["amenity=fuel"], "raizen": ["amenity=fuel"],
+    "texaco": ["amenity=fuel"], "ale": ["amenity=fuel"], "vibra": ["amenity=fuel"],
+    "drogasil": ["amenity=pharmacy"], "drogaraia": ["amenity=pharmacy"], "raia": ["amenity=pharmacy"],
+    "pacheco": ["amenity=pharmacy"], "panvel": ["amenity=pharmacy"], "nissei": ["amenity=pharmacy"],
 }
 
 
@@ -100,5 +129,10 @@ def word_forms() -> List[Tuple[str, str, str]]:
 
 
 def categories() -> Dict[str, str]:
-    """As linhas da tabela `category`: palavra -> tipos separados por vírgula."""
+    """As linhas da tabela `category`: palavra (ou frase) -> tipos separados por vírgula."""
     return {word: ",".join(kinds) for word, kinds in sorted(CATEGORIES.items())}
+
+
+def brands() -> Dict[str, str]:
+    """As linhas da tabela `brand`: marca -> tipos separados por vírgula."""
+    return {word: ",".join(kinds) for word, kinds in sorted(BRANDS.items())}

@@ -11,7 +11,8 @@ Banco do estado (`format_version` 1; nomes em inglês, a convenção do projeto)
                   alternativos, HS9); area
     street_line   item, cell, coords (blob)                       "que rua é esta?" (street_lines.py)
     word_form     word, form, rule                                 abreviações, formas, números (search_rules.py)
-    category      word, kinds                                      "posto" -> amenity=fuel
+    category      word, kinds                                      "posto" -> amenity=fuel; frases ("posto de saude")
+    brand         word, kinds                                      "ipiranga" -> amenity=fuel (a marca fica no texto)
     item_source   item, source                                     origem sem conferência no mapa: "anp" (HP5b1);
                   só os registros marcados (o que não está aqui veio do mapa); um leitor antigo não a lê
     vocab         word, n                                          as palavras do índice e em quantos registros: a
@@ -69,6 +70,7 @@ CREATE VIRTUAL TABLE item_text USING fts4(content="", name, area, tokenize=simpl
 CREATE TABLE street_line(item INTEGER NOT NULL, cell INTEGER NOT NULL, coords BLOB NOT NULL);
 CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NULL);
 CREATE TABLE category(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
+CREATE TABLE brand(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
 CREATE TABLE item_source(item INTEGER PRIMARY KEY, source TEXT NOT NULL);
 CREATE TABLE house_number(street INTEGER PRIMARY KEY, rungs BLOB NOT NULL);
 CREATE TABLE vocab(word TEXT PRIMARY KEY, n INTEGER NOT NULL);
@@ -88,6 +90,7 @@ CREATE VIRTUAL TABLE item_text USING fts4(content="", name, area, tokenize=simpl
 CREATE TABLE road_state(item INTEGER NOT NULL, uf TEXT NOT NULL);
 CREATE TABLE word_form(word TEXT NOT NULL, form TEXT NOT NULL, rule TEXT NOT NULL);
 CREATE TABLE category(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
+CREATE TABLE brand(word TEXT PRIMARY KEY, kinds TEXT NOT NULL);
 CREATE TABLE vocab(word TEXT PRIMARY KEY, n INTEGER NOT NULL);
 """
 BASE_INDEXES = """
@@ -182,6 +185,7 @@ def _vocab(db: sqlite3.Connection, texts: Sequence[Tuple[str, str]]) -> None:
 def _search_tables(db: sqlite3.Connection) -> None:
     db.executemany("INSERT INTO word_form VALUES(?,?,?)", search_rules.word_forms())
     db.executemany("INSERT INTO category VALUES(?,?)", search_rules.categories().items())
+    db.executemany("INSERT INTO brand VALUES(?,?)", search_rules.brands().items())
 
 
 def _meta(db: sqlite3.Connection, uf: str, meta: Dict[str, str]) -> None:

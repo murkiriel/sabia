@@ -153,6 +153,11 @@ class _Rules:
             if rule == "abbr":  # nos dois sentidos; a abreviação no nome vale só inteira ("St.", nunca "Styles")
                 self.alternatives.setdefault(form, set()).add((word, True))
         self.categories = {w: k.split(",") for w, k in db.execute("SELECT word, kinds FROM category")}
+        # as frases de categoria, sem as palavras vazias, da mais longa à mais curta
+        self.category_phrases = sorted(((w, [t for t in w.split() if t not in STOPWORDS]) for w in self.categories
+                                        if " " in w), key=lambda p: (-len(p[1]), p[0]))
+        self.brands = ({w: k.split(",") for w, k in db.execute("SELECT word, kinds FROM brand")}
+                       if _has_table(db, "brand") else {})
         self.municipalities = {fold(name): (mid, name)
                                for mid, name in db.execute("SELECT id, name FROM municipality")}
         self.names = {mid: name for _, (mid, name) in self.municipalities.items()}
@@ -162,6 +167,7 @@ class _Rules:
         self.known: Set[str] = set(self.categories) | set(self.alternatives) | STOPWORDS | HOUSE_NUMBER_CONNECTORS
         self.known |= {f for forms in self.alternatives.values() for f, _ in forms} | NAME_NUMBER_WORDS
         self.known |= {w for phrase in self.drop for w in phrase.split()}
+        self.known |= {t for _, tokens in self.category_phrases for t in tokens} | set(self.brands)
 
     def correct_words(self, words: Sequence[str], force: bool = False) -> List[str]:
         return [self.correct(w, n == len(words) - 1, force) for n, w in enumerate(words)]
@@ -231,9 +237,17 @@ def _has_table(db, name: str) -> bool:
     return bool(list(db.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (name,))))
 
 
-def _parse(rules: _Rules, folded: str) -> Tuple[List[str], List[str], Optional[int], Set[str], List[str]]:
-    """(palavras de texto, tipos da categoria, município citado, palavras do nome dele, todas as palavras sem as
-    vazias, na ordem)."""
+@dataclass
+class _Parsed:
+    text: List[str]              # as palavras de texto (sem as vazias e sem as da categoria)
+    kinds: List[str]             # os tipos da categoria ou da marca
+    target: Optional[int]        # o município citado
+    mun_words: Set[str]          # as palavras do nome dele
+    words: List[str]             # todas as palavras sem as vazias, na ordem
+    category_words: List[str]    # as palavras da categoria (a palavra, ou as da frase); a marca fica no texto
+
+
+def _parse(rules: _Rules, folded: str) -> _Parsed:
     for prefix in sorted(rules.drop, key=len, reverse=True):
         if folded.startswith(prefix + " "):
             folded = folded[len(prefix) + 1:]
@@ -251,13 +265,26 @@ def _parse(rules: _Rules, folded: str) -> Tuple[List[str], List[str], Optional[i
             break
     words = [w for w in words if w not in STOPWORDS] or words
     kinds: List[str] = []
-    text: List[str] = []
-    for w in words:
-        if w in rules.categories and not kinds:
-            kinds = rules.categories[w]
-        else:
-            text.append(w)
-    return text, kinds, target, mun_words, words
+    text = list(words)
+    category_words: List[str] = []
+    # a frase de categoria primeiro, a mais longa ("posto de saude" antes de "posto"), sem as palavras vazias dela
+    for phrase, tokens in rules.category_phrases:
+        for i in range(len(text) - len(tokens) + 1):
+            if text[i:i + len(tokens)] == tokens:
+                kinds, category_words = rules.categories[phrase], tokens
+                text = text[:i] + text[i + len(tokens):]
+                break
+        if kinds:
+            break
+    if not kinds:
+        for i, w in enumerate(text):
+            if w in rules.categories:
+                kinds, category_words = rules.categories[w], [w]
+                text = text[:i] + text[i + 1:]
+                break
+    if not kinds:  # a marca puxa o tipo dela, mas fica no texto ("ipiranga")
+        kinds = next((rules.brands[w] for w in text if w in rules.brands), [])
+    return _Parsed(text, kinds, target, mun_words, words, category_words)
 
 
 def house_number_in(words: Sequence[str]) -> Optional[Tuple[int, List[str]]]:
@@ -289,10 +316,10 @@ def match_strings(db, query: str) -> List[str]:
     """As MATCH que a busca faria (para conferir que nenhuma mistura OR e AND)."""
     rules = _Rules(db)
     folded = " ".join(rules.correct_words(fold(query).split()))
-    text, kinds, _, _, _ = _parse(rules, folded)
-    out = _combinations(rules, text) if text else []
-    if kinds:
-        out += _combinations(rules, text + [w for w in folded.split() if w in rules.categories][:1])
+    parsed = _parse(rules, folded)
+    out = _combinations(rules, parsed.text) if parsed.text else []
+    if parsed.category_words:
+        out += _combinations(rules, parsed.text + parsed.category_words)
     return out
 
 
@@ -380,7 +407,8 @@ def search(db, query: str, near: Optional[Tuple[float, float]] = None, limit: in
 
 
 def _search(db, rules: _Rules, folded: str, near: Optional[Tuple[float, float]], limit: int) -> List[Result]:
-    text, kinds, target, mun_words, all_words = _parse(rules, folded)
+    parsed = _parse(rules, folded)
+    text, kinds, target, mun_words, all_words = parsed.text, parsed.kinds, parsed.target, parsed.mun_words, parsed.words
     columns = rules.columns
     found: Dict[int, tuple] = {}
     for match in (_combinations(rules, text) if text else []):
@@ -402,8 +430,7 @@ def _search(db, rules: _Rules, folded: str, near: Optional[Tuple[float, float]],
         marks = ",".join("?" * len(kinds))
         if text:
             # a categoria também pode ser parte do nome ("Posto Cerrado"): as duas buscas valem
-            category_word = next(w for w in folded.split() if w in rules.categories)
-            for match in _combinations(rules, text + [category_word]):
+            for match in _combinations(rules, text + parsed.category_words):
                 for row in _rows(db, f"SELECT {columns} FROM item_text JOIN item i ON i.id = item_text.docid "
                                      f"WHERE item_text MATCH ? LIMIT {MAX_ROWS}", [match]):
                     found[row[0]] = row
@@ -430,7 +457,7 @@ def _search(db, rules: _Rules, folded: str, near: Optional[Tuple[float, float]],
     # Só a categoria ("posto") com a posição: a busca é por perto; o nome não conta (o posto sem nome ao lado vem
     # antes do "Posto Central" a 1 km)
     only_category = bool(kinds) and not text and near is not None
-    category_words = [] if only_category else [w for w in folded.split() if w in rules.categories][:1]
+    category_words = [] if only_category else parsed.category_words
     # O nome do município citado é palavra de área: não conta no nome de um registro ("Farmácia Central Goiânia"
     # não passa na frente do bairro Setor Central), a não ser que a busca seja só ele ("goiania", "rio verde").
     only_municipality = bool(text) and not kinds and all(w in mun_words for w in text)
@@ -445,8 +472,10 @@ def _search(db, rules: _Rules, folded: str, near: Optional[Tuple[float, float]],
     def hits_of(row: tuple) -> int:
         kind, name = row[2], row[3]
         hits = _name_hits(rules, counted, name, last_word)
-        # a categoria conta pelo tipo e de novo se a palavra (ou a outra forma dela) estiver no nome
-        return hits + int(kind in kinds) + (_name_hits(rules, category_words, name) if category_words else 0)
+        # a categoria conta uma vez: pelo tipo ou pela palavra (ou a outra forma dela) no nome ("Posto Cerrado" de
+        # outro tipo); o "Posto Ipiranga" não passa o posto chamado só "Ipiranga", mais perto, por ter "posto" no nome
+        in_name = bool(category_words) and _name_hits(rules, category_words, name) > 0
+        return hits + int(kind in kinds or in_name)
 
     hits = {rid: hits_of(row) for rid, row in found.items()}
     houses: Dict[int, Tuple[float, float]] = {}
