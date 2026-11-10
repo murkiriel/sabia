@@ -37,8 +37,18 @@ o estado da cidade não está instalado (e diz, pela `uf`, qual pacote baixar).
 6. **Alternativas de cada palavra** (`word_form`): a própria palavra; nas linhas `abbr`, a forma por extenso de uma
    abreviação digitada ("dr" → "doutor") e, no outro sentido, a abreviação de uma palavra digitada por extenso
    ("capitao" → "cap"), esta **só como palavra inteira** (para "setor" → "st" não casar com "styles"); as linhas
-   `form` e `number`.
-7. **As consultas:** uma `MATCH` por combinação de alternativas (o gerador limita a 16), cada uma só com termos
+   `form` e `number`, estas também **só como palavra inteira** ("10" casa com "dez", nunca com "dezesseis").
+7. **Número da casa:** o último número da busca, quando vem depois de outra palavra, é o número da casa ("rua 10,
+   152, setor oeste"; "rua 10 nº 152": `n`, `no`, `nr`, `num` e `numero` logo antes dele saem junto). Não é número da
+   casa o que vem logo depois de uma palavra que leva número no nome (`rua`, `avenida`, `quadra`, `lote`, `km`, `br`,
+   a sigla de um estado e as outras da lista `NAME_NUMBER_WORDS` de `search.py`) nem o que vem depois de uma letra
+   solta ("avenida t 63"). Com número da casa, busque também as ruas (`cls = 'street'`) com as outras palavras, e
+   cada termo inteiro se o número fechava a busca (quem digitou já passou da rua). Nas ruas com mais palavras
+   casadas, procure o número na escada da rua (`house_number`, ver [`FORMATO.md`](FORMATO.md)): no lado do número
+   (par 0, ímpar 1), o pedaço com um degrau igual a ele ou com dois degraus seguidos que o cercam, e a posição
+   interpolada entre os dois. Nunca de um pedaço para outro. A rua com o número vem antes das outras com as mesmas
+   palavras, no ponto do número; sem pedaço que o cerque, a rua continua no resultado, no ponto dela e sem número.
+8. **As consultas:** uma `MATCH` por combinação de alternativas (o gerador limita a 16), cada uma só com termos
    separados por espaço, que o FTS junta com AND. **Não use `OR` nem parênteses dentro de uma `MATCH`**: a precedência
    do OR muda entre a sintaxe padrão e a estendida do FTS, e o SQLite do aparelho pode ter qualquer uma das duas.
    Junte as combinações no seu código (ou com `UNION`). Cada termo é prefixo (`avenida*`), menos o número e a letra
@@ -49,19 +59,20 @@ o estado da cidade não está instalado (e diz, pela `uf`, qual pacote baixar).
    SELECT i.* FROM item_text JOIN item i ON i.id = item_text.docid WHERE item_text MATCH 'rua* 10 setor* oeste*'
    ```
 
-8. **Ordenar**, nesta ordem de critérios:
+9. **Ordenar**, nesta ordem de critérios:
    1. quantas palavras da busca casam com uma palavra do **nome** (com as alternativas; a palavra da categoria conta
       uma vez pelo `kind` e mais uma se estiver no nome). As palavras do município citado não contam aqui, a não ser
-      que a busca seja só o nome dele;
-   2. registros do município citado primeiro;
-   3. com categoria, os do tipo dela primeiro;
-   4. a classe: município, cidade e vila grande (`municipality`, `place=city`, `place=town`); vila e bairro
+      que a busca seja só o nome dele; o número da casa também não;
+   2. a rua que tem o número da casa na escada;
+   3. registros do município citado primeiro;
+   4. com categoria, os do tipo dela primeiro;
+   5. a classe: município, cidade e vila grande (`municipality`, `place=city`, `place=town`); vila e bairro
       (`place=village`, `suburb`, `neighbourhood`, `quarter`); outros lugares e ruas; rodovias; pontos de interesse;
-   5. entre ruas, a via mais importante (`highway=primary` antes de `highway=residential`);
-   6. as palavras do município citado no nome do registro ("goiania shopping" → "Goiânia Shopping");
-   7. o mais perto do usuário, se a posição for conhecida; senão o nome mais curto.
-9. **Rótulo:** nome, bairro e município, sem repetir ("Rua 10, Setor Oeste, Goiânia"). Ponto de interesse sem nome
-   (posto sem nome no OpenStreetMap) mostra o tipo ("Posto de combustível").
+   6. entre ruas, a via mais importante (`highway=primary` antes de `highway=residential`);
+   7. as palavras do município citado no nome do registro ("goiania shopping" → "Goiânia Shopping");
+   8. o mais perto do usuário, se a posição for conhecida; senão o nome mais curto.
+10. **Rótulo:** nome, o número da casa se houver, bairro e município, sem repetir ("Rua 10, 152, Setor Oeste,
+    Goiânia"). Ponto de interesse sem nome (posto sem nome no OpenStreetMap) mostra o tipo ("Posto de combustível").
 
 Com essas regras, das 50 buscas de Goiás medidas antes do gerador (comparadas com um geocodificador online feito do
 mesmo OpenStreetMap), o primeiro resultado é o certo em 46 (eram 37 antes das regras), pelo critério das travas; das

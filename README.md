@@ -49,7 +49,8 @@ Geração **2026-10-06-93a54bc6**: OpenStreetMap de 2026-10-05, formato 1. Baixe
 
 ## O que resolve
 
-1. **Buscar sem internet:** "Rua 10, Setor Oeste", "posto ipiranga anápolis", "br-153 anápolis", "BR-060 km 120".
+1. **Buscar sem internet:** "Rua 10, Setor Oeste", "Avenida Brasil, 1500, Anápolis", "posto ipiranga anápolis",
+   "br-153 anápolis", "BR-060 km 120".
 2. **Dizer "que rua é esta?"** a partir de uma coordenada (o traçado simplificado de cada rua vai no pacote).
 3. **Achar o mais perto** por categoria: "posto", "borracharia", "hospital".
 

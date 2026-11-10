@@ -10,7 +10,9 @@ G7e). Passos:
 3. Tirar as palavras vazias ("de", "da", "do", "dos", "das", "e").
 4. Palavras de categoria (`category`) viram filtro de `kind`; as outras casam no texto.
 5. Cada palavra vira alternativas: ela mesma, as abreviações nos dois sentidos, a outra forma e o número por extenso
-   (`word_form`). Uma MATCH por combinação de alternativas, só com AND implícito (nunca OR: a precedência dele muda
+   (`word_form`; este, só inteiro). O último número depois de outra palavra pode ser o número da casa ("rua 10 152"):
+   as ruas com as outras palavras também entram, e a que tem o número na escada (`house_number`) vem antes, no ponto
+   dele. Uma MATCH por combinação de alternativas, só com AND implícito (nunca OR: a precedência dele muda
    entre a sintaxe padrão e a estendida do FTS), juntadas por UNION. Toda palavra é prefixo (`termo*`), menos número e
    letra solta, que valem inteiros, exceto a última (quem digita ainda não terminou).
 6. Ordem: mais palavras no nome; do município citado; do tipo da categoria; classe (município e cidade, vila e
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 import itertools
 import math
+import struct
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
@@ -31,6 +34,21 @@ MAX_COMBINATIONS = 16
 MAX_ROWS = 2000
 # "Que rua é esta?": mais longe que isto do traçado mais próximo, não há rua.
 MAX_STREET_DISTANCE_M = 75.0
+
+# Número da casa: o último número da busca, depois de outra palavra, é o número da casa ("rua 10, 152, setor oeste"),
+# a não ser que venha logo depois de uma palavra que leva número no nome ("rua 14", "quadra 3", "km 120", "br 153") ou
+# de uma letra solta ("avenida t 63"). "n", "nº", "nr", "num" e "numero" antes dele saem junto.
+NAME_NUMBER_WORDS = {
+    "rua", "r", "avenida", "av", "avda", "alameda", "al", "travessa", "tv", "trav", "quadra", "qd", "lote", "lt",
+    "bloco", "bl", "conjunto", "conj", "km", "rodovia", "rod", "estrada", "est", "estr", "setor", "st", "etapa",
+    "modulo", "area", "linha", "vicinal", "ramal", "via", "praca", "pca", "pc", "viela", "beco", "galeria", "casa",
+    "residencial", "res", "chacara", "chac", "gleba", "ladeira", "acesso", "marginal", "anel", "vila", "vl", "jardim",
+    "jd", "parque", "pq", "lago", "eixo", "trecho", "nucleo", "colonia", "loteamento", "condominio", "cond", "br",
+    "ac", "al", "ap", "am", "ba", "ce", "df", "es", "go", "ma", "mt", "ms", "mg", "pa", "pb", "pr", "pe", "pi", "rj",
+    "rn", "rs", "ro", "rr", "sc", "sp", "se", "to",
+}
+HOUSE_NUMBER_CONNECTORS = {"n", "no", "nr", "num", "numero"}
+MAX_HOUSE_NUMBER = 99999
 
 CLASS_RANK = {"municipality": 0, "place=city": 0, "place=town": 0, "place=village": 1, "place=suburb": 1,
               "place=neighbourhood": 1, "place=quarter": 1}
@@ -48,11 +66,15 @@ class Result:
     lat: float
     lng: float
     distance_m: Optional[float] = None
+    house_number: Optional[int] = None
 
     @property
     def label(self) -> str:
         """'Rua 10, Setor Oeste, Goiânia'."""
-        parts = [self.name or self.kind] + [p for p in (self.district, self.municipality) if p and p != self.name]
+        parts = [self.name or self.kind]
+        if self.house_number is not None:
+            parts.append(str(self.house_number))
+        parts += [p for p in (self.district, self.municipality) if p and p != self.name]
         return ", ".join(parts)
 
 
@@ -67,7 +89,8 @@ class _Rules:
             if rule == "drop_prefix":
                 self.drop.append(word)
                 continue
-            self.alternatives.setdefault(word, set()).add((form, False))
+            # o número por extenso vale só inteiro: "10" casa com "dez", nunca com o começo de "dezesseis"
+            self.alternatives.setdefault(word, set()).add((form, rule == "number"))
             if rule == "abbr":  # nos dois sentidos; a abreviação no nome vale só inteira ("St.", nunca "Styles")
                 self.alternatives.setdefault(form, set()).add((word, True))
         self.categories = {w: k.split(",") for w, k in db.execute("SELECT word, kinds FROM category")}
@@ -118,10 +141,25 @@ def _parse(rules: _Rules, query: str) -> Tuple[List[str], List[str], Optional[in
     return text, kinds, target, mun_words
 
 
-def _combinations(rules: _Rules, words: Sequence[str]) -> List[str]:
+def house_number_in(words: Sequence[str]) -> Optional[Tuple[int, List[str]]]:
+    """(número da casa, as palavras sem ele e sem o "n"/"numero" antes dele), ou None se a busca não traz um."""
+    for i in range(len(words) - 1, 0, -1):
+        if not words[i].isdigit():
+            continue
+        start = i - 1 if words[i - 1] in HOUSE_NUMBER_CONNECTORS else i
+        before = words[start - 1] if start >= 1 else ""
+        number = int(words[i])
+        if (start == i and (before in NAME_NUMBER_WORDS or (len(before) == 1 and not before.isdigit()))) \
+                or not before or not 0 < number <= MAX_HOUSE_NUMBER:
+            return None
+        return number, list(words[:start]) + list(words[i + 1:])
+    return None
+
+
+def _combinations(rules: _Rules, words: Sequence[str], prefix_last: bool = True) -> List[str]:
     options = []
     for n, w in enumerate(words):
-        options.append([a if exact else a + "*" for a, exact in rules.options(w, n == len(words) - 1)])
+        options.append([a if exact else a + "*" for a, exact in rules.options(w, prefix_last and n == len(words) - 1)])
     out = []
     for combo in itertools.islice(itertools.product(*options), MAX_COMBINATIONS):
         out.append(" ".join(combo))
@@ -165,6 +203,17 @@ def search(db, query: str, near: Optional[Tuple[float, float]] = None, limit: in
         for row in _rows(db, f"SELECT {ITEM_COLUMNS} FROM item_text JOIN item i ON i.id = item_text.docid "
                              f"WHERE item_text MATCH ? LIMIT {MAX_ROWS}", [match]):
             found[row[0]] = row
+    # O número da casa ("rua 10 152"): as ruas com as outras palavras; as palavras da rua já estão completas quando o
+    # número fecha a busca. Quem tem o número na escada vem antes, no ponto dele.
+    house_number = house_number_in(text)
+    prefix_last = True
+    if house_number is not None:
+        text = house_number[1]
+        prefix_last = not fold(query).split()[-1].isdigit()
+        for match in _combinations(rules, text, prefix_last):
+            for row in _rows(db, f"SELECT {ITEM_COLUMNS} FROM item_text JOIN item i ON i.id = item_text.docid "
+                                 f"WHERE item_text MATCH ? AND i.cls = 'street' LIMIT {MAX_ROWS}", [match]):
+                found[row[0]] = row
     if kinds:
         marks = ",".join("?" * len(kinds))
         if text:
@@ -194,30 +243,72 @@ def search(db, query: str, near: Optional[Tuple[float, float]] = None, limit: in
     # não passa na frente do bairro Setor Central), a não ser que a busca seja só ele ("goiania", "rio verde").
     only_municipality = bool(text) and not kinds and all(w in mun_words for w in text)
     counted = text if only_municipality else [w for w in text if w not in mun_words]
-    last_word = text[-1] if text else ""
+    last_word = text[-1] if text and prefix_last else ""
+
+    def hits_of(row: tuple) -> int:
+        _, _, kind, name, _, _, _, _ = row
+        hits = _name_hits(rules, counted, name, last_word)
+        # a categoria conta pelo tipo e de novo se a palavra (ou a outra forma dela) estiver no nome
+        return hits + int(kind in kinds) + (_name_hits(rules, category_words, name) if category_words else 0)
+
+    hits = {rid: hits_of(row) for rid, row in found.items()}
+    houses: Dict[int, Tuple[float, float]] = {}
+    if house_number is not None:
+        # a escada só das ruas com mais palavras casadas (as outras não passariam na frente por causa do número)
+        best = max((hits[rid] for rid, row in found.items() if row[1] == "street"), default=None)
+        for rid, row in found.items():
+            if row[1] == "street" and hits[rid] == best:
+                point = house_position(db, rid, house_number[0])
+                if point is not None:
+                    houses[rid] = point
 
     def key(row: tuple):
         rid, cls, kind, name, mun, _, lat, lng = row
         rank = CLASS_RANK.get(kind, CLS_RANK.get(cls, 4))
         importance = osm_kinds.HIGHWAY_RANK.get(kind.removeprefix("highway="), 99) if cls == "street" else 0
         far = geo.dist_m(lat / database.SCALE, lng / database.SCALE, *near) if near else float(len(name))
-        hits = _name_hits(rules, counted, name, last_word)
-        # a categoria conta pelo tipo e de novo se a palavra (ou a outra forma dela) estiver no nome
-        hits += int(kind in kinds) + (_name_hits(rules, category_words, name) if category_words else 0)
         # o nome do município no nome do registro só desempata, depois da classe ("shopping goiania")
         mun_hits = 0 if only_municipality else _name_hits(rules, sorted(mun_words), name, last_word)
-        return (-hits, mun != target if target else False, kind not in kinds if kinds else False, rank, importance,
-                -mun_hits, far, rid)
+        return (-hits[rid], rid not in houses, mun != target if target else False,
+                kind not in kinds if kinds else False, rank, importance, -mun_hits, far, rid)
 
     ordered = sorted(found.values(), key=key)[:limit]
     out = []
     for rid, cls, kind, name, mun, district, lat, lng in ordered:
         r = Result(rid, cls, kind, name, rules.names.get(mun, str(mun)), rules.districts.get(district),
                    lat / database.SCALE, lng / database.SCALE)
+        if rid in houses:
+            r.lat, r.lng = houses[rid]
+            r.house_number = house_number[0] if house_number else None
         if near is not None:
             r.distance_m = geo.dist_m(r.lat, r.lng, *near)
         out.append(r)
     return out
+
+
+def house_position(db, street: int, number: int) -> Optional[Tuple[float, float]]:
+    """O ponto do número na escada do CNEFE da rua (tabela house_number), ou None se nenhum pedaço do lado do número
+    o cerca: um degrau com o número, ou a interpolação entre os dois degraus do mesmo pedaço que o cercam."""
+    if number <= 0 or not _has_table(db, "house_number"):
+        return None
+    row = next(iter(db.execute("SELECT rungs FROM house_number WHERE street = ?", (street,))), None)
+    if row is None:
+        return None
+    flat = struct.unpack(f"<{len(row[0]) // 4}i", row[0])
+    side = number % 2
+    pieces: Dict[int, List[Tuple[int, int, int]]] = {}
+    for k in range(0, len(flat), 5):
+        if flat[k] == side:
+            pieces.setdefault(flat[k + 1], []).append((flat[k + 2], flat[k + 3], flat[k + 4]))
+    for _, rungs in sorted(pieces.items()):
+        rungs.sort()
+        for (n1, lat1, lng1), (n2, lat2, lng2) in zip(rungs, rungs[1:] + rungs[-1:]):
+            if n1 == number:
+                return lat1 / database.SCALE, lng1 / database.SCALE
+            if n1 < number < n2:
+                t = (number - n1) / (n2 - n1)
+                return (lat1 + t * (lat2 - lat1)) / database.SCALE, (lng1 + t * (lng2 - lng1)) / database.SCALE
+    return None
 
 
 def _cells_around(lat: float, lng: float) -> List[int]:
