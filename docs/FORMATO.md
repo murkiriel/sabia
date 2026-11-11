@@ -8,6 +8,19 @@ A versão do formato está em `meta.format_version` e no `catalogo.json` (`forma
 versão maior** que a que conhece. A versão sobe quando muda algo que um leitor antigo não entenderia (tabela ou
 coluna renomeada ou removida, valor que muda de significado); tabelas e colunas novas não sobem a versão.
 
+## Coordenadas
+
+- **Sistema:** WGS84 (EPSG:4326), em graus. As fontes do IBGE (malha, localidades, CNEFE) vêm em SIRGAS 2000 e entram
+  sem conversão: a diferença para o WGS84 é de centímetros, abaixo da precisão do pacote (~1 m).
+- **No banco:** sempre **latitude primeiro**, como inteiros, graus × 100.000 (5 casas): as colunas `lat` e `lng`, e
+  os blobs (`street_line.coords`, `house_number.rungs`, `district.polygon`) em pares `lat, lng`. Divida por 100.000
+  para ter os graus: `lat = -1668634` é −16,68634.
+- **No `catalogo.json`:** o `bbox` de cada pacote é `[lat_min, lon_min, lat_max, lon_max]`, em graus, também com a
+  **latitude primeiro**, ao contrário do GeoJSON e do cabeçalho do PMTiles (`[lon_min, lat_min, lon_max, lat_max]`).
+  É o retângulo dos polígonos dos municípios do estado (na base, do Brasil), arredondado para fora em 2 casas; o do
+  ES vai até −29,29 de longitude por causa da Ilha da Trindade. A ordem é a mesma nos catálogos dos outros geradores
+  do mesmo molde e foi mantida de propósito ([DECISOES.md](DECISOES.md), D13).
+
 ## Banco do estado (`sabia-<UF>.sqlite`)
 
 | Tabela | Colunas | O que é |
@@ -57,7 +70,7 @@ coluna renomeada ou removida, valor que muda de significado); tabelas e colunas 
   tabela inteira está em `gerador/sabia/ranks.py`. **Os ids seguem a importância** (o maior `rank` tem o menor `id`;
   no empate, a ordem da geração): o FTS devolve em ordem de `docid`, e o `LIMIT` de uma busca curta fica com os mais
   importantes. Na base, o mesmo (municípios e rodovias federais).
-- `lat`, `lng`: inteiros, graus × 100.000 (5 casas, ~1 m).
+- `lat`, `lng`: inteiros, graus × 100.000 (5 casas, ~1 m), WGS84 ([Coordenadas](#coordenadas)).
 - `cell`: o quadrado do mapa no zoom 13 (o tile dos mapas na web, ~4 a 5 km de lado no Brasil), como um número:
   `x × 8192 + y`, com `x = floor((lng + 180) / 360 × 8192)` e
   `y = floor((1 − asinh(tan(lat em radianos)) / π) / 2 × 8192)`. "Mais perto" e "que rua é esta?" olham os 9

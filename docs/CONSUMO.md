@@ -8,6 +8,9 @@ buscas de verdade (`gerador/buscas.json`).
 ## Instalar
 
 1. Leia o `catalogo.json` e escolha os pacotes: a **base** (todos os municípios do país) e os estados que interessam.
+   O `bbox` de cada pacote é `[lat_min, lon_min, lat_max, lon_max]`, com a **latitude primeiro** (não é a ordem do
+   GeoJSON): um ponto (lat, lon) está no retângulo se `bbox[0] <= lat <= bbox[2]` e `bbox[1] <= lon <= bbox[3]`. O
+   retângulo é dos municípios inteiros e arredondado para fora, então os de estados vizinhos se sobrepõem.
 2. Baixe cada arquivo e confira o `sha256`.
 3. Descompacte (zstd) uma vez e guarde o `.sqlite`. O cabeçalho do quadro zstd traz o tamanho descompactado, para
    conferir o espaço antes.
@@ -16,6 +19,9 @@ buscas de verdade (`gerador/buscas.json`).
 
 Cada estado é independente: dá para instalar, atualizar e apagar um sem mexer nos outros, e gerações diferentes
 convivem (o `build_id` de cada um está em `meta`).
+
+As coordenadas são WGS84. No banco, `lat` e `lng` são inteiros, graus × 100.000, e os blobs vêm em pares `lat, lng`:
+**latitude primeiro** em tudo, banco e catálogo ([`FORMATO.md`](FORMATO.md#coordenadas)).
 
 ## Buscar
 

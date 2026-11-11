@@ -19,6 +19,7 @@ abaixo foram aceitas como estão.
 | D10 | Postos da ANP (etapa C) | Depois da etapa A; feito com o ponto que a API da ANP traz, não pelo CNEFE (abaixo) |
 | D11 | Ciclo | A cada 29 dias, dois disparos diários, geração extra por data, 3 gerações guardadas |
 | D12 | Nome | Sabiá (`sabia`) é o nome definitivo |
+| D13 | Coordenadas (2026-11-11) | WGS84; latitude primeiro no banco e no `bbox` do catálogo, mantida (não migra para a ordem do GeoJSON) |
 
 ## D1: repositório público
 
@@ -135,6 +136,14 @@ Uma geração a cada 29 dias, com o extrato do Brasil mais recente; dois disparo
 pelo GitHub não avisa ninguém), geração extra por data marcada e as 3 gerações mais recentes no ar. O extrato é o do
 Brasil inteiro publicado pelo openstreetmap.fr, o mesmo usado por tiles de rota feitos do OpenStreetMap: com o mesmo
 extrato, uma rota nunca aponta para uma rua que a busca não conhece.
+
+## D13: coordenadas (2026-11-11)
+
+As coordenadas são WGS84 e vêm sempre com a latitude primeiro: `lat, lng` no banco (inteiros, graus × 100.000) e
+`[lat_min, lon_min, lat_max, lon_max]` no `bbox` do `catalogo.json`. É o contrário do GeoJSON e do PMTiles, mas é a
+ordem dos catálogos dos outros geradores do mesmo molde, e o app consumidor já a lê: migrar mexeria em todos sem
+ganho. A ordem fica e passa a estar escrita em [FORMATO.md](FORMATO.md#coordenadas) e no
+[CONSUMO.md](CONSUMO.md); o formato do catálogo não muda.
 
 ## Medições (2026-10-01 a 2026-10-05)
 

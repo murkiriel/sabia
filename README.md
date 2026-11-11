@@ -101,7 +101,8 @@ states             {UF: pacote}, um por estado
   sha256           para conferir o download
   bytes_db         tamanho do banco descompactado (o espaço no aparelho)
   bbox             [lat mín, lon mín, lat máx, lon máx] dos municípios do estado (na base, o Brasil), arredondado
-                   para fora; use para escolher o que baixar
+                   para fora; use para escolher o que baixar. Latitude primeiro, ao contrário do GeoJSON; graus
+                   WGS84, como as coordenadas dos bancos (inteiros × 100.000, lat e lng): docs/FORMATO.md
   counts           registros por classe (place, street, road, poi), bairros (district), pedaços de traçado
                    (street_line), municípios, o total (items), as ruas com número das casas (house_number) e os
                    degraus da escada de números delas (house_number_rungs); na base, só municipality e road
