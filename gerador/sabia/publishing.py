@@ -219,8 +219,8 @@ def package_files(cat: dict) -> List[str]:
 
 def release_files(cat: dict) -> List[str]:
     """Os arquivos que sobem na release: os pacotes e, depois deles, o conjunto de conformidade da busca com o
-    sha256 dele (docs/CONFORMIDADE.md). O conjunto não entra no catalogo.json: quem o quer acha pelo nome fixo na
-    release do `build_id`."""
+    sha256 dele (docs/CONFORMIDADE.md). O catalogo.json o lista na chave `conformance` e na lista `files` do
+    contrato comum (docs/CATALOGO.md); o nome fixo na release do `build_id` continua valendo."""
     return package_files(cat) + [conformance.FILE, conformance.SHA_FILE]
 
 

@@ -139,5 +139,15 @@ ATTRIBUTION = ("© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limit
                "postos de combustível: ANP; números das casas: IBGE (CNEFE, Censo 2022)")
 SEARCH_CASES = GENERATOR_DIR / "buscas.json"
 
+# Para o contrato de catálogo comum (docs/CATALOGO.md): as licenças em SPDX (os pacotes, LICENSE da raiz; o código,
+# gerador/LICENSE), o repositório e o piso do SQLite que abre os bancos: o do Android 10 (3.22.0, o mesmo que
+# scripts/install_sqlite.py compila para a trava), só com FTS3/FTS4, sem FTS5 e sem R-Tree (sabia/database.py).
+DATA_LICENSE = "ODbL-1.0"
+CODE_LICENSE = "MIT"
+REPOSITORY_URL = "https://github.com/" + GITHUB_REPO
+SQLITE_MIN_VERSION = "3.22.0"
+SQLITE_MODULES = ("fts4",)
+SQLITE_NOT_USED = ("fts5", "rtree")
+
 # O GitHub Releases recusa arquivo a partir de 2 GiB; esta é a trava, com folga.
 MAX_ASSET_BYTES = 1_900_000_000
