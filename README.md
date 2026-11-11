@@ -80,7 +80,9 @@ Tamanhos da geração 2026-11-10-c17dff60 (banco aberto, o espaço no aparelho, 
 
 Os de cada estado estão no `catalogo.json` (`bytes_db` e `bytes`).
 
-Como instalar, buscar, achar a rua de um ponto e o mais perto: [`docs/CONSUMO.md`](docs/CONSUMO.md).
+Como instalar, buscar, achar a rua de um ponto e o mais perto: [`docs/CONSUMO.md`](docs/CONSUMO.md). Para conferir que um
+porte da busca (Kotlin, JavaScript...) dá os mesmos resultados que a de referência, cada release traz um conjunto de
+casos de conformidade: [`docs/CONFORMIDADE.md`](docs/CONFORMIDADE.md).
 
 ## `catalogo.json`
 
@@ -115,7 +117,7 @@ Actions (workflow [`gerar`](.github/workflows/gerar.yml)). Cada geração é uma
 sempre aponta para a mais recente. Ficam no ar as **3 gerações mais recentes**: use sempre o `release_url` do
 `catalogo.json`, não um link fixo de release. Cada estado é independente: dá para atualizar um sem mexer nos outros.
 
-Uma geração só é publicada se passar nas travas: 168 buscas de verdade (nas 27 UFs) com o resultado esperado, todos os municípios do
+Uma geração só é publicada se passar nas travas: 267 buscas de verdade (6 ou mais em cada uma das 27 UFs) com o resultado esperado, todos os municípios do
 IBGE presentes, nenhuma queda grande de registros em relação à geração anterior, e o banco abrindo e respondendo igual
 no SQLite 3.22 (o do Android 10). Como é gerado: [`gerador/README.md`](gerador/README.md).
 
