@@ -5,11 +5,18 @@ OpenStreetMap e dos municípios do IBGE.
 
 ## Requisitos
 
-- Python 3.10+ (testado com 3.12)
-- `pip install -r requirements.txt`: `osmium` (pyosmium, leitura do extrato), `shapely` (município e bairro de cada
-  registro), `zstandard` (compactação) e `pyarrow` (os lugares da Overture, GeoParquet no S3). Num Python sem venv
-  (a distribuição "embeddable" do Windows), use `pip install --target .pylib -r requirements.txt`; o `generate.py`
-  põe `.pylib/` no caminho de import.
+- Python 3.12 (o do Actions; o `requirements.txt` é travado para ele)
+- `pip install --require-hashes -r requirements.txt`: `osmium` (pyosmium, leitura do extrato), `shapely` (município e
+  bairro de cada registro), `zstandard` (compactação) e `pyarrow` (os lugares da Overture, GeoParquet no S3). Num
+  Python sem venv (a distribuição "embeddable" do Windows), use
+  `pip install --require-hashes --target .pylib -r requirements.txt`; o `generate.py` põe `.pylib/` no caminho de
+  import.
+- As dependências diretas ficam no `requirements.in`, com a versão fixa; o `requirements.txt` sai dele, com todas as
+  transitivas (numpy, requests...) fixadas e o sha256 de cada arquivo do PyPI, pelo comando do topo dele (da pasta
+  `gerador/`): `uv pip compile requirements.in --generate-hashes --python-version 3.12 -o requirements.txt`. Para
+  subir uma versão, mude o `.in` e rode o comando; os dois arquivos vão juntos no commit. Os testes
+  (`tests/test_workflows.py`) conferem que o lock tem versão e hash em tudo e as versões do `.in`, e que os workflows
+  só instalam com `--require-hashes`.
 - Para conferir o código: `ruff` e `mypy` (configurados no `pyproject.toml`).
 
 ## Como rodar
@@ -74,7 +81,7 @@ com a data do extrato, em `data/build/fontes.json`, e o registro da geração (`
 `sources`.
 
 Os testes também rodam no GitHub Actions a cada push e pull request (`.github/workflows/testes.yml`), com as
-dependências do `requirements.txt` e sem dados baixados.
+dependências travadas do `requirements.txt` e sem dados baixados.
 
 ## Como funciona
 

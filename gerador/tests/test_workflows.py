@@ -2,6 +2,7 @@
 import re
 import unittest
 from pathlib import Path
+from typing import Dict, List
 
 WORKFLOWS = Path(__file__).resolve().parent.parent.parent / ".github" / "workflows"
 
@@ -35,7 +36,7 @@ class TestsWorkflowTest(unittest.TestCase):
         self.assertRegex(self.text, r"(?m)^permissions:\n  contents: read\n")
 
     def test_installs_the_pinned_requirements(self):
-        self.assertIn("pip install -r requirements.txt", self.text)
+        self.assertIn("pip install --require-hashes -r requirements.txt", self.text)
 
     def test_runs_the_whole_suite(self):
         self.assertIn("python -m unittest discover -s tests -t . -v", self.text)
@@ -172,15 +173,54 @@ class ScheduledGenerationTest(unittest.TestCase):
         self.assertRegex(self.text, r"(?m)^concurrency:\n  group: generate\n  cancel-in-progress: false")
 
 
+GENERATOR = Path(__file__).resolve().parent.parent
+COMPILE = "uv pip compile requirements.in --generate-hashes --python-version 3.12 -o requirements.txt"
+
+
+def requirements(name: str) -> List[str]:
+    """As linhas de requisito de um arquivo do pip, com as continuações (`\\`) juntadas e sem os comentários."""
+    text = (GENERATOR / name).read_text(encoding="utf-8").replace("\r\n", "\n").replace("\\\n", " ")
+    return [" ".join(line.split("#")[0].split()) for line in text.splitlines() if line.split("#")[0].strip()]
+
+
+def pins(lines: List[str]) -> Dict[str, str]:
+    return {line.split()[0].split("==")[0].lower(): line.split()[0].split("==")[1] for line in lines}
+
+
 class RequirementsTest(unittest.TestCase):
-    def test_versions_are_pinned(self):
-        lines = (Path(__file__).resolve().parent.parent / "requirements.txt").read_text(encoding="utf-8").splitlines()
-        packages = [line.split("#")[0].strip() for line in lines if line.split("#")[0].strip()]
-        self.assertTrue(packages)
-        for p in packages:
-            self.assertRegex(p, r"^[A-Za-z0-9_.-]+==[0-9][0-9A-Za-z.]*$", p)
-        names = {p.split("==")[0].lower() for p in packages}
-        self.assertTrue({"osmium", "shapely", "zstandard"} <= names, names)
+    """As dependências diretas no requirements.in; o requirements.txt, o que se instala, com todas as transitivas
+    fixadas e com hash, gerado dele pelo uv."""
+
+    def test_direct_dependencies_are_pinned(self):
+        lines = requirements("requirements.in")
+        for line in lines:
+            self.assertRegex(line, r"^[A-Za-z0-9_.-]+==[0-9][0-9A-Za-z.]*$", line)
+        self.assertTrue({"osmium", "shapely", "zstandard", "pyarrow"} <= set(pins(lines)), lines)
+
+    def test_lock_pins_everything_with_hashes(self):
+        lines = requirements("requirements.txt")
+        self.assertTrue(lines)
+        for line in lines:
+            self.assertRegex(line, r"^[A-Za-z0-9_.-]+==[0-9][0-9A-Za-z.]*( --hash=sha256:[0-9a-f]{64})+$", line[:80])
+
+    def test_lock_has_the_direct_versions_and_the_transitive_ones(self):
+        """O lock tem cada dependência direta na versão do .in, e mais (numpy, do shapely; requests, do osmium)."""
+        direct, locked = pins(requirements("requirements.in")), pins(requirements("requirements.txt"))
+        for name, version in direct.items():
+            self.assertEqual(version, locked.get(name), name)
+        self.assertTrue({"numpy", "requests"} <= set(locked), locked)
+
+    def test_lock_says_how_to_regenerate(self):
+        head = (GENERATOR / "requirements.txt").read_text(encoding="utf-8").splitlines()[:3]
+        self.assertIn(f"#    {COMPILE}", head)
+
+    def test_workflows_install_only_with_hashes(self):
+        """Todo `pip install` dos workflows é do lock, em modo de hash: nada entra sem versão e hash."""
+        installs = [line.strip() for text in workflows().values() for line in text.splitlines()
+                    if "pip install" in line and not line.lstrip().startswith("#")]
+        self.assertEqual(2, len(installs), installs)
+        for line in installs:
+            self.assertRegex(line, r"^run: pip install --require-hashes -r (gerador/)?requirements\.txt$", line)
 
 
 if __name__ == "__main__":

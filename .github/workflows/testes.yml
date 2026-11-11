@@ -20,8 +20,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      # As mesmas da geração, travadas com hash (requirements.txt, gerado do requirements.in).
       - name: Dependências
-        run: pip install -r requirements.txt
+        run: pip install --require-hashes -r requirements.txt
       - name: SQLite 3.22, o do Android 10 (compilado só com FTS3 e FTS4, sha256 conferido)
         run: python scripts/install_sqlite.py
       - name: Testes

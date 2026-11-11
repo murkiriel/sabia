@@ -110,8 +110,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Todas as dependências, as transitivas também, com versão e hash (gerado do requirements.in, ver o topo do
+      # requirements.txt): um pacote trocado no PyPI ou uma versão nova não entram sem passar pelo git.
       - name: Dependências
-        run: pip install -r gerador/requirements.txt
+        run: pip install --require-hashes -r gerador/requirements.txt
 
       - name: SQLite 3.22, o do Android 10, para a trava que abre os bancos nele
         working-directory: gerador

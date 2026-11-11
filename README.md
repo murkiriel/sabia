@@ -148,7 +148,7 @@ O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
 
 - Nomes de arquivos e pastas de dados e documentos: português, sem acento, sem espaço (`catalogo.json`,
   `sabia-GO.sqlite.zst`, `DECISOES.md`). Exceção: os nomes que o ecossistema espera (`README.md`, `LICENSE`,
-  `requirements.txt`).
+  `requirements.in`, `requirements.txt`).
 - Código: nomes de variáveis, funções, classes, módulos e arquivos de código em inglês; siglas como são (`osm`,
   `ibge`, `uf`). Opções de linha de comando e identificadores de automação também.
 - Formato dos dados: tabelas e colunas do banco, chaves do `catalogo.json` e valores com significado em inglês.
