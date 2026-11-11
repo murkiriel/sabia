@@ -15,8 +15,8 @@ abaixo foram aceitas como estão.
 | D6 | "Que rua é esta?" | Entra na etapa A, com o traçado de cada trecho simplificado a 10 m |
 | D7 | Tipos de ponto de interesse | Todos os que têm nome, mais os de viagem sem nome, mais aeroporto, cachoeira, pico, mirante e autódromo |
 | D8 | Regras de busca | Tabelas dentro do pacote: abreviações, formas, números por extenso, categorias, "cidade de" dispensável |
-| D9 | Endereço com número (etapa B) | Depois da etapa A, pelo CNEFE do IBGE, por face de quadra, mais quadra e lote |
-| D10 | Postos da ANP (etapa C) | Depois da etapa A, posicionados pelo CNEFE |
+| D9 | Endereço com número (etapa B) | Depois da etapa A, pelo CNEFE do IBGE; feito como a escada de números de cada rua, sem quadra e lote (abaixo) |
+| D10 | Postos da ANP (etapa C) | Depois da etapa A; feito com o ponto que a API da ANP traz, não pelo CNEFE (abaixo) |
 | D11 | Ciclo | A cada 29 dias, dois disparos diários, geração extra por data, 3 gerações guardadas |
 | D12 | Nome | Sabiá (`sabia`) é o nome definitivo |
 
@@ -114,6 +114,20 @@ Ficam para depois da etapa A.
   IBGE.
 - **C, postos da ANP:** o OpenStreetMap tem perto de 43% dos 2.071 postos de Goiás registrados na ANP. O cadastro da
   ANP não tem coordenada; a posição sai do endereço, pelo CNEFE.
+
+**Como ficou** (as duas etapas estão em todas as UFs desde a geração 2026-11-10-c17dff60):
+
+- **B:** não por face de quadra nem por quadra e lote. O pacote guarda, para cada rua do mapa que casa pelo nome com
+  uma do CNEFE no município, a **escada de números**: por lado (par, ímpar), um degrau (número e ponto do endereço) a
+  cada 20 números e o último, e um pedaço novo onde dois números seguidos ficam a mais de 300 m; o resto se interpola
+  entre os degraus (Goiás: erro de 12 m na mediana, 92 m no p90). Tabela `house_number` ([FORMATO.md](FORMATO.md));
+  medição e escolhas em [ENDERECOS.md](ENDERECOS.md); código em `gerador/sabia/cnefe.py`. **Quadra e lote não
+  entraram**: o endereço "SN" com quadra e lote (quase dois terços dos de Goiás) não tem número na escada, e a busca
+  trata "quadra" e "lote" só como palavras que levam número no nome.
+- **C:** a API de revendedores da ANP já traz o ponto de cada posto (98% deles; Goiás: 2.019 de 2.069),
+  enquanto o endereço pelo CNEFE achava lugar para só 26%. O posto entra no ponto que a ANP dá (o declarado à
+  fiscalização ou pelo próprio posto); o que só a ANP tem fica marcado com `anp` na tabela `item_source`, porque essa
+  posição não foi conferida no mapa. Código em `gerador/sabia/anp.py`.
 
 ## D11: ciclo
 
