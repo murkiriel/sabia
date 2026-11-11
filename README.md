@@ -124,6 +124,7 @@ release_url        onde baixar os arquivos desta geração
 attribution        crédito obrigatório dos dados
 base               a base nacional (campos abaixo; counts: municipality, road)
 states             {UF: pacote}, um por estado
+contract           o mesmo catálogo no contrato comum aos quatro geradores (v1): ver docs/CATALOGO.md#sabia
   name             nome do estado (só em states)
   file             nome do arquivo na release (.sqlite.zst)
   bytes            tamanho do arquivo compactado
