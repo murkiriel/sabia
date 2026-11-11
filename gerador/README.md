@@ -28,6 +28,8 @@ python scripts/install_sqlite.py        # uma vez: o SQLite 3.22 da trava G7e, e
 python generate.py                      # geração completa em data/dist/
 python generate.py --states DF,GO       # só esses estados
 python generate.py --from validate      # só as travas (e o catálogo) sobre os bancos já gerados
+python scripts/build_conformance.py     # o conjunto de conformidade da busca (a geração já faz; docs/CONFORMIDADE.md)
+python scripts/check_conformance.py data/dist/sabia-conformidade.json.zst --dbs data/build   # a referência contra ele
 python scripts/publish.py               # confere a geração (não publica nada)
 python scripts/publish.py --release     # sobe os pacotes numa release e grava o catalogo.json na raiz
 python scripts/due.py                   # está na hora de gerar de novo? (só responde; não gera)
@@ -95,6 +97,7 @@ dependências travadas do `requirements.txt` e sem dados baixados.
 | build | `sabia/database.py` | Os bancos SQLite (FTS4, tabelas de busca de `sabia/search_rules.py`, `meta`) e a compactação zstd 19; formato em [`docs/FORMATO.md`](../docs/FORMATO.md) |
 | build | `sabia/build.py` | A etapa inteira: lê o extrato uma vez, grava os bancos em `data/build/` e os pacotes e o `pacotes.json` em `data/dist/` |
 | validate | `sabia/validation.py` | As travas (abaixo) e o `data/dist/relatorio.json` |
+| conformance | `sabia/conformance.py` | O conjunto de conformidade da busca, `data/dist/sabia-conformidade.json.zst` e o `.sha256` ao lado, que sobem na release; a referência roda contra ele antes de gravar ([`docs/CONFORMIDADE.md`](../docs/CONFORMIDADE.md)) |
 | catalog | `sabia/catalog.py` | O `data/dist/catalogo.json`: tamanho, sha256, retângulo e contagens de cada pacote |
 
 Cada geração grava `data/dist/geracao.json` (`sabia/run_record.py`): minutos de cada etapa, pico de disco em `data/`
@@ -178,9 +181,10 @@ A etapa `validate` não deixa montar o catálogo se:
 - **(a) buscas de verdade:** algum caso de [`buscas.json`](buscas.json) não traz o resultado esperado até a posição
   `top` (nome igual ou contido, município, bairro, tipo, número da casa e/ou um ponto com raio; com `near`, a busca
   é feita dessa posição e `within_m` limita a distância), pela busca de referência (`sabia/search.py`, as regras de
-  [`docs/CONSUMO.md`](../docs/CONSUMO.md)). Hoje, 168 casos: em Goiás, as 50 buscas da medição (menos a PUC, escrita
+  [`docs/CONSUMO.md`](../docs/CONSUMO.md)). Hoje, 267 casos: em Goiás, as 50 buscas da medição (menos a PUC, escrita
   "universidadfe" no OpenStreetMap), número da casa, erro de digitação e 18 buscas com a posição; 21 do DF; em cada
-  uma das outras 25 UFs, a capital, uma segunda cidade e uma avenida da capital. O `relatorio.json` traz também o
+  uma das outras 25 UFs, a capital, uma segunda cidade e uma avenida da capital, e os 4 casos da receita de
+  [`docs/CONFORMIDADE.md`](../docs/CONFORMIDADE.md#casos-levados-às-travas) (3 no MA). O `relatorio.json` traz também o
   MRR (a média de 1/posição do resultado certo) e o placar de cada UF;
 - **(b) cobertura:** falta no banco do estado algum município do IBGE com polígono, ou falta ponto na base para um
   município de estado gerado;
@@ -214,13 +218,16 @@ publica se:
 - a geração foi feita de um extrato local (`--osm-file`, `osm.url` = `local`),
 - a geração não passou nas travas (`data/dist/relatorio.json` com problemas, ou sem ele),
 - algum pacote falta, não bate o sha256 ou passa do limite do GitHub Releases,
+- falta o conjunto de conformidade (`sabia-conformidade.json.zst`), ele não bate com o `.sha256` ao lado ou é de
+  outra geração ou formato,
 - algum estado sumiu ou perdeu mais de 5% dos registros em relação ao `catalogo.json` publicado, no total ou numa
   classe com 1.000 registros ou mais (`--accept-drop` para passar),
 - a geração usa um OpenStreetMap mais antigo que o da publicada (`--accept-older`),
 - já existe uma release PUBLICADA com o mesmo `build_id`,
 - com `--commit`, o git do repositório não está com o e-mail anônimo do GitHub (`…@users.noreply.github.com`).
 
-A release sobe como rascunho, sem arquivos; cada pacote que ainda não está lá (ou está com outro tamanho) sobe; só
+A release sobe como rascunho, sem arquivos; cada pacote (e, depois deles, o conjunto de conformidade e o `.sha256`
+dele) que ainda não está lá (ou está com outro tamanho) sobe; só
 com todos presentes e do tamanho certo ela é publicada. Se a subida cair no meio, rodar o mesmo comando retoma do que
 falta. Só depois o `catalogo.json` e a tabela "Baixar por estado" do README da raiz mudam, no mesmo commit; com
 `--push`, as releases antigas são apagadas no fim (ficam 3 gerações, `SABIA_KEEP_GENERATIONS` muda;

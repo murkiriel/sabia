@@ -39,7 +39,7 @@ class StagesTest(unittest.TestCase):
         self.script = load_script()
 
     def test_stage_order(self):
-        self.assertEqual(["sources", "build", "validate", "catalog"], self.script.STAGES)
+        self.assertEqual(["sources", "build", "validate", "conformance", "catalog"], self.script.STAGES)
 
     def test_parser_defaults(self):
         args = self.script.build_parser().parse_args([])

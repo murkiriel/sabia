@@ -139,6 +139,8 @@ jobs:
         run: |
           mkdir -p relatorio
           cp gerador/data/recursos.log gerador/data/tempo.txt gerador/data/dist/geracao.json gerador/data/dist/relatorio.json gerador/data/dist/catalogo.json gerador/data/dist/pacotes.json relatorio/ 2>/dev/null || true
+          # O conjunto de conformidade da busca (docs/CONFORMIDADE.md), também quando a geração não é publicada
+          cp gerador/data/dist/sabia-conformidade.json.zst gerador/data/dist/sabia-conformidade.json.zst.sha256 relatorio/ 2>/dev/null || true
           # O corpo das respostas ruins do IBGE, se houve (sabia/sources.py)
           cp gerador/data/raw/*.invalido relatorio/ 2>/dev/null || true
           df -h / /mnt 2>/dev/null || df -h /

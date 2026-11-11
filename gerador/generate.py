@@ -6,7 +6,8 @@
     python generate.py --from validate                  # só valida e remonta o catálogo sobre os bancos já gerados
 
 Etapas, em ordem: sources (extrato do OpenStreetMap, arquivos do IBGE e as outras fontes), build (lê o extrato e
-grava os bancos), validate (as travas), catalog. Depois, `python scripts/publish.py` publica.
+grava os bancos), validate (as travas), conformance (o conjunto de conformidade da busca, docs/CONFORMIDADE.md),
+catalog. Depois, `python scripts/publish.py` publica.
 """
 from __future__ import annotations
 
@@ -26,9 +27,10 @@ sys.path.insert(0, str(HERE))
 if (HERE / ".pylib").exists():
     sys.path.insert(0, str(HERE / ".pylib"))
 
-from sabia import build, catalog, config, copies, run_record, sources, sqlite_old, validation  # noqa: E402
+from sabia import (build, catalog, config, conformance, copies, run_record, sources, sqlite_old,  # noqa: E402
+                   validation)
 
-STAGES = ["sources", "build", "validate", "catalog"]
+STAGES = ["sources", "build", "validate", "conformance", "catalog"]
 
 
 def parse_states(text: str) -> List[str]:
@@ -124,6 +126,27 @@ def validate_stage(states: List[str], packages: Dict[str, object], today: Option
     return problems
 
 
+def conformance_stage(states: List[str]) -> List[str]:
+    """O conjunto de conformidade da busca (sabia/conformance.py, docs/CONFORMIDADE.md) sobre os bancos de
+    data/build/, depois das travas: data/dist/sabia-conformidade.json.zst e o sha256 ao lado, que sobem na release
+    com os pacotes. Antes de gravar, a própria busca de referência roda contra ele; devolve os problemas (vazio =
+    gravado)."""
+    dbs = {"base": config.BUILD / "sabia-base.sqlite", **{uf: config.BUILD / f"sabia-{uf}.sqlite" for uf in states}}
+    for old in (config.DIST / conformance.FILE, config.DIST / conformance.SHA_FILE):
+        old.unlink(missing_ok=True)
+    doc = conformance.build(dbs, conformance.load_validation_cases(config.SEARCH_CASES), config.DIST,
+                            catalog.git_commit_hash())
+    problems = conformance.self_check(doc, dbs)
+    if problems:
+        return [f"conformidade: {p}" for p in problems]
+    conformance.save(doc, config.DIST / conformance.FILE)
+    s = conformance.summary(doc)
+    size = (config.DIST / conformance.FILE).stat().st_size
+    print(f"[conformidade] {s['unit']} casos das funções puras, {s['search']} buscas e {s['which_street']} 'que rua é "
+          f"esta?' em {conformance.FILE} ({size / 1e3:.0f} kB); a referência passa em todos")
+    return []
+
+
 def catalog_stage(packages: Dict[str, object]) -> Dict[str, object]:
     """O catalogo.json em data/dist/, a partir do pacotes.json e dos arquivos compactados."""
     municipalities = sources.load_municipalities(config.RAW / sources.MESH_FILE, config.RAW / sources.NAMES_FILE)
@@ -165,7 +188,16 @@ def _generate(args: argparse.Namespace, recorder: run_record.RunRecorder) -> str
                 print("  -", p)
             raise SystemExit(1)
     else:
-        print("[gerar] AVISO: --from catalog não roda as travas; o catálogo sai sobre a validação anterior")
+        print("[gerar] AVISO: --from conformance ou catalog não roda as travas; sai sobre a validação anterior")
+    if start <= STAGES.index("conformance"):
+        with recorder.stage("conformance"):
+            problems = conformance_stage(states)
+        if problems:
+            print()
+            print("[gerar] O CONJUNTO DE CONFORMIDADE NÃO PASSOU NA REFERÊNCIA; o catálogo não foi montado:")
+            for p in problems[:50]:
+                print("  -", p)
+            raise SystemExit(1)
     with recorder.stage("catalog"):
         cat = catalog_stage(packages)
     total = sum(e["bytes"] for e in [cat["base"], *cat["states"].values()])  # type: ignore[attr-defined]

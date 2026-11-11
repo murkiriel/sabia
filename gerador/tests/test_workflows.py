@@ -188,6 +188,10 @@ class ScheduledGenerationTest(unittest.TestCase):
         """O corpo de uma resposta ruim do IBGE (data/raw/*.invalido) vai para o artefato: a falha diz a causa."""
         self.assertIn("gerador/data/raw/*.invalido", self.step("Guardar logs e medições"))
 
+    def test_conformance_set_goes_to_the_artifact(self):
+        """O conjunto de conformidade da busca vai para o artefato, também numa geração à mão sem publicar."""
+        self.assertIn("gerador/data/dist/sabia-conformidade.json.zst", self.step("Guardar logs e medições"))
+
     def test_no_ibge_cache(self):
         """A malha e a lista de municípios vêm das cópias versionadas (2026-11-10): o cache por mês do Actions, que
         guardava as duas, saiu (em novembro não havia cache e a API não respondia ao executor)."""

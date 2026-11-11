@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sabia import catalog, config, publishing  # noqa: E402
+from sabia import catalog, config, conformance, publishing  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES  # noqa: E402
 from tests.test_catalog import packages  # noqa: E402
 
@@ -21,6 +21,13 @@ class CheckTest(unittest.TestCase):
         self._patch.start()
         self.cat = catalog.build_catalog(packages(self.dist), MUNICIPALITIES, generator_commit="abc1234")
         self.report({"problems": []})
+        self.conformance(self.cat["build_id"])
+
+    def conformance(self, build_id, format_version=None):
+        doc = {"conformance_version": conformance.CONFORMANCE_VERSION, "build_id": build_id,
+               "format_version": self.cat["format_version"] if format_version is None else format_version,
+               "unit": [], "search": [], "which_street": []}
+        conformance.save(doc, self.dist / conformance.FILE)
 
     def tearDown(self):
         self._patch.stop()
@@ -78,6 +85,28 @@ class CheckTest(unittest.TestCase):
     def test_files_of_the_release(self):
         self.assertEqual(["sabia-base.sqlite.zst", "sabia-DF.sqlite.zst", "sabia-GO.sqlite.zst"],
                          publishing.package_files(self.cat))
+        # o conjunto de conformidade sobe junto, depois dos pacotes, com o sha256 ao lado (fora do catálogo)
+        self.assertEqual(publishing.package_files(self.cat) + ["sabia-conformidade.json.zst",
+                                                                "sabia-conformidade.json.zst.sha256"],
+                         publishing.release_files(self.cat))
+        self.assertNotIn("conformidade", json.dumps(self.cat))
+
+    def test_conformance_set_is_required(self):
+        (self.dist / conformance.FILE).unlink()
+        self.assertEqual(["falta sabia-conformidade.json.zst: a geração não passou pela etapa conformance"],
+                         self.check())
+
+    def test_conformance_set_of_another_generation(self):
+        self.conformance("2026-01-01-00000000")
+        self.assertIn("2026-01-01-00000000", self.check()[0])
+        self.conformance(self.cat["build_id"], format_version=2)
+        self.assertIn("formato 2", self.check()[0])
+
+    def test_conformance_set_must_match_its_sha256(self):
+        (self.dist / conformance.SHA_FILE).write_text("0" * 64 + "  " + conformance.FILE + "\n", encoding="utf-8")
+        self.assertIn("não bate", self.check()[0])
+        (self.dist / conformance.SHA_FILE).unlink()
+        self.assertIn("falta", self.check()[0])
 
 
 def sample_catalog():

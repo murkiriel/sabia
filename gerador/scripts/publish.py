@@ -20,6 +20,8 @@ Não publica se:
 - a geração foi feita de um extrato local (--osm-file),
 - a geração não passou nas travas (data/dist/relatorio.json com problemas, ou sem ele),
 - algum pacote falta, não bate o sha256 ou passa do limite do GitHub Releases,
+- falta o conjunto de conformidade da busca (sabia-conformidade.json.zst, da etapa conformance), ele não bate com o
+  sha256 ao lado ou é de outra geração,
 - algum estado sumiu ou perdeu mais de 5% dos registros em relação ao catalogo.json publicado, no total ou numa
   classe com 1.000 registros ou mais (--accept-drop),
 - a geração usa um OpenStreetMap mais antigo que o da publicada (--accept-older),
@@ -43,7 +45,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sabia import config, publishing  # noqa: E402
+from sabia import config, conformance, publishing  # noqa: E402
 
 
 def _git(*args: str) -> subprocess.CompletedProcess:
@@ -116,14 +118,17 @@ def main() -> None:
         return
 
     tag = cat["build_id"]
-    files = [config.DIST / name for name in publishing.package_files(cat)]
+    conformance_name = conformance.FILE
+    files = [config.DIST / name for name in publishing.release_files(cat)]
     notes = (f"Busca de lugares sem internet, um banco por estado (formato {cat['format_version']}), OpenStreetMap "
-             f"de {cat['osm']['timestamp']}. Índice: catalogo.json na raiz do repositório.\n\n{config.ATTRIBUTION}")
+             f"de {cat['osm']['timestamp']}. Índice: catalogo.json na raiz do repositório. Conjunto de conformidade "
+             f"da busca (para conferir um porte da busca de referência): {conformance_name}, com o sha256 em "
+             f"{conformance_name}.sha256 (docs/CONFORMIDADE.md).\n\n{config.ATTRIBUTION}")
     try:
         publishing.publish_release(publishing.gh_real, tag, files, f"Sabiá {tag}", notes)
     except (publishing.GhError, publishing.ReleaseAlreadyPublished) as e:
         sys.exit(f"Release não publicada: {e}")
-    print(f"Release {tag} publicada com {len(files)} pacotes.")
+    print(f"Release {tag} publicada com {len(files)} arquivos (os pacotes e o conjunto de conformidade).")
 
     shutil.copyfile(config.DIST / "catalogo.json", root_catalog)
     readme = config.REPO / "README.md"

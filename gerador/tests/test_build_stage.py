@@ -13,7 +13,8 @@ from unittest import mock
 from shapely.geometry import mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sabia import config, database, memory, sqlite_old  # noqa: E402
+from sabia import config, conformance, database, memory, run_record, sqlite_old  # noqa: E402
+from sabia.util import file_hash  # noqa: E402
 from tests.osm_builder import MUNICIPALITIES, OsmBuilder  # noqa: E402
 from tests.test_cli import load_script  # noqa: E402
 from tests.test_localities import write_zip  # noqa: E402
@@ -249,6 +250,61 @@ class ValidateStageTest(StageFixture):
             problems = self.script.validate_stage(["GO"], packages)
         self.assertTrue(problems)
         self.assertTrue(all("3.22" in p for p in problems), problems)
+
+
+class ConformanceStageTest(StageFixture):
+    """A etapa conformance, depois das travas: o conjunto de conformidade da busca sobre os bancos de data/build/, em
+    data/dist/ com o sha256 ao lado (docs/CONFORMIDADE.md)."""
+
+    def test_set_in_dist_with_its_sha256(self):
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual([], self.script.conformance_stage(["GO"]))
+        self.assertIn("a referência passa em todos", out.getvalue())
+        file = self.dist / conformance.FILE
+        self.assertIsNone(conformance.sha_problem(file))
+        doc = conformance.load(file)
+        self.assertEqual((packages["build_id"], database.FORMAT_VERSION), (doc["build_id"], doc["format_version"]))
+        self.assertEqual(["GO"], doc["states"])
+        self.assertEqual(file_hash(self.dist / "sabia-GO.sqlite.zst"), doc["packages"]["GO"]["sha256"])
+        self.assertEqual({"base", "GO"}, {c["db"] for c in doc["search"]})
+        self.assertTrue(doc["unit"] and doc["which_street"])
+        # os casos das travas de GO entram todos, com a saída da referência
+        go = [c for c in json.loads(config.SEARCH_CASES.read_text(encoding="utf-8")) if c["uf"] == "GO"]
+        self.assertEqual(len(go), sum(1 for c in doc["search"] if c["origin"] == "buscas.json"))
+
+    def test_a_set_the_reference_fails_is_not_written(self):
+        self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        with mock.patch.object(conformance, "self_check", return_value=["GO-municipio: posição 1"]):
+            self.assertEqual(["conformidade: GO-municipio: posição 1"], self.script.conformance_stage(["GO"]))
+        self.assertFalse((self.dist / conformance.FILE).exists())
+
+    def test_build_cleans_the_set_of_the_previous_generation(self):
+        self.dist.mkdir(parents=True)
+        for name in (conformance.FILE, conformance.SHA_FILE):
+            (self.dist / name).write_bytes(b"de outra geracao")
+        self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        self.assertEqual([], [p.name for p in self.dist.glob("sabia-conformidade*")])
+
+    def test_runs_after_the_gates_and_before_the_catalog(self):
+        packages = self.script.build_stage(["GO"], self.osm, today="2026-09-30")
+        (self.build / "osm.json").write_text(json.dumps(self.osm), encoding="utf-8")
+        calls = []
+        cat = {"build_id": packages["build_id"], "base": {"bytes": 1}, "states": {"GO": {"bytes": 1}}}
+        args = self.script.build_parser().parse_args(["--states", "GO", "--from", "validate"])
+        recorder = run_record.RunRecorder(self.build, interval=3600)
+        with mock.patch.object(self.script, "validate_stage", lambda *a: calls.append("validate") or []), \
+                mock.patch.object(self.script, "conformance_stage", lambda *a: calls.append("conformance") or []), \
+                mock.patch.object(self.script, "catalog_stage", lambda *a: calls.append("catalog") or cat), \
+                redirect_stdout(io.StringIO()):
+            self.script._generate(args, recorder)
+            self.assertEqual(["validate", "conformance", "catalog"], calls)
+            calls.clear()
+            with mock.patch.object(self.script, "conformance_stage", lambda *a: calls.append("conformance") or ["x"]):
+                with self.assertRaises(SystemExit):
+                    self.script._generate(args, recorder)
+            self.assertEqual(["validate", "conformance"], calls)  # sem o catálogo
 
 
 class CatalogStageTest(StageFixture):
