@@ -16,9 +16,11 @@
 # publicar), 75 min e 7.194.332 kB (6,9 GiB, o "pico" do log do build), com até 2,2 GiB de swap. O extrato do Brasil
 # tem ~2,3 GB e o pyosmium guarda as coordenadas dos nós na memória (SABIA_NODE_STORAGE muda); por isso o job tem
 # swap e registra memória, swap e disco a cada 30 s.
-# O executor de repositório privado é pequeno (2 CPUs, 7,8 GiB de RAM, ~13 GB livres em /): o job libera espaço
-# apagando ferramentas pré-instaladas e põe os dados e o swap no disco com mais espaço livre (/ ou o disco temporário
-# em /mnt, quando a máquina tem um), como os outros geradores do mesmo molde.
+# Essas medições são do executor de repositório privado, pequeno (2 CPUs, 7,7 GiB de RAM, ~14 GB livres em /). O
+# repositório é público desde 2026-11-11, e o GitHub dá a repositório público um executor maior (4 CPUs, 16 GB de
+# RAM, pela documentação dele), ainda não medido aqui: o swap e a limpeza de disco continuam, que não custam nada se
+# sobrar. O job libera espaço apagando ferramentas pré-instaladas e põe os dados e o swap no disco com mais espaço
+# livre (/ ou o disco temporário em /mnt, quando a máquina tem um), como os outros geradores do mesmo molde.
 name: gerar
 
 on:
@@ -48,8 +50,9 @@ jobs:
     outputs:
       run: ${{ steps.age.outputs.run }}
     steps:
-      # A data vem do catalogo.json do checkout, não de raw.githubusercontent.com: lá um repositório privado
-      # responde 404, a data sumiria e o job geraria todo dia. O checkout é o do ramo como está agora, não o do
+      # A data vem do catalogo.json do checkout, não de raw.githubusercontent.com: lá um repositório privado (este,
+      # até 2026-11-11) responde 404, a data sumiria e o job geraria todo dia; e, público, o raw pode servir por
+      # alguns minutos o catálogo de antes de uma publicação. O checkout é o do ramo como está agora, não o do
       # commit do disparo: um run que esperou na fila atrás de outro que publicou tem de ler o catálogo novo.
       - uses: actions/checkout@v7
         with:

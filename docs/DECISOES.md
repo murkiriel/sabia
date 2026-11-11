@@ -7,7 +7,7 @@ abaixo foram aceitas como estão.
 
 | # | Decisão | Escolha |
 |---|---|---|
-| D1 | Repositório | Público desde o começo, anônimo, com a convenção de nomes e idiomas do README |
+| D1 | Repositório | Público, anônimo, com a convenção de nomes e idiomas do README (público de fato desde 2026-11-11) |
 | D2 | Formato do pacote | SQLite com FTS4, lido pelo SQLite do sistema; um arquivo por estado mais uma base nacional |
 | D3 | Compactação | zstd nível 19; o banco é descompactado uma vez, na instalação |
 | D4 | O que entra na etapa A | Lugares, ruas, rodovias por município e pontos de interesse do OpenStreetMap, mais os polígonos de bairro |
@@ -19,6 +19,14 @@ abaixo foram aceitas como estão.
 | D10 | Postos da ANP (etapa C) | Depois da etapa A, posicionados pelo CNEFE |
 | D11 | Ciclo | A cada 29 dias, dois disparos diários, geração extra por data, 3 gerações guardadas |
 | D12 | Nome | Sabiá (`sabia`) é o nome definitivo |
+
+## D1: repositório público
+
+Decidido como "público desde o começo", mas o repositório ficou **privado até 2026-11-11**: o `catalogo.json` e os
+pacotes das releases respondiam 404 a quem não tinha acesso, e o app consumidor não conseguia baixá-los. Em 2026-11-11
+o histórico (45 commits) foi conferido (sem segredos, e-mails pessoais ou caminhos de máquina) e o repositório
+**passou a ser público**; desde então o `catalogo.json` (pelo `raw.githubusercontent.com` também) e os pacotes
+respondem sem autenticação.
 
 ## D2: SQLite com FTS4, lido pelo SQLite do sistema
 

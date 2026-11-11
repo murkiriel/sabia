@@ -93,7 +93,8 @@ class ScheduledGenerationTest(unittest.TestCase):
         self.assertRegex(self.text, r"(?s)publish:\n.*?type: boolean\n\s+default: false\n")
 
     def test_interval_job_asks_the_tested_rule(self):
-        """A data vem do catálogo do checkout: com o repositório privado, raw.githubusercontent.com responde 404."""
+        """A data vem do catálogo do checkout: com o repositório privado (até 2026-11-11), raw.githubusercontent.com
+        responde 404; público, pode servir por alguns minutos o catálogo de antes de uma publicação."""
         self.assertIn("scripts/due.py", self.interval)
         self.assertIn("run: ${{ steps.age.outputs.run }}", self.interval)
         commands = "\n".join(line for line in self.text.splitlines() if not line.lstrip().startswith("#"))
@@ -134,8 +135,8 @@ class ScheduledGenerationTest(unittest.TestCase):
         return m.group(1) if m else ""
 
     def test_frees_disk_before_anything_else(self):
-        """O executor de repositório privado chega com ~13 GB livres em /: sem apagar as ferramentas que a geração
-        não usa, o extrato, os bancos e o swap não cabem."""
+        """O executor de repositório privado chegava com ~14 GB livres em / (o público, desde 2026-11-11, ainda não foi
+        medido): sem apagar as ferramentas que a geração não usa, o extrato, os bancos e o swap não cabem."""
         free = self.step("Liberar disco")
         self.assertIn("sudo rm -rf /usr/share/dotnet /usr/local/lib/android", free)
         self.assertIn("docker image prune", free)
