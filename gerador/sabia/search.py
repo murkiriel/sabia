@@ -27,7 +27,7 @@ import itertools
 import math
 import struct
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from . import database, geo, ranks, street_lines
 from .records import Item
@@ -119,6 +119,11 @@ class Result:
     lng: float
     distance_m: Optional[float] = None
     house_number: Optional[int] = None
+    # Os critérios da ordem, na ordem em que valem (ver key em _search): as palavras casadas no nome (`hits`), a rua
+    # com o número da casa na escada (`house`), fora do município citado (`elsewhere`), do tipo da categoria
+    # (`kind_match`) e a nota (`score`, arredondada a 9 casas). Para quem porta a busca conferir cada critério
+    # (docs/CONFORMIDADE.md); None no "que rua é esta?".
+    criteria: Optional[Dict[str, Any]] = None
 
     @property
     def label(self) -> str:
@@ -382,6 +387,21 @@ def _closeness(meters: float) -> float:
     return 1.0 - min(1.0, math.log10(1.0 + meters / 1000.0) / math.log10(1.0 + MAX_DISTANCE_KM))
 
 
+def score(full: int, partial: int, rank: int, place_rank: int, mun_hits: int, mun_words: int,
+          cover: Optional[float], distance_m: Optional[float]) -> float:
+    """A nota (critério 5 da ordem), a soma com os pesos W_*: `full` e `partial` são o name_score com e sem as palavras
+    do município citado (0 a 3); `rank` o do registro e `place_rank` o do município dele (0 a 255); `mun_hits` quantas
+    das `mun_words` palavras do município citado estão no nome; `cover` o name_cover (None na busca só pela categoria
+    com a posição); `distance_m` a distância até a posição (None sem ela). As parcelas somam nesta ordem."""
+    weight = (W_FULL * full / 3 + W_NAME * partial / 3 + W_RANK * rank / ranks.MAX_RANK
+              + W_PLACE * place_rank / ranks.MAX_RANK
+              + (W_MUNICIPALITY * mun_hits / mun_words if mun_words else 0.0)
+              + (0.0 if cover is None else W_COVER * cover))
+    if distance_m is not None:
+        weight += W_DISTANCE * _closeness(distance_m)
+    return weight
+
+
 def _rows(db, sql: str, params: Iterable) -> List[tuple]:
     return list(db.execute(sql, tuple(params)))
 
@@ -512,23 +532,24 @@ def _search(db, rules: _Rules, folded: str, near: Optional[Tuple[float, float]],
             rank = ranks.rank(Item(cls, kind, name, str(mun), 0.0, 0.0))
         mun_hits = 0 if only_municipality else _name_hits(rules, sorted(mun_words), name, last_word)
         full, partial = name_scores(name)
-        weight = (W_FULL * full / 3 + W_NAME * partial / 3 + W_RANK * rank / ranks.MAX_RANK
-                  + W_PLACE * rules.municipality_rank.get(mun, 0) / ranks.MAX_RANK
-                  + (W_MUNICIPALITY * mun_hits / len(mun_words) if mun_words else 0.0)
-                  + (0.0 if only_category else W_COVER * name_cover(rules, full_words, name, prefix_last)))
-        if near is not None:
-            weight += W_DISTANCE * _closeness(geo.dist_m(lat / database.SCALE, lng / database.SCALE, *near))
+        weight = score(full, partial, rank, rules.municipality_rank.get(mun, 0), mun_hits, len(mun_words),
+                       None if only_category else name_cover(rules, full_words, name, prefix_last),
+                       None if near is None else geo.dist_m(lat / database.SCALE, lng / database.SCALE, *near))
         # fora do município citado vai para baixo, a não ser que o nome tenha as palavras dele ("avenida anapolis" é
         # também a Avenida Anápolis de Goiânia)
         elsewhere = bool(target) and mun != target and mun_hits < len(mun_words)
         return (-hits[rid], rid not in houses, elsewhere, kind not in kinds if kinds else False, -round(weight, 9),
                 len(name), rid)
 
-    ordered = sorted(found.values(), key=key)[:limit]
+    keys = {rid: key(row) for rid, row in found.items()}
+    ordered = sorted(found.values(), key=lambda row: keys[row[0]])[:limit]
     out = []
     for rid, cls, kind, name, mun, district, lat, lng, _ in ordered:
+        k = keys[rid]
+        criteria = {"hits": -k[0], "house": not k[1], "elsewhere": k[2], "kind_match": bool(kinds) and not k[3],
+                    "score": -k[4]}
         r = Result(rid, cls, kind, name, rules.names.get(mun, str(mun)), rules.districts.get(district),
-                   lat / database.SCALE, lng / database.SCALE)
+                   lat / database.SCALE, lng / database.SCALE, criteria=criteria)
         if rid in houses:
             r.lat, r.lng = houses[rid]
             r.house_number = house_number[0] if house_number else None
@@ -546,7 +567,14 @@ def house_position(db, street: int, number: int) -> Optional[Tuple[float, float]
     row = next(iter(db.execute("SELECT rungs FROM house_number WHERE street = ?", (street,))), None)
     if row is None:
         return None
-    flat = struct.unpack(f"<{len(row[0]) // 4}i", row[0])
+    return ladder_position(struct.unpack(f"<{len(row[0]) // 4}i", row[0]), number)
+
+
+def ladder_position(flat: Sequence[int], number: int) -> Optional[Tuple[float, float]]:
+    """O ponto do número numa escada já lida (`house_number.rungs` como inteiros, de 5 em 5: lado, pedaço, número,
+    lat, lng), ou None; a conta de house_position, sem o banco."""
+    if number <= 0:
+        return None
     side = number % 2
     pieces: Dict[int, List[Tuple[int, int, int]]] = {}
     for k in range(0, len(flat), 5):

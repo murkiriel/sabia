@@ -81,7 +81,9 @@ Para instalar:
 
 Como buscar (as regras que quem consome aplica sobre o pacote), achar a rua de um ponto e o mais perto:
 [`docs/CONSUMO.md`](docs/CONSUMO.md). A busca de referência, a mesma que as travas usam, está em
-[`gerador/sabia/search.py`](gerador/sabia/search.py).
+[`gerador/sabia/search.py`](gerador/sabia/search.py). Para conferir que um porte da busca (Kotlin, JavaScript...) dá os
+mesmos resultados que a de referência, cada release traz um conjunto de casos de conformidade:
+[`docs/CONFORMIDADE.md`](docs/CONFORMIDADE.md).
 
 ## Formato
 
@@ -163,7 +165,7 @@ uma release nova; o `catalogo.json` da raiz sempre aponta para a mais recente. F
 recentes**: use sempre o `release_url` do `catalogo.json`, não um link fixo de release. Cada estado é independente:
 dá para atualizar um sem mexer nos outros.
 
-Uma geração só é publicada se passar nas travas: 168 buscas de verdade (nas 27 UFs) com o resultado esperado, todos os municípios do
+Uma geração só é publicada se passar nas travas: 267 buscas de verdade (6 ou mais em cada uma das 27 UFs) com o resultado esperado, todos os municípios do
 IBGE presentes, nenhuma queda grande de registros em relação à geração anterior, e o banco abrindo e respondendo igual
 no SQLite 3.22 (o do Android 10). Como é gerado: [`gerador/README.md`](gerador/README.md).
 

@@ -33,9 +33,10 @@ def build_id(day: str, extract_md5: str) -> str:
 
 
 def clean_output() -> None:
-    """Apaga os pacotes de uma geração anterior em data/dist/ (um estado que não entra mais não pode sobrar)."""
+    """Apaga os pacotes e o conjunto de conformidade de uma geração anterior em data/dist/ (um estado que não entra
+    mais não pode sobrar)."""
     config.DIST.mkdir(parents=True, exist_ok=True)
-    for old in config.DIST.glob("sabia-*.sqlite.zst*"):
+    for old in [*config.DIST.glob("sabia-*.sqlite.zst*"), *config.DIST.glob("sabia-conformidade.json.zst*")]:
         old.unlink()
     for name in ("pacotes.json", "catalogo.json"):
         (config.DIST / name).unlink(missing_ok=True)

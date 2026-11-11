@@ -20,7 +20,7 @@ import unicodedata
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-from . import config, database, validation
+from . import config, conformance, database, validation
 from .util import file_hash
 
 Gh = Callable[[Sequence[str]], Tuple[int, str, str]]
@@ -213,8 +213,36 @@ def entries(cat: dict) -> dict:
 
 
 def package_files(cat: dict) -> List[str]:
-    """Os arquivos que sobem na release: a base e os estados, nessa ordem."""
+    """Os pacotes da geração: a base e os estados, nessa ordem."""
     return [cat["base"]["file"]] + [cat["states"][uf]["file"] for uf in sorted(cat["states"])]
+
+
+def release_files(cat: dict) -> List[str]:
+    """Os arquivos que sobem na release: os pacotes e, depois deles, o conjunto de conformidade da busca com o
+    sha256 dele (docs/CONFORMIDADE.md). O conjunto não entra no catalogo.json: quem o quer acha pelo nome fixo na
+    release do `build_id`."""
+    return package_files(cat) + [conformance.FILE, conformance.SHA_FILE]
+
+
+def conformance_problems(cat: dict) -> List[str]:
+    """O conjunto de conformidade em data/dist/ é desta geração e bate com o sha256 ao lado."""
+    file = config.DIST / conformance.FILE
+    if not file.exists():
+        return [f"falta {conformance.FILE}: a geração não passou pela etapa conformance"]
+    problem = conformance.sha_problem(file)
+    if problem:
+        return [f"conformidade: {problem}"]
+    try:
+        doc = conformance.load(file)
+    except (OSError, ValueError) as e:
+        return [f"conformidade: {conformance.FILE} ilegível ({e})"]
+    out = []
+    if doc.get("build_id") != cat["build_id"]:
+        out.append(f"conformidade: {conformance.FILE} é da geração {doc.get('build_id')}, não da {cat['build_id']}")
+    if doc.get("format_version") != cat["format_version"]:
+        out.append(f"conformidade: {conformance.FILE} no formato {doc.get('format_version')}, catálogo no "
+                   f"{cat['format_version']}")
+    return out
 
 
 def _report_problem() -> Optional[str]:
@@ -248,6 +276,7 @@ def check(cat: dict, published: Optional[dict], accept_drop: bool, accept_older:
             problems.append(f"{name}: {file.stat().st_size / 1e9:.2f} GB, acima do limite do GitHub Releases")
         elif file_hash(file) != e["sha256"]:
             problems.append(f"{name}: sha256 de {e['file']} não bate com o catálogo")
+    problems += conformance_problems(cat)
     if published and not accept_drop:
         problems += validation.drops({uf: e["counts"] for uf, e in published["states"].items()},
                                      {uf: e["counts"] for uf, e in cat["states"].items()})

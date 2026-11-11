@@ -82,8 +82,10 @@ class SearchGateTest(unittest.TestCase):
         cases = validation.load_cases(config.SEARCH_CASES, list(config.STATES))
         self.assertGreaterEqual(len([c for c in cases if c["uf"] == "GO"]), 45)
         self.assertGreaterEqual(len([c for c in cases if c["uf"] == "DF"]), 15)
-        for uf in config.STATES:  # item 11: casos em todas as UFs
-            self.assertGreaterEqual(len([c for c in cases if c["uf"] == uf]), 3, uf)
+        for uf in config.STATES:  # item 11: casos em todas as UFs; com a receita da conformidade, 6 ou mais
+            self.assertGreaterEqual(len([c for c in cases if c["uf"] == uf]), 6, uf)
+        self.assertGreaterEqual(len(cases), 267)  # os 168 de antes e os 99 da receita (docs/CONFORMIDADE.md)
+        self.assertEqual(len(cases), len({(c["uf"], c["query"], tuple(c.get("near", ()))) for c in cases}))
         self.assertGreaterEqual(len([c for c in cases if "near" in c]), 10)
         for c in cases:
             self.assertIn(c["uf"], config.STATES)

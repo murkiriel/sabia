@@ -1,0 +1,6718 @@
+{
+ "conformance_version": 1,
+ "build_id": "2026-11-10-c17dff60",
+ "format_version": 1,
+ "generator_commit": "4d4eb12",
+ "reference": "gerador/sabia/search.py",
+ "unicode_version": "15.0.0",
+ "limit": 10,
+ "states": [
+  "DF",
+  "GO"
+ ],
+ "packages": {
+  "base": {
+   "file": "sabia-base.sqlite.zst",
+   "sha256": "7a32fae7890970d50305f3c544de9db2b2f0bdd2dbaea74231dfac64de0a20b1"
+  },
+  "DF": {
+   "file": "sabia-DF.sqlite.zst",
+   "sha256": "0627476b578ff9774d8848b78b0d25d6dafe9ea997105debdb7b3e00bde9e3b4"
+  },
+  "GO": {
+   "file": "sabia-GO.sqlite.zst",
+   "sha256": "8b5a1e0cc356de745e3276c86d4df1bd6aec521997caf340914a035493af0956"
+  }
+ },
+ "constants": {
+  "stopwords": [
+   "da",
+   "das",
+   "de",
+   "do",
+   "dos",
+   "e"
+  ],
+  "name_number_words": [
+   "ac",
+   "acesso",
+   "al",
+   "alameda",
+   "am",
+   "anel",
+   "ap",
+   "area",
+   "av",
+   "avda",
+   "avenida",
+   "ba",
+   "beco",
+   "bl",
+   "bloco",
+   "br",
+   "casa",
+   "ce",
+   "chac",
+   "chacara",
+   "colonia",
+   "cond",
+   "condominio",
+   "conj",
+   "conjunto",
+   "df",
+   "eixo",
+   "es",
+   "est",
+   "estr",
+   "estrada",
+   "etapa",
+   "galeria",
+   "gleba",
+   "go",
+   "jardim",
+   "jd",
+   "km",
+   "ladeira",
+   "lago",
+   "linha",
+   "lote",
+   "loteamento",
+   "lt",
+   "ma",
+   "marginal",
+   "mg",
+   "modulo",
+   "ms",
+   "mt",
+   "nucleo",
+   "pa",
+   "parque",
+   "pb",
+   "pc",
+   "pca",
+   "pe",
+   "pi",
+   "pq",
+   "pr",
+   "praca",
+   "qd",
+   "quadra",
+   "r",
+   "ramal",
+   "res",
+   "residencial",
+   "rj",
+   "rn",
+   "ro",
+   "rod",
+   "rodovia",
+   "rr",
+   "rs",
+   "rua",
+   "sc",
+   "se",
+   "setor",
+   "sp",
+   "st",
+   "to",
+   "trav",
+   "travessa",
+   "trecho",
+   "tv",
+   "via",
+   "vicinal",
+   "viela",
+   "vila",
+   "vl"
+  ],
+  "house_number_connectors": [
+   "n",
+   "no",
+   "nr",
+   "num",
+   "numero"
+  ],
+  "max_house_number": 99999,
+  "sound_groups": [
+   "ckqszx",
+   "gj",
+   "iy",
+   "uvw"
+  ],
+  "max_combinations": 16,
+  "max_rows": 2000,
+  "max_street_distance_m": 75.0,
+  "category_rings": [
+   1,
+   2,
+   4
+  ],
+  "weights": {
+   "W_FULL": 0.2,
+   "W_NAME": 0.4,
+   "W_MUNICIPALITY": 0.1,
+   "W_COVER": 0.2,
+   "W_RANK": 1.0,
+   "W_PLACE": 0.2,
+   "W_DISTANCE": 1.5
+  },
+  "max_distance_km": 2000.0,
+  "max_rank": 255,
+  "score_decimals": 9,
+  "cell_zoom": 13,
+  "coord_scale": 100000,
+  "m_per_deg": 111320.0
+ },
+ "rules": {
+  "word_form": [
+   [
+    "0",
+    "zero",
+    "number"
+   ],
+   [
+    "1",
+    "um",
+    "number"
+   ],
+   [
+    "1",
+    "uma",
+    "number"
+   ],
+   [
+    "10",
+    "dez",
+    "number"
+   ],
+   [
+    "100",
+    "cem",
+    "number"
+   ],
+   [
+    "1000",
+    "mil",
+    "number"
+   ],
+   [
+    "11",
+    "onze",
+    "number"
+   ],
+   [
+    "12",
+    "doze",
+    "number"
+   ],
+   [
+    "13",
+    "treze",
+    "number"
+   ],
+   [
+    "14",
+    "catorze",
+    "number"
+   ],
+   [
+    "14",
+    "quatorze",
+    "number"
+   ],
+   [
+    "15",
+    "quinze",
+    "number"
+   ],
+   [
+    "16",
+    "dezesseis",
+    "number"
+   ],
+   [
+    "17",
+    "dezessete",
+    "number"
+   ],
+   [
+    "18",
+    "dezoito",
+    "number"
+   ],
+   [
+    "19",
+    "dezenove",
+    "number"
+   ],
+   [
+    "2",
+    "dois",
+    "number"
+   ],
+   [
+    "2",
+    "duas",
+    "number"
+   ],
+   [
+    "20",
+    "vinte",
+    "number"
+   ],
+   [
+    "200",
+    "duzentos",
+    "number"
+   ],
+   [
+    "3",
+    "tres",
+    "number"
+   ],
+   [
+    "30",
+    "trinta",
+    "number"
+   ],
+   [
+    "300",
+    "trezentos",
+    "number"
+   ],
+   [
+    "4",
+    "quatro",
+    "number"
+   ],
+   [
+    "40",
+    "quarenta",
+    "number"
+   ],
+   [
+    "400",
+    "quatrocentos",
+    "number"
+   ],
+   [
+    "5",
+    "cinco",
+    "number"
+   ],
+   [
+    "50",
+    "cinquenta",
+    "number"
+   ],
+   [
+    "500",
+    "quinhentos",
+    "number"
+   ],
+   [
+    "6",
+    "seis",
+    "number"
+   ],
+   [
+    "60",
+    "sessenta",
+    "number"
+   ],
+   [
+    "600",
+    "seiscentos",
+    "number"
+   ],
+   [
+    "7",
+    "sete",
+    "number"
+   ],
+   [
+    "70",
+    "setenta",
+    "number"
+   ],
+   [
+    "700",
+    "setecentos",
+    "number"
+   ],
+   [
+    "8",
+    "oito",
+    "number"
+   ],
+   [
+    "80",
+    "oitenta",
+    "number"
+   ],
+   [
+    "800",
+    "oitocentos",
+    "number"
+   ],
+   [
+    "9",
+    "nove",
+    "number"
+   ],
+   [
+    "90",
+    "noventa",
+    "number"
+   ],
+   [
+    "900",
+    "novecentos",
+    "number"
+   ],
+   [
+    "aerea",
+    "aereo",
+    "form"
+   ],
+   [
+    "aereo",
+    "aerea",
+    "form"
+   ],
+   [
+    "aerop",
+    "aeroporto",
+    "abbr"
+   ],
+   [
+    "al",
+    "alameda",
+    "abbr"
+   ],
+   [
+    "alm",
+    "almirante",
+    "abbr"
+   ],
+   [
+    "av",
+    "avenida",
+    "abbr"
+   ],
+   [
+    "avda",
+    "avenida",
+    "abbr"
+   ],
+   [
+    "bl",
+    "bloco",
+    "abbr"
+   ],
+   [
+    "bombeiro",
+    "bombeiros",
+    "form"
+   ],
+   [
+    "bombeiros",
+    "bombeiro",
+    "form"
+   ],
+   [
+    "brig",
+    "brigadeiro",
+    "abbr"
+   ],
+   [
+    "cap",
+    "capitao",
+    "abbr"
+   ],
+   [
+    "catorze",
+    "14",
+    "number"
+   ],
+   [
+    "cel",
+    "coronel",
+    "abbr"
+   ],
+   [
+    "cem",
+    "100",
+    "number"
+   ],
+   [
+    "chac",
+    "chacara",
+    "abbr"
+   ],
+   [
+    "cidade da",
+    "",
+    "drop_prefix"
+   ],
+   [
+    "cidade de",
+    "",
+    "drop_prefix"
+   ],
+   [
+    "cidade do",
+    "",
+    "drop_prefix"
+   ],
+   [
+    "cinco",
+    "5",
+    "number"
+   ],
+   [
+    "cinquenta",
+    "50",
+    "number"
+   ],
+   [
+    "cmte",
+    "comandante",
+    "abbr"
+   ],
+   [
+    "cond",
+    "condominio",
+    "abbr"
+   ],
+   [
+    "conj",
+    "conjunto",
+    "abbr"
+   ],
+   [
+    "correio",
+    "correios",
+    "form"
+   ],
+   [
+    "correios",
+    "correio",
+    "form"
+   ],
+   [
+    "cto",
+    "centro",
+    "abbr"
+   ],
+   [
+    "ctr",
+    "centro",
+    "abbr"
+   ],
+   [
+    "d",
+    "dom",
+    "abbr"
+   ],
+   [
+    "dep",
+    "deputado",
+    "abbr"
+   ],
+   [
+    "des",
+    "desembargador",
+    "abbr"
+   ],
+   [
+    "dez",
+    "10",
+    "number"
+   ],
+   [
+    "dezenove",
+    "19",
+    "number"
+   ],
+   [
+    "dezesseis",
+    "16",
+    "number"
+   ],
+   [
+    "dezessete",
+    "17",
+    "number"
+   ],
+   [
+    "dezoito",
+    "18",
+    "number"
+   ],
+   [
+    "dois",
+    "2",
+    "number"
+   ],
+   [
+    "doze",
+    "12",
+    "number"
+   ],
+   [
+    "dr",
+    "doutor",
+    "abbr"
+   ],
+   [
+    "dra",
+    "doutora",
+    "abbr"
+   ],
+   [
+    "duas",
+    "2",
+    "number"
+   ],
+   [
+    "duzentos",
+    "200",
+    "number"
+   ],
+   [
+    "ed",
+    "edificio",
+    "abbr"
+   ],
+   [
+    "eng",
+    "engenheiro",
+    "abbr"
+   ],
+   [
+    "esc",
+    "escola",
+    "abbr"
+   ],
+   [
+    "est",
+    "estrada",
+    "abbr"
+   ],
+   [
+    "estr",
+    "estrada",
+    "abbr"
+   ],
+   [
+    "fac",
+    "faculdade",
+    "abbr"
+   ],
+   [
+    "faz",
+    "fazenda",
+    "abbr"
+   ],
+   [
+    "ferroviaria",
+    "ferroviario",
+    "form"
+   ],
+   [
+    "ferroviario",
+    "ferroviaria",
+    "form"
+   ],
+   [
+    "fr",
+    "frei",
+    "abbr"
+   ],
+   [
+    "gen",
+    "general",
+    "abbr"
+   ],
+   [
+    "gov",
+    "governador",
+    "abbr"
+   ],
+   [
+    "hosp",
+    "hospital",
+    "abbr"
+   ],
+   [
+    "jd",
+    "jardim",
+    "abbr"
+   ],
+   [
+    "jdm",
+    "jardim",
+    "abbr"
+   ],
+   [
+    "lg",
+    "largo",
+    "abbr"
+   ],
+   [
+    "lgo",
+    "largo",
+    "abbr"
+   ],
+   [
+    "lt",
+    "lote",
+    "abbr"
+   ],
+   [
+    "mal",
+    "marechal",
+    "abbr"
+   ],
+   [
+    "mil",
+    "1000",
+    "number"
+   ],
+   [
+    "min",
+    "ministro",
+    "abbr"
+   ],
+   [
+    "municipal",
+    "municipio",
+    "form"
+   ],
+   [
+    "municipio",
+    "municipal",
+    "form"
+   ],
+   [
+    "municipio da",
+    "",
+    "drop_prefix"
+   ],
+   [
+    "municipio de",
+    "",
+    "drop_prefix"
+   ],
+   [
+    "municipio do",
+    "",
+    "drop_prefix"
+   ],
+   [
+    "nove",
+    "9",
+    "number"
+   ],
+   [
+    "novecentos",
+    "900",
+    "number"
+   ],
+   [
+    "noventa",
+    "90",
+    "number"
+   ],
+   [
+    "nsa",
+    "nossa",
+    "abbr"
+   ],
+   [
+    "oitenta",
+    "80",
+    "number"
+   ],
+   [
+    "oito",
+    "8",
+    "number"
+   ],
+   [
+    "oitocentos",
+    "800",
+    "number"
+   ],
+   [
+    "onze",
+    "11",
+    "number"
+   ],
+   [
+    "pc",
+    "praca",
+    "abbr"
+   ],
+   [
+    "pca",
+    "praca",
+    "abbr"
+   ],
+   [
+    "pe",
+    "padre",
+    "abbr"
+   ],
+   [
+    "pq",
+    "parque",
+    "abbr"
+   ],
+   [
+    "pres",
+    "presidente",
+    "abbr"
+   ],
+   [
+    "prof",
+    "professor",
+    "abbr"
+   ],
+   [
+    "profa",
+    "professora",
+    "abbr"
+   ],
+   [
+    "pte",
+    "ponte",
+    "abbr"
+   ],
+   [
+    "qd",
+    "quadra",
+    "abbr"
+   ],
+   [
+    "quarenta",
+    "40",
+    "number"
+   ],
+   [
+    "quatorze",
+    "14",
+    "number"
+   ],
+   [
+    "quatro",
+    "4",
+    "number"
+   ],
+   [
+    "quatrocentos",
+    "400",
+    "number"
+   ],
+   [
+    "quinhentos",
+    "500",
+    "number"
+   ],
+   [
+    "quinze",
+    "15",
+    "number"
+   ],
+   [
+    "r",
+    "rua",
+    "abbr"
+   ],
+   [
+    "res",
+    "residencial",
+    "abbr"
+   ],
+   [
+    "resid",
+    "residencial",
+    "abbr"
+   ],
+   [
+    "rod",
+    "rodovia",
+    "abbr"
+   ],
+   [
+    "rodoviaria",
+    "rodoviario",
+    "form"
+   ],
+   [
+    "rodoviario",
+    "rodoviaria",
+    "form"
+   ],
+   [
+    "s",
+    "sao",
+    "abbr"
+   ],
+   [
+    "seis",
+    "6",
+    "number"
+   ],
+   [
+    "seiscentos",
+    "600",
+    "number"
+   ],
+   [
+    "sen",
+    "senador",
+    "abbr"
+   ],
+   [
+    "sessenta",
+    "60",
+    "number"
+   ],
+   [
+    "sete",
+    "7",
+    "number"
+   ],
+   [
+    "setecentos",
+    "700",
+    "number"
+   ],
+   [
+    "setenta",
+    "70",
+    "number"
+   ],
+   [
+    "sgt",
+    "sargento",
+    "abbr"
+   ],
+   [
+    "sra",
+    "senhora",
+    "abbr"
+   ],
+   [
+    "st",
+    "setor",
+    "abbr"
+   ],
+   [
+    "sta",
+    "santa",
+    "abbr"
+   ],
+   [
+    "sto",
+    "santo",
+    "abbr"
+   ],
+   [
+    "ten",
+    "tenente",
+    "abbr"
+   ],
+   [
+    "trav",
+    "travessa",
+    "abbr"
+   ],
+   [
+    "tres",
+    "3",
+    "number"
+   ],
+   [
+    "treze",
+    "13",
+    "number"
+   ],
+   [
+    "trezentos",
+    "300",
+    "number"
+   ],
+   [
+    "trinta",
+    "30",
+    "number"
+   ],
+   [
+    "tv",
+    "travessa",
+    "abbr"
+   ],
+   [
+    "um",
+    "1",
+    "number"
+   ],
+   [
+    "uma",
+    "1",
+    "number"
+   ],
+   [
+    "univ",
+    "universidade",
+    "abbr"
+   ],
+   [
+    "vd",
+    "viaduto",
+    "abbr"
+   ],
+   [
+    "ver",
+    "vereador",
+    "abbr"
+   ],
+   [
+    "vinte",
+    "20",
+    "number"
+   ],
+   [
+    "vl",
+    "vila",
+    "abbr"
+   ],
+   [
+    "zero",
+    "0",
+    "number"
+   ]
+  ],
+  "category": {
+   "aeroporto": "aeroway=aerodrome",
+   "area de descanso": "highway=rest_area,highway=services",
+   "atm": "amenity=atm",
+   "banco": "amenity=bank",
+   "banheiro": "amenity=toilets",
+   "bombeiros": "amenity=fire_station",
+   "borracharia": "shop=tyres",
+   "borracheiro": "shop=tyres",
+   "cachoeira": "natural=waterfall,waterway=waterfall",
+   "caixa 24 horas": "amenity=atm",
+   "caixa eletronico": "amenity=atm",
+   "camping": "tourism=camp_site",
+   "cinema": "amenity=cinema",
+   "clinica": "amenity=clinic,healthcare=clinic",
+   "combustivel": "amenity=fuel",
+   "concessionaria": "shop=car,shop=motorcycle",
+   "conveniencia": "shop=convenience",
+   "delegacia": "amenity=police",
+   "descanso": "highway=rest_area,highway=services",
+   "diesel": "amenity=fuel",
+   "drogaria": "amenity=pharmacy",
+   "escola": "amenity=school",
+   "estacionamento": "amenity=parking",
+   "estadio": "leisure=stadium",
+   "etanol": "amenity=fuel",
+   "faculdade": "amenity=college,amenity=university",
+   "farmacia": "amenity=pharmacy",
+   "feira": "amenity=marketplace",
+   "gasolina": "amenity=fuel",
+   "hospital": "amenity=hospital",
+   "hotel": "tourism=hotel",
+   "igreja": "amenity=place_of_worship",
+   "lanchonete": "amenity=fast_food",
+   "lava jato": "amenity=car_wash",
+   "lava rapido": "amenity=car_wash",
+   "lavajato": "amenity=car_wash",
+   "loja de conveniencia": "shop=convenience",
+   "loja de moto": "shop=motorcycle",
+   "mecanica": "shop=car_repair,shop=motorcycle_repair",
+   "mecanica de moto": "shop=motorcycle_repair",
+   "mecanico": "shop=car_repair,shop=motorcycle_repair",
+   "mercado": "shop=supermarket,shop=convenience,amenity=marketplace",
+   "mirante": "tourism=viewpoint",
+   "motel": "tourism=motel",
+   "moto pecas": "shop=motorcycle",
+   "museu": "tourism=museum",
+   "oficina": "shop=car_repair,shop=motorcycle_repair",
+   "oficina de moto": "shop=motorcycle_repair",
+   "padaria": "shop=bakery",
+   "parque": "leisure=park",
+   "pedagio": "barrier=toll_booth",
+   "pneu": "shop=tyres",
+   "pneus": "shop=tyres",
+   "policia": "amenity=police",
+   "posto": "amenity=fuel",
+   "posto de combustivel": "amenity=fuel",
+   "posto de gasolina": "amenity=fuel",
+   "posto de policia": "amenity=police",
+   "posto de recarga": "amenity=charging_station",
+   "posto de saude": "amenity=clinic,healthcare=clinic,healthcare=centre,amenity=doctors",
+   "posto policial": "amenity=police",
+   "postos": "amenity=fuel",
+   "pousada": "tourism=guest_house",
+   "praia": "natural=beach",
+   "pronto atendimento": "amenity=hospital,amenity=clinic",
+   "pronto socorro": "amenity=hospital",
+   "recarga": "amenity=charging_station",
+   "restaurante": "amenity=restaurant",
+   "rodoviaria": "amenity=bus_station",
+   "shopping": "shop=mall",
+   "supermercado": "shop=supermarket",
+   "teatro": "amenity=theatre",
+   "ubs": "amenity=clinic,healthcare=clinic,healthcare=centre,amenity=doctors",
+   "unidade basica de saude": "amenity=clinic,healthcare=clinic,healthcare=centre,amenity=doctors",
+   "universidade": "amenity=university",
+   "upa": "amenity=hospital,amenity=clinic",
+   "zoologico": "tourism=zoo"
+  },
+  "brand": {
+   "ale": "amenity=fuel",
+   "drogaraia": "amenity=pharmacy",
+   "drogasil": "amenity=pharmacy",
+   "ipiranga": "amenity=fuel",
+   "nissei": "amenity=pharmacy",
+   "pacheco": "amenity=pharmacy",
+   "panvel": "amenity=pharmacy",
+   "petrobras": "amenity=fuel",
+   "raia": "amenity=pharmacy",
+   "raizen": "amenity=fuel",
+   "shell": "amenity=fuel",
+   "texaco": "amenity=fuel",
+   "vibra": "amenity=fuel"
+  }
+ },
+ "unit_fixtures": {
+  "vocab": [
+   [
+    "goiania",
+    900
+   ],
+   [
+    "goiana",
+    4
+   ],
+   [
+    "goias",
+    700
+   ],
+   [
+    "anapolis",
+    300
+   ],
+   [
+    "anhanguera",
+    120
+   ],
+   [
+    "bueno",
+    60
+   ],
+   [
+    "setor",
+    5000
+   ],
+   [
+    "oeste",
+    400
+   ],
+   [
+    "hotel",
+    80
+   ],
+   [
+    "soccorro",
+    1
+   ],
+   [
+    "socorro",
+    30
+   ],
+   [
+    "pirenopolis",
+    20
+   ],
+   [
+    "ipiranga",
+    50
+   ],
+   [
+    "paulista",
+    70
+   ],
+   [
+    "paulo",
+    300
+   ],
+   [
+    "aparecida",
+    400
+   ],
+   [
+    "marista",
+    40
+   ],
+   [
+    "brasilia",
+    500
+   ],
+   [
+    "capitao",
+    15
+   ],
+   [
+    "caldas",
+    90
+   ],
+   [
+    "independencia",
+    60
+   ],
+   [
+    "jardim",
+    3000
+   ],
+   [
+    "america",
+    200
+   ],
+   [
+    "cerrado",
+    50
+   ]
+  ],
+  "municipalities": [
+   [
+    5208707,
+    "Goiânia"
+   ],
+   [
+    5201405,
+    "Aparecida de Goiânia"
+   ],
+   [
+    5201108,
+    "Anápolis"
+   ],
+   [
+    5200050,
+    "Anhanguera"
+   ],
+   [
+    5208905,
+    "Goiás"
+   ],
+   [
+    2910800,
+    "Feira de Santana"
+   ],
+   [
+    5300108,
+    "Brasília"
+   ]
+  ]
+ },
+ "unit": [
+  {
+   "id": "fold-01",
+   "fn": "fold",
+   "args": {
+    "text": "R. Cap. Caldas, 280"
+   },
+   "expected": "r cap caldas 280"
+  },
+  {
+   "id": "fold-02",
+   "fn": "fold",
+   "args": {
+    "text": "São-José"
+   },
+   "expected": "sao jose"
+  },
+  {
+   "id": "fold-03",
+   "fn": "fold",
+   "args": {
+    "text": "AVENIDA T-63"
+   },
+   "expected": "avenida t 63"
+  },
+  {
+   "id": "fold-04",
+   "fn": "fold",
+   "args": {
+    "text": "Goiânia"
+   },
+   "note": "NFD",
+   "expected": "goiania"
+  },
+  {
+   "id": "fold-05",
+   "fn": "fold",
+   "args": {
+    "text": "GOIÂNIA"
+   },
+   "expected": "goiania"
+  },
+  {
+   "id": "fold-06",
+   "fn": "fold",
+   "args": {
+    "text": "Ç ü ã õ ê"
+   },
+   "expected": "c u a o e"
+  },
+  {
+   "id": "fold-07",
+   "fn": "fold",
+   "args": {
+    "text": "𝐆𝐨𝐢𝐚̂𝐧𝐢𝐚"
+   },
+   "note": "matemático negrito",
+   "expected": "Goiania"
+  },
+  {
+   "id": "fold-08",
+   "fn": "fold",
+   "args": {
+    "text": "𝑹𝒖𝒂 𝟏𝟎"
+   },
+   "note": "matemático",
+   "expected": "Rua 10"
+  },
+  {
+   "id": "fold-09",
+   "fn": "fold",
+   "args": {
+    "text": "ＧＯＩÂＮＩＡ １０"
+   },
+   "note": "largura total",
+   "expected": "goiania 10"
+  },
+  {
+   "id": "fold-10",
+   "fn": "fold",
+   "args": {
+    "text": "ﬁlomena"
+   },
+   "note": "ligadura",
+   "expected": "filomena"
+  },
+  {
+   "id": "fold-11",
+   "fn": "fold",
+   "args": {
+    "text": "Rua Nº 5"
+   },
+   "note": "º vira o",
+   "expected": "rua no 5"
+  },
+  {
+   "id": "fold-12",
+   "fn": "fold",
+   "args": {
+    "text": "1º de Maio"
+   },
+   "expected": "1o de maio"
+  },
+  {
+   "id": "fold-13",
+   "fn": "fold",
+   "args": {
+    "text": "Rua Dez"
+   },
+   "note": "espaço sem quebra",
+   "expected": "rua dez"
+  },
+  {
+   "id": "fold-14",
+   "fn": "fold",
+   "args": {
+    "text": "Rua\tDez\n"
+   },
+   "expected": "rua dez"
+  },
+  {
+   "id": "fold-15",
+   "fn": "fold",
+   "args": {
+    "text": "Goi­ânia"
+   },
+   "note": "hífen suave",
+   "expected": "goi ania"
+  },
+  {
+   "id": "fold-16",
+   "fn": "fold",
+   "args": {
+    "text": "Rua‍Dez"
+   },
+   "note": "junção de largura zero",
+   "expected": "rua dez"
+  },
+  {
+   "id": "fold-17",
+   "fn": "fold",
+   "args": {
+    "text": "Rua 🚀 10"
+   },
+   "note": "emoji",
+   "expected": "rua 10"
+  },
+  {
+   "id": "fold-18",
+   "fn": "fold",
+   "args": {
+    "text": "x²"
+   },
+   "note": "sobrescrito",
+   "expected": "x2"
+  },
+  {
+   "id": "fold-19",
+   "fn": "fold",
+   "args": {
+    "text": "½"
+   },
+   "note": "fração",
+   "expected": "1 2"
+  },
+  {
+   "id": "fold-20",
+   "fn": "fold",
+   "args": {
+    "text": "Ⅻ"
+   },
+   "note": "número romano",
+   "informative": true,
+   "expected": "xii"
+  },
+  {
+   "id": "fold-21",
+   "fn": "fold",
+   "args": {
+    "text": ""
+   },
+   "expected": ""
+  },
+  {
+   "id": "fold-22",
+   "fn": "fold",
+   "args": {
+    "text": "   "
+   },
+   "expected": ""
+  },
+  {
+   "id": "fold-23",
+   "fn": "fold",
+   "args": {
+    "text": "--"
+   },
+   "expected": ""
+  },
+  {
+   "id": "fold-24",
+   "fn": "fold",
+   "args": {
+    "text": "áb"
+   },
+   "expected": "ab"
+  },
+  {
+   "id": "fold-25",
+   "fn": "fold",
+   "args": {
+    "text": "İstanbul"
+   },
+   "expected": "istanbul"
+  },
+  {
+   "id": "fold-26",
+   "fn": "fold",
+   "args": {
+    "text": "Đà Nẵng"
+   },
+   "expected": "đa nang"
+  },
+  {
+   "id": "fold-27",
+   "fn": "fold",
+   "args": {
+    "text": "Øresund"
+   },
+   "expected": "øresund"
+  },
+  {
+   "id": "fold-28",
+   "fn": "fold",
+   "args": {
+    "text": "Straße"
+   },
+   "expected": "straße"
+  },
+  {
+   "id": "fold-29",
+   "fn": "fold",
+   "args": {
+    "text": "Œuvre"
+   },
+   "expected": "œuvre"
+  },
+  {
+   "id": "fold-30",
+   "fn": "fold",
+   "args": {
+    "text": "ŀ"
+   },
+   "informative": true,
+   "expected": "l"
+  },
+  {
+   "id": "fold-31",
+   "fn": "fold",
+   "args": {
+    "text": "ΟΔΟΣ"
+   },
+   "note": "sigma final",
+   "informative": true,
+   "expected": "οδος"
+  },
+  {
+   "id": "fold-32",
+   "fn": "fold",
+   "args": {
+    "text": "٣"
+   },
+   "note": "dígito árabe",
+   "informative": true,
+   "expected": "٣"
+  },
+  {
+   "id": "fold-33",
+   "fn": "fold",
+   "args": {
+    "text": "किताब"
+   },
+   "note": "marca combinante de classe 0",
+   "informative": true,
+   "expected": "क त ब"
+  },
+  {
+   "id": "fold-34",
+   "fn": "fold",
+   "args": {
+    "text": "한국"
+   },
+   "note": "hangul",
+   "informative": true,
+   "expected": "한국"
+  },
+  {
+   "id": "fold-35",
+   "fn": "fold",
+   "args": {
+    "text": "Avenida  Goiás ,  Setor-Oeste"
+   },
+   "expected": "avenida goias setor oeste"
+  },
+  {
+   "id": "index_text-01",
+   "fn": "index_text",
+   "args": {
+    "name": "Rua 14"
+   },
+   "expected": "rua 14 quatorze catorze"
+  },
+  {
+   "id": "index_text-02",
+   "fn": "index_text",
+   "args": {
+    "name": "Rua Quatorze"
+   },
+   "expected": "rua quatorze 14"
+  },
+  {
+   "id": "index_text-03",
+   "fn": "index_text",
+   "args": {
+    "name": "Avenida 1"
+   },
+   "expected": "avenida 1 um uma"
+  },
+  {
+   "id": "index_text-04",
+   "fn": "index_text",
+   "args": {
+    "name": "Rua Um"
+   },
+   "expected": "rua um"
+  },
+  {
+   "id": "index_text-05",
+   "fn": "index_text",
+   "args": {
+    "name": "Rua 014"
+   },
+   "expected": "rua 014"
+  },
+  {
+   "id": "index_text-06",
+   "fn": "index_text",
+   "args": {
+    "name": "Avenida T-63"
+   },
+   "expected": "avenida t 63"
+  },
+  {
+   "id": "index_text-07",
+   "fn": "index_text",
+   "args": {
+    "name": "Rua 1000"
+   },
+   "expected": "rua 1000 mil"
+  },
+  {
+   "id": "index_text-08",
+   "fn": "index_text",
+   "args": {
+    "name": "Rua 21"
+   },
+   "expected": "rua 21"
+  },
+  {
+   "id": "index_text-09",
+   "fn": "index_text",
+   "args": {
+    "name": "Praça Dez de Novembro"
+   },
+   "expected": "praca dez 10 de novembro"
+  },
+  {
+   "id": "index_text-10",
+   "fn": "index_text",
+   "args": {
+    "name": "BR-153 km 120"
+   },
+   "expected": "br 153 km 120"
+  },
+  {
+   "id": "edit_distance-01",
+   "fn": "edit_distance",
+   "args": {
+    "a": "goiana",
+    "b": "goiania"
+   },
+   "expected": 1
+  },
+  {
+   "id": "edit_distance-02",
+   "fn": "edit_distance",
+   "args": {
+    "a": "otel",
+    "b": "hotel"
+   },
+   "expected": 1
+  },
+  {
+   "id": "edit_distance-03",
+   "fn": "edit_distance",
+   "args": {
+    "a": "ab",
+    "b": "ba"
+   },
+   "expected": 1
+  },
+  {
+   "id": "edit_distance-04",
+   "fn": "edit_distance",
+   "args": {
+    "a": "ca",
+    "b": "abc"
+   },
+   "expected": 3
+  },
+  {
+   "id": "edit_distance-05",
+   "fn": "edit_distance",
+   "args": {
+    "a": "",
+    "b": "abc"
+   },
+   "expected": 3
+  },
+  {
+   "id": "edit_distance-06",
+   "fn": "edit_distance",
+   "args": {
+    "a": "abc",
+    "b": ""
+   },
+   "expected": 3
+  },
+  {
+   "id": "edit_distance-07",
+   "fn": "edit_distance",
+   "args": {
+    "a": "kitten",
+    "b": "sitting"
+   },
+   "expected": 3
+  },
+  {
+   "id": "edit_distance-08",
+   "fn": "edit_distance",
+   "args": {
+    "a": "anhanguera",
+    "b": "anhaguera"
+   },
+   "expected": 1
+  },
+  {
+   "id": "edit_distance-09",
+   "fn": "edit_distance",
+   "args": {
+    "a": "bueno",
+    "b": "beuno"
+   },
+   "expected": 1
+  },
+  {
+   "id": "edit_distance-10",
+   "fn": "edit_distance",
+   "args": {
+    "a": "abcdef",
+    "b": "badcfe"
+   },
+   "expected": 3
+  },
+  {
+   "id": "edit_distance-11",
+   "fn": "edit_distance",
+   "args": {
+    "a": "pirenopolis",
+    "b": "pirinopolis"
+   },
+   "expected": 1
+  },
+  {
+   "id": "edit_distance-12",
+   "fn": "edit_distance",
+   "args": {
+    "a": "rua",
+    "b": "rua"
+   },
+   "expected": 0
+  },
+  {
+   "id": "edit_distance-13",
+   "fn": "edit_distance",
+   "args": {
+    "a": "aa",
+    "b": "aaaa"
+   },
+   "expected": 2
+  },
+  {
+   "id": "max_errors-01",
+   "fn": "max_errors",
+   "args": {
+    "length": 0
+   },
+   "expected": 0
+  },
+  {
+   "id": "max_errors-02",
+   "fn": "max_errors",
+   "args": {
+    "length": 1
+   },
+   "expected": 0
+  },
+  {
+   "id": "max_errors-03",
+   "fn": "max_errors",
+   "args": {
+    "length": 2
+   },
+   "expected": 0
+  },
+  {
+   "id": "max_errors-04",
+   "fn": "max_errors",
+   "args": {
+    "length": 3
+   },
+   "expected": 0
+  },
+  {
+   "id": "max_errors-05",
+   "fn": "max_errors",
+   "args": {
+    "length": 4
+   },
+   "expected": 1
+  },
+  {
+   "id": "max_errors-06",
+   "fn": "max_errors",
+   "args": {
+    "length": 5
+   },
+   "expected": 1
+  },
+  {
+   "id": "max_errors-07",
+   "fn": "max_errors",
+   "args": {
+    "length": 6
+   },
+   "expected": 1
+  },
+  {
+   "id": "max_errors-08",
+   "fn": "max_errors",
+   "args": {
+    "length": 7
+   },
+   "expected": 1
+  },
+  {
+   "id": "max_errors-09",
+   "fn": "max_errors",
+   "args": {
+    "length": 8
+   },
+   "expected": 2
+  },
+  {
+   "id": "max_errors-10",
+   "fn": "max_errors",
+   "args": {
+    "length": 9
+   },
+   "expected": 2
+  },
+  {
+   "id": "max_errors-11",
+   "fn": "max_errors",
+   "args": {
+    "length": 10
+   },
+   "expected": 2
+  },
+  {
+   "id": "same_sound-01",
+   "fn": "same_sound",
+   "args": {
+    "a": "c",
+    "b": "s"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-02",
+   "fn": "same_sound",
+   "args": {
+    "a": "c",
+    "b": "k"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-03",
+   "fn": "same_sound",
+   "args": {
+    "a": "q",
+    "b": "z"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-04",
+   "fn": "same_sound",
+   "args": {
+    "a": "x",
+    "b": "s"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-05",
+   "fn": "same_sound",
+   "args": {
+    "a": "g",
+    "b": "j"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-06",
+   "fn": "same_sound",
+   "args": {
+    "a": "i",
+    "b": "y"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-07",
+   "fn": "same_sound",
+   "args": {
+    "a": "u",
+    "b": "w"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-08",
+   "fn": "same_sound",
+   "args": {
+    "a": "v",
+    "b": "w"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-09",
+   "fn": "same_sound",
+   "args": {
+    "a": "c",
+    "b": "g"
+   },
+   "expected": false
+  },
+  {
+   "id": "same_sound-10",
+   "fn": "same_sound",
+   "args": {
+    "a": "h",
+    "b": "o"
+   },
+   "expected": false
+  },
+  {
+   "id": "same_sound-11",
+   "fn": "same_sound",
+   "args": {
+    "a": "a",
+    "b": "a"
+   },
+   "expected": true
+  },
+  {
+   "id": "same_sound-12",
+   "fn": "same_sound",
+   "args": {
+    "a": "e",
+    "b": "i"
+   },
+   "expected": false
+  },
+  {
+   "id": "house_number_in-01",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "10",
+     "152",
+     "setor",
+     "oeste"
+    ]
+   },
+   "expected": {
+    "number": 152,
+    "words": [
+     "rua",
+     "10",
+     "setor",
+     "oeste"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-02",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "10"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-03",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "10",
+     "n",
+     "152"
+    ]
+   },
+   "expected": {
+    "number": 152,
+    "words": [
+     "rua",
+     "10"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-04",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "avenida",
+     "t",
+     "63"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-05",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "avenida",
+     "goias",
+     "152"
+    ]
+   },
+   "expected": {
+    "number": 152,
+    "words": [
+     "avenida",
+     "goias"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-06",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "152"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-07",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "br",
+     "153",
+     "km",
+     "120"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-08",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "x",
+     "100000"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-09",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "x",
+     "0"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-10",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "quadra",
+     "3"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-11",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "avenida",
+     "anhanguera",
+     "1000",
+     "goiania"
+    ]
+   },
+   "expected": {
+    "number": 1000,
+    "words": [
+     "avenida",
+     "anhanguera",
+     "goiania"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-12",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "bahia",
+     "no",
+     "12"
+    ]
+   },
+   "expected": {
+    "number": 12,
+    "words": [
+     "rua",
+     "bahia"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-13",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "n",
+     "12"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-14",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "a",
+     "12"
+    ]
+   },
+   "expected": null
+  },
+  {
+   "id": "house_number_in-15",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "2",
+     "12"
+    ]
+   },
+   "expected": {
+    "number": 12,
+    "words": [
+     "rua",
+     "2"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-16",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "go",
+     "060",
+     "10"
+    ]
+   },
+   "expected": {
+    "number": 10,
+    "words": [
+     "go",
+     "060"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-17",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "10",
+     "numero",
+     "152"
+    ]
+   },
+   "expected": {
+    "number": 152,
+    "words": [
+     "rua",
+     "10"
+    ]
+   }
+  },
+  {
+   "id": "house_number_in-18",
+   "fn": "house_number_in",
+   "args": {
+    "words": [
+     "rua",
+     "10",
+     "152",
+     "200"
+    ]
+   },
+   "expected": {
+    "number": 200,
+    "words": [
+     "rua",
+     "10",
+     "152"
+    ]
+   }
+  },
+  {
+   "id": "options-01",
+   "fn": "options",
+   "args": {
+    "word": "av",
+    "last": false
+   },
+   "expected": [
+    [
+     "av",
+     false
+    ],
+    [
+     "avenida",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-02",
+   "fn": "options",
+   "args": {
+    "word": "av",
+    "last": true
+   },
+   "expected": [
+    [
+     "av",
+     false
+    ],
+    [
+     "avenida",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-03",
+   "fn": "options",
+   "args": {
+    "word": "10",
+    "last": false
+   },
+   "expected": [
+    [
+     "10",
+     true
+    ],
+    [
+     "dez",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-04",
+   "fn": "options",
+   "args": {
+    "word": "10",
+    "last": true
+   },
+   "expected": [
+    [
+     "10",
+     false
+    ],
+    [
+     "dez",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-05",
+   "fn": "options",
+   "args": {
+    "word": "doutor",
+    "last": false
+   },
+   "expected": [
+    [
+     "doutor",
+     false
+    ],
+    [
+     "dr",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-06",
+   "fn": "options",
+   "args": {
+    "word": "setor",
+    "last": false
+   },
+   "expected": [
+    [
+     "setor",
+     false
+    ],
+    [
+     "st",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-07",
+   "fn": "options",
+   "args": {
+    "word": "st",
+    "last": false
+   },
+   "expected": [
+    [
+     "st",
+     false
+    ],
+    [
+     "setor",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-08",
+   "fn": "options",
+   "args": {
+    "word": "rodoviaria",
+    "last": false
+   },
+   "expected": [
+    [
+     "rodoviaria",
+     false
+    ],
+    [
+     "rodoviario",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-09",
+   "fn": "options",
+   "args": {
+    "word": "s",
+    "last": false
+   },
+   "expected": [
+    [
+     "s",
+     true
+    ],
+    [
+     "sao",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-10",
+   "fn": "options",
+   "args": {
+    "word": "s",
+    "last": true
+   },
+   "expected": [
+    [
+     "s",
+     false
+    ],
+    [
+     "sao",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-11",
+   "fn": "options",
+   "args": {
+    "word": "sao",
+    "last": true
+   },
+   "expected": [
+    [
+     "sao",
+     false
+    ],
+    [
+     "s",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-12",
+   "fn": "options",
+   "args": {
+    "word": "um",
+    "last": false
+   },
+   "expected": [
+    [
+     "um",
+     false
+    ],
+    [
+     "1",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-13",
+   "fn": "options",
+   "args": {
+    "word": "quatorze",
+    "last": false
+   },
+   "expected": [
+    [
+     "quatorze",
+     false
+    ],
+    [
+     "14",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-14",
+   "fn": "options",
+   "args": {
+    "word": "14",
+    "last": false
+   },
+   "expected": [
+    [
+     "14",
+     true
+    ],
+    [
+     "catorze",
+     true
+    ],
+    [
+     "quatorze",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "options-15",
+   "fn": "options",
+   "args": {
+    "word": "bombeiros",
+    "last": false
+   },
+   "expected": [
+    [
+     "bombeiros",
+     false
+    ],
+    [
+     "bombeiro",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-16",
+   "fn": "options",
+   "args": {
+    "word": "goiania",
+    "last": true
+   },
+   "expected": [
+    [
+     "goiania",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "options-17",
+   "fn": "options",
+   "args": {
+    "word": "dra",
+    "last": false
+   },
+   "expected": [
+    [
+     "dra",
+     false
+    ],
+    [
+     "doutora",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "name_score-01",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "rua",
+     "10"
+    ],
+    "name": "Rua 10",
+    "prefix_last": true
+   },
+   "expected": 3
+  },
+  {
+   "id": "name_cover-01",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "rua",
+     "10"
+    ],
+    "name": "Rua 10",
+    "prefix_last": true
+   },
+   "expected": 1.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-01",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "rua",
+     "10"
+    ],
+    "name": "Rua 10",
+    "last_word": "10"
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_score-02",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "rua",
+     "10"
+    ],
+    "name": "Rua 10 Setor Oeste",
+    "prefix_last": true
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_cover-02",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "rua",
+     "10"
+    ],
+    "name": "Rua 10 Setor Oeste",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-02",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "rua",
+     "10"
+    ],
+    "name": "Rua 10 Setor Oeste",
+    "last_word": "10"
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_score-03",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "setor",
+     "oeste"
+    ],
+    "name": "Rua 10 Setor Oeste",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-03",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "setor",
+     "oeste"
+    ],
+    "name": "Rua 10 Setor Oeste",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-03",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "setor",
+     "oeste"
+    ],
+    "name": "Rua 10 Setor Oeste",
+    "last_word": "oeste"
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_score-04",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "av",
+     "goias"
+    ],
+    "name": "Avenida Goiás",
+    "prefix_last": true
+   },
+   "expected": 3
+  },
+  {
+   "id": "name_cover-04",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "av",
+     "goias"
+    ],
+    "name": "Avenida Goiás",
+    "prefix_last": true
+   },
+   "expected": 1.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-04",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "av",
+     "goias"
+    ],
+    "name": "Avenida Goiás",
+    "last_word": "goias"
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_score-05",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "anhang"
+    ],
+    "name": "Avenida Anhanguera",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-05",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "anhang"
+    ],
+    "name": "Avenida Anhanguera",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-05",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "anhang"
+    ],
+    "name": "Avenida Anhanguera",
+    "last_word": "anhang"
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_score-06",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "anhang"
+    ],
+    "name": "Avenida Anhanguera",
+    "prefix_last": false
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-06",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "anhang"
+    ],
+    "name": "Avenida Anhanguera",
+    "prefix_last": false
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-06",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "anhang"
+    ],
+    "name": "Avenida Anhanguera",
+    "last_word": ""
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_score-07",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "dr",
+     "olinto"
+    ],
+    "name": "Rua Doutor Olinto Manso",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-07",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "dr",
+     "olinto"
+    ],
+    "name": "Rua Doutor Olinto Manso",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-07",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "dr",
+     "olinto"
+    ],
+    "name": "Rua Doutor Olinto Manso",
+    "last_word": "olinto"
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_score-08",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "quatorze"
+    ],
+    "name": "Rua 14",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-08",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "quatorze"
+    ],
+    "name": "Rua 14",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-08",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "quatorze"
+    ],
+    "name": "Rua 14",
+    "last_word": "quatorze"
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_score-09",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "14"
+    ],
+    "name": "Rua Quatorze",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-09",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "14"
+    ],
+    "name": "Rua Quatorze",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-09",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "14"
+    ],
+    "name": "Rua Quatorze",
+    "last_word": "14"
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_score-10",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "10"
+    ],
+    "name": "Rua 100",
+    "prefix_last": false
+   },
+   "expected": 0
+  },
+  {
+   "id": "name_cover-10",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "10"
+    ],
+    "name": "Rua 100",
+    "prefix_last": false
+   },
+   "expected": 0.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-10",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "10"
+    ],
+    "name": "Rua 100",
+    "last_word": ""
+   },
+   "expected": 0
+  },
+  {
+   "id": "name_score-11",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "10"
+    ],
+    "name": "Rua 100",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-11",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "10"
+    ],
+    "name": "Rua 100",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-11",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "10"
+    ],
+    "name": "Rua 100",
+    "last_word": "10"
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_score-12",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "rodoviaria",
+     "goiania"
+    ],
+    "name": "Terminal Rodoviário de Goiânia",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-12",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "rodoviaria",
+     "goiania"
+    ],
+    "name": "Terminal Rodoviário de Goiânia",
+    "prefix_last": true
+   },
+   "expected": 0.6666666666666666,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-12",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "rodoviaria",
+     "goiania"
+    ],
+    "name": "Terminal Rodoviário de Goiânia",
+    "last_word": "goiania"
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_score-13",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "jardim",
+     "america"
+    ],
+    "name": "Pet shop - banho e tosa - Jardim América",
+    "prefix_last": true
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_cover-13",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "jardim",
+     "america"
+    ],
+    "name": "Pet shop - banho e tosa - Jardim América",
+    "prefix_last": true
+   },
+   "expected": 0.3333333333333333,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-13",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "jardim",
+     "america"
+    ],
+    "name": "Pet shop - banho e tosa - Jardim América",
+    "last_word": "america"
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_score-14",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "st"
+    ],
+    "name": "Styles",
+    "prefix_last": true
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_cover-14",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "st"
+    ],
+    "name": "Styles",
+    "prefix_last": true
+   },
+   "expected": 1.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-14",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "st"
+    ],
+    "name": "Styles",
+    "last_word": "st"
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_score-15",
+   "fn": "name_score",
+   "args": {
+    "words": [
+     "setor"
+    ],
+    "name": "St. Central",
+    "prefix_last": true
+   },
+   "expected": 2
+  },
+  {
+   "id": "name_cover-15",
+   "fn": "name_cover",
+   "args": {
+    "words": [
+     "setor"
+    ],
+    "name": "St. Central",
+    "prefix_last": true
+   },
+   "expected": 0.5,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-15",
+   "fn": "name_hits",
+   "args": {
+    "words": [
+     "setor"
+    ],
+    "name": "St. Central",
+    "last_word": "setor"
+   },
+   "expected": 1
+  },
+  {
+   "id": "name_score-16",
+   "fn": "name_score",
+   "args": {
+    "words": [],
+    "name": "Rua 10",
+    "prefix_last": true
+   },
+   "expected": 0
+  },
+  {
+   "id": "name_cover-16",
+   "fn": "name_cover",
+   "args": {
+    "words": [],
+    "name": "Rua 10",
+    "prefix_last": true
+   },
+   "expected": 0.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "name_hits-16",
+   "fn": "name_hits",
+   "args": {
+    "words": [],
+    "name": "Rua 10",
+    "last_word": ""
+   },
+   "expected": 0
+  },
+  {
+   "id": "parse-01",
+   "fn": "parse",
+   "args": {
+    "folded": "cidade de goias"
+   },
+   "expected": {
+    "words": [
+     "goias"
+    ],
+    "text": [
+     "goias"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiás",
+    "municipality_words": [
+     "goias"
+    ]
+   }
+  },
+  {
+   "id": "parse-02",
+   "fn": "parse",
+   "args": {
+    "folded": "posto de saude vila nova"
+   },
+   "expected": {
+    "words": [
+     "posto",
+     "saude",
+     "vila",
+     "nova"
+    ],
+    "text": [
+     "vila",
+     "nova"
+    ],
+    "kinds": [
+     "amenity=clinic",
+     "healthcare=clinic",
+     "healthcare=centre",
+     "amenity=doctors"
+    ],
+    "category_words": [
+     "posto",
+     "saude"
+    ],
+    "municipality": null,
+    "municipality_words": []
+   }
+  },
+  {
+   "id": "parse-03",
+   "fn": "parse",
+   "args": {
+    "folded": "posto ipiranga"
+   },
+   "expected": {
+    "words": [
+     "posto",
+     "ipiranga"
+    ],
+    "text": [
+     "ipiranga"
+    ],
+    "kinds": [
+     "amenity=fuel"
+    ],
+    "category_words": [
+     "posto"
+    ],
+    "municipality": null,
+    "municipality_words": []
+   }
+  },
+  {
+   "id": "parse-04",
+   "fn": "parse",
+   "args": {
+    "folded": "ipiranga"
+   },
+   "expected": {
+    "words": [
+     "ipiranga"
+    ],
+    "text": [
+     "ipiranga"
+    ],
+    "kinds": [
+     "amenity=fuel"
+    ],
+    "category_words": [],
+    "municipality": null,
+    "municipality_words": []
+   }
+  },
+  {
+   "id": "parse-05",
+   "fn": "parse",
+   "args": {
+    "folded": "feira de santana"
+   },
+   "expected": {
+    "words": [
+     "feira",
+     "santana"
+    ],
+    "text": [
+     "feira",
+     "santana"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Feira de Santana",
+    "municipality_words": [
+     "de",
+     "feira",
+     "santana"
+    ]
+   }
+  },
+  {
+   "id": "parse-06",
+   "fn": "parse",
+   "args": {
+    "folded": "rua 10 aparecida de goiania"
+   },
+   "expected": {
+    "words": [
+     "rua",
+     "10",
+     "aparecida",
+     "goiania"
+    ],
+    "text": [
+     "rua",
+     "10",
+     "aparecida",
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Aparecida de Goiânia",
+    "municipality_words": [
+     "aparecida",
+     "de",
+     "goiania"
+    ]
+   }
+  },
+  {
+   "id": "parse-07",
+   "fn": "parse",
+   "args": {
+    "folded": "avenida anhanguera goiania"
+   },
+   "expected": {
+    "words": [
+     "avenida",
+     "anhanguera",
+     "goiania"
+    ],
+    "text": [
+     "avenida",
+     "anhanguera",
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiânia",
+    "municipality_words": [
+     "goiania"
+    ]
+   }
+  },
+  {
+   "id": "parse-08",
+   "fn": "parse",
+   "args": {
+    "folded": "rua 90 goiania"
+   },
+   "expected": {
+    "words": [
+     "rua",
+     "90",
+     "goiania"
+    ],
+    "text": [
+     "rua",
+     "90",
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiânia",
+    "municipality_words": [
+     "goiania"
+    ]
+   }
+  },
+  {
+   "id": "parse-09",
+   "fn": "parse",
+   "args": {
+    "folded": "goiania"
+   },
+   "expected": {
+    "words": [
+     "goiania"
+    ],
+    "text": [
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiânia",
+    "municipality_words": [
+     "goiania"
+    ]
+   }
+  },
+  {
+   "id": "parse-10",
+   "fn": "parse",
+   "args": {
+    "folded": "caixa eletronico"
+   },
+   "expected": {
+    "words": [
+     "caixa",
+     "eletronico"
+    ],
+    "text": [],
+    "kinds": [
+     "amenity=atm"
+    ],
+    "category_words": [
+     "caixa",
+     "eletronico"
+    ],
+    "municipality": null,
+    "municipality_words": []
+   }
+  },
+  {
+   "id": "parse-11",
+   "fn": "parse",
+   "args": {
+    "folded": "drogasil centro"
+   },
+   "expected": {
+    "words": [
+     "drogasil",
+     "centro"
+    ],
+    "text": [
+     "drogasil",
+     "centro"
+    ],
+    "kinds": [
+     "amenity=pharmacy"
+    ],
+    "category_words": [],
+    "municipality": null,
+    "municipality_words": []
+   }
+  },
+  {
+   "id": "parse-12",
+   "fn": "parse",
+   "args": {
+    "folded": "de"
+   },
+   "expected": {
+    "words": [
+     "de"
+    ],
+    "text": [
+     "de"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": null,
+    "municipality_words": []
+   }
+  },
+  {
+   "id": "parse-13",
+   "fn": "parse",
+   "args": {
+    "folded": "hospital de base brasilia"
+   },
+   "expected": {
+    "words": [
+     "hospital",
+     "base",
+     "brasilia"
+    ],
+    "text": [
+     "base",
+     "brasilia"
+    ],
+    "kinds": [
+     "amenity=hospital"
+    ],
+    "category_words": [
+     "hospital"
+    ],
+    "municipality": "Brasília",
+    "municipality_words": [
+     "brasilia"
+    ]
+   }
+  },
+  {
+   "id": "parse-14",
+   "fn": "parse",
+   "args": {
+    "folded": "municipio de anapolis"
+   },
+   "expected": {
+    "words": [
+     "anapolis"
+    ],
+    "text": [
+     "anapolis"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Anápolis",
+    "municipality_words": [
+     "anapolis"
+    ]
+   }
+  },
+  {
+   "id": "correct-01",
+   "fn": "correct",
+   "args": {
+    "word": "goiana",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "goiana"
+  },
+  {
+   "id": "correct-02",
+   "fn": "correct",
+   "args": {
+    "word": "goiana",
+    "prefix": false,
+    "force": true
+   },
+   "expected": "goiania"
+  },
+  {
+   "id": "correct-03",
+   "fn": "correct",
+   "args": {
+    "word": "otel",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "hotel"
+  },
+  {
+   "id": "correct-04",
+   "fn": "correct",
+   "args": {
+    "word": "anhagu",
+    "prefix": true,
+    "force": false
+   },
+   "expected": "anhangu"
+  },
+  {
+   "id": "correct-05",
+   "fn": "correct",
+   "args": {
+    "word": "beuno",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "bueno"
+  },
+  {
+   "id": "correct-06",
+   "fn": "correct",
+   "args": {
+    "word": "xyz",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "xyz"
+  },
+  {
+   "id": "correct-07",
+   "fn": "correct",
+   "args": {
+    "word": "postp",
+    "prefix": true,
+    "force": false
+   },
+   "expected": "posto"
+  },
+  {
+   "id": "correct-08",
+   "fn": "correct",
+   "args": {
+    "word": "socorro",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "socorro"
+  },
+  {
+   "id": "correct-09",
+   "fn": "correct",
+   "args": {
+    "word": "pirenopols",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "pirenopolis"
+  },
+  {
+   "id": "correct-10",
+   "fn": "correct",
+   "args": {
+    "word": "brasilai",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "brasilia"
+  },
+  {
+   "id": "correct-11",
+   "fn": "correct",
+   "args": {
+    "word": "setr",
+    "prefix": true,
+    "force": false
+   },
+   "expected": "setor"
+  },
+  {
+   "id": "correct-12",
+   "fn": "correct",
+   "args": {
+    "word": "goi",
+    "prefix": true,
+    "force": false
+   },
+   "expected": "goi"
+  },
+  {
+   "id": "correct-13",
+   "fn": "correct",
+   "args": {
+    "word": "paulista",
+    "prefix": false,
+    "force": true
+   },
+   "expected": "paulista"
+  },
+  {
+   "id": "correct-14",
+   "fn": "correct",
+   "args": {
+    "word": "152",
+    "prefix": false,
+    "force": false
+   },
+   "expected": "152"
+  },
+  {
+   "id": "ladder_position-01",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 2
+   },
+   "expected": [
+    -16.67,
+    -49.258
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-02",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 1
+   },
+   "expected": [
+    -16.67,
+    -49.258
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-03",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 3
+   },
+   "expected": [
+    -16.67,
+    -49.257962400000004
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-04",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 50
+   },
+   "expected": [
+    -16.67,
+    -49.257097599999994
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-05",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 102
+   },
+   "expected": [
+    -16.67,
+    -49.25612
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-06",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 101
+   },
+   "expected": [
+    -16.67,
+    -49.25612
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-07",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 103
+   },
+   "expected": null,
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-08",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 201
+   },
+   "expected": null,
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-09",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 202
+   },
+   "expected": [
+    -16.67,
+    -49.25424
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-10",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 203
+   },
+   "expected": null,
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-11",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 1002
+   },
+   "expected": [
+    -16.67,
+    -49.2533
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-12",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 1010
+   },
+   "expected": [
+    -16.67,
+    -49.253262
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-13",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 1042
+   },
+   "expected": [
+    -16.67,
+    -49.25311
+   ],
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-14",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 1044
+   },
+   "expected": null,
+   "tol": 1e-09
+  },
+  {
+   "id": "ladder_position-15",
+   "fn": "ladder_position",
+   "args": {
+    "rungs": [
+     0,
+     0,
+     2,
+     -1667000,
+     -4925800,
+     0,
+     0,
+     102,
+     -1667000,
+     -4925612,
+     0,
+     0,
+     202,
+     -1667000,
+     -4925424,
+     1,
+     0,
+     1,
+     -1667000,
+     -4925800,
+     1,
+     0,
+     101,
+     -1667000,
+     -4925612,
+     0,
+     1,
+     1002,
+     -1667000,
+     -4925330,
+     0,
+     1,
+     1042,
+     -1667000,
+     -4925311
+    ],
+    "number": 0
+   },
+   "expected": null,
+   "tol": 1e-09
+  },
+  {
+   "id": "cell-01",
+   "fn": "cell",
+   "args": {
+    "lat": -16.68634,
+    "lng": -49.25
+   },
+   "expected": 24375681
+  },
+  {
+   "id": "cell-02",
+   "fn": "cell",
+   "args": {
+    "lat": -15.7939,
+    "lng": -47.8828
+   },
+   "expected": 24629612
+  },
+  {
+   "id": "cell-03",
+   "fn": "cell",
+   "args": {
+    "lat": -23.5505,
+    "lng": -46.6333
+   },
+   "expected": 24859175
+  },
+  {
+   "id": "cell-04",
+   "fn": "cell",
+   "args": {
+    "lat": -33.75,
+    "lng": -73.99
+   },
+   "expected": 19764016
+  },
+  {
+   "id": "cell-05",
+   "fn": "cell",
+   "args": {
+    "lat": 5.27,
+    "lng": -60.2
+   },
+   "expected": 22335367
+  },
+  {
+   "id": "cell-06",
+   "fn": "cell",
+   "args": {
+    "lat": 0.0,
+    "lng": 0.0
+   },
+   "expected": 33558528
+  },
+  {
+   "id": "cell-07",
+   "fn": "cell",
+   "args": {
+    "lat": -3.7319,
+    "lng": -38.5267
+   },
+   "expected": 26374228
+  },
+  {
+   "id": "cells_around-01",
+   "fn": "cells_around",
+   "args": {
+    "lat": -16.68634,
+    "lng": -49.25,
+    "ring": 1
+   },
+   "expected": [
+    24367488,
+    24367489,
+    24367490,
+    24375680,
+    24375681,
+    24375682,
+    24383872,
+    24383873,
+    24383874
+   ]
+  },
+  {
+   "id": "cells_around-02",
+   "fn": "cells_around",
+   "args": {
+    "lat": -16.68634,
+    "lng": -49.25,
+    "ring": 2
+   },
+   "expected": [
+    24359295,
+    24359296,
+    24359297,
+    24359298,
+    24359299,
+    24367487,
+    24367488,
+    24367489,
+    24367490,
+    24367491,
+    24375679,
+    24375680,
+    24375681,
+    24375682,
+    24375683,
+    24383871,
+    24383872,
+    24383873,
+    24383874,
+    24383875,
+    24392063,
+    24392064,
+    24392065,
+    24392066,
+    24392067
+   ]
+  },
+  {
+   "id": "dist_m-01",
+   "fn": "dist_m",
+   "args": {
+    "lat1": -16.68,
+    "lng1": -49.25,
+    "lat2": -16.69,
+    "lng2": -49.26
+   },
+   "expected": 1541.5179399814913,
+   "tol": 1e-06
+  },
+  {
+   "id": "dist_m-02",
+   "fn": "dist_m",
+   "args": {
+    "lat1": -15.0,
+    "lng1": -47.0,
+    "lat2": -15.0,
+    "lng2": -47.001
+   },
+   "expected": 107.52686298224849,
+   "tol": 1e-06
+  },
+  {
+   "id": "dist_m-03",
+   "fn": "dist_m",
+   "args": {
+    "lat1": -30.0,
+    "lng1": -51.0,
+    "lat2": -29.0,
+    "lng2": -50.0
+   },
+   "expected": 147578.54242014192,
+   "tol": 1e-06
+  },
+  {
+   "id": "dist_m-04",
+   "fn": "dist_m",
+   "args": {
+    "lat1": 0.0,
+    "lng1": 0.0,
+    "lat2": 0.0,
+    "lng2": 0.0
+   },
+   "expected": 0.0,
+   "tol": 1e-06
+  },
+  {
+   "id": "closeness-01",
+   "fn": "closeness",
+   "args": {
+    "meters": 0.0
+   },
+   "expected": 1.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-02",
+   "fn": "closeness",
+   "args": {
+    "meters": 1.0
+   },
+   "expected": 0.9998685110603164,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-03",
+   "fn": "closeness",
+   "args": {
+    "meters": 500.0
+   },
+   "expected": 0.9466591702081812,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-04",
+   "fn": "closeness",
+   "args": {
+    "meters": 1000.0
+   },
+   "expected": 0.9088132491808298,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-05",
+   "fn": "closeness",
+   "args": {
+    "meters": 9999.0
+   },
+   "expected": 0.6845576310747552,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-06",
+   "fn": "closeness",
+   "args": {
+    "meters": 150000.0
+   },
+   "expected": 0.3399533907068636,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-07",
+   "fn": "closeness",
+   "args": {
+    "meters": 1999999.0
+   },
+   "expected": 6.574448074836425e-08,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-08",
+   "fn": "closeness",
+   "args": {
+    "meters": 2000000.0
+   },
+   "expected": 0.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "closeness-09",
+   "fn": "closeness",
+   "args": {
+    "meters": 5000000.0
+   },
+   "expected": 0.0,
+   "tol": 1e-09
+  },
+  {
+   "id": "distance_to_line-01",
+   "fn": "distance_to_line",
+   "args": {
+    "lat": -16.6801,
+    "lng": -49.255,
+    "coords": [
+     [
+      -16.68,
+      -49.26
+     ],
+     [
+      -16.68,
+      -49.25
+     ],
+     [
+      -16.67,
+      -49.25
+     ]
+    ]
+   },
+   "expected": 11.131999999983236,
+   "tol": 1e-06
+  },
+  {
+   "id": "distance_to_line-02",
+   "fn": "distance_to_line",
+   "args": {
+    "lat": -16.675,
+    "lng": -49.2499,
+    "coords": [
+     [
+      -16.68,
+      -49.26
+     ],
+     [
+      -16.68,
+      -49.25
+     ],
+     [
+      -16.67,
+      -49.25
+     ]
+    ]
+   },
+   "expected": 10.663874780759215,
+   "tol": 1e-06
+  },
+  {
+   "id": "distance_to_line-03",
+   "fn": "distance_to_line",
+   "args": {
+    "lat": -16.69,
+    "lng": -49.27,
+    "coords": [
+     [
+      -16.68,
+      -49.26
+     ],
+     [
+      -16.68,
+      -49.25
+     ],
+     [
+      -16.67,
+      -49.25
+     ]
+    ]
+   },
+   "expected": 1541.4986437502696,
+   "tol": 1e-06
+  },
+  {
+   "id": "distance_to_line-04",
+   "fn": "distance_to_line",
+   "args": {
+    "lat": -16.68,
+    "lng": -49.26,
+    "coords": [
+     [
+      -16.68,
+      -49.26
+     ],
+     [
+      -16.68,
+      -49.25
+     ],
+     [
+      -16.67,
+      -49.25
+     ]
+    ]
+   },
+   "expected": 0.0,
+   "tol": 1e-06
+  },
+  {
+   "id": "score-01",
+   "fn": "score",
+   "args": {
+    "full": 3,
+    "partial": 3,
+    "rank": 149,
+    "place_rank": 149,
+    "mun_hits": 0,
+    "mun_words": 0,
+    "cover": 1.0,
+    "distance_m": null
+   },
+   "expected": 1.5011764705882356,
+   "tol": 1e-09
+  },
+  {
+   "id": "score-02",
+   "fn": "score",
+   "args": {
+    "full": 2,
+    "partial": 1,
+    "rank": 20,
+    "place_rank": 140,
+    "mun_hits": 1,
+    "mun_words": 1,
+    "cover": 0.5,
+    "distance_m": 1234.5
+   },
+   "expected": 1.9962435736864417,
+   "tol": 1e-09
+  },
+  {
+   "id": "score-03",
+   "fn": "score",
+   "args": {
+    "full": 0,
+    "partial": 0,
+    "rank": 30,
+    "place_rank": 0,
+    "mun_hits": 0,
+    "mun_words": 0,
+    "cover": null,
+    "distance_m": 350.0
+   },
+   "expected": 1.5584268164443766,
+   "tol": 1e-09
+  },
+  {
+   "id": "score-04",
+   "fn": "score",
+   "args": {
+    "full": 1,
+    "partial": 0,
+    "rank": 255,
+    "place_rank": 255,
+    "mun_hits": 2,
+    "mun_words": 3,
+    "cover": 0.25,
+    "distance_m": 2500000.0
+   },
+   "expected": 1.3833333333333333,
+   "tol": 1e-09
+  },
+  {
+   "id": "label-01",
+   "fn": "label",
+   "args": {
+    "name": "Rua 10",
+    "kind": "highway=residential",
+    "house_number": 152,
+    "district": "Setor Oeste",
+    "municipality": "Goiânia"
+   },
+   "expected": "Rua 10, 152, Setor Oeste, Goiânia"
+  },
+  {
+   "id": "label-02",
+   "fn": "label",
+   "args": {
+    "name": "",
+    "kind": "amenity=fuel",
+    "house_number": null,
+    "district": null,
+    "municipality": "Goiânia"
+   },
+   "expected": "amenity=fuel, Goiânia"
+  },
+  {
+   "id": "label-03",
+   "fn": "label",
+   "args": {
+    "name": "Goiânia",
+    "kind": "municipality",
+    "house_number": null,
+    "district": null,
+    "municipality": "Goiânia"
+   },
+   "expected": "Goiânia"
+  },
+  {
+   "id": "label-04",
+   "fn": "label",
+   "args": {
+    "name": "Setor Oeste",
+    "kind": "place=suburb",
+    "house_number": null,
+    "district": "Setor Oeste",
+    "municipality": "Goiânia"
+   },
+   "expected": "Setor Oeste, Goiânia"
+  }
+ ],
+ "search": [
+  {
+   "type": "base",
+   "uf": "AC",
+   "query": "cruzeiro do sul ac",
+   "id": "base-01",
+   "origin": "receita",
+   "db": "base",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Cruzeiro do Sul",
+     "cls": "place",
+     "kind": "municipality",
+     "municipality": "1200203",
+     "district": null,
+     "lat": -7.63625,
+     "lng": -72.66916,
+     "house_number": null,
+     "label": "Cruzeiro do Sul, 1200203",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.764705882
+    }
+   ],
+   "compare": {
+    "order_exact": 1,
+    "same_set": 1,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "cruzeiro do sul ac",
+    "corrected": "cruzeiro do sul ac",
+    "forced": null,
+    "words": [
+     "cruzeiro",
+     "sul",
+     "ac"
+    ],
+    "text": [
+     "cruzeiro",
+     "sul",
+     "ac"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": null,
+    "house_number": null
+   }
+  },
+  {
+   "type": "base",
+   "uf": "AP",
+   "query": "santana ap",
+   "id": "base-04",
+   "origin": "receita",
+   "db": "base",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Santana",
+     "cls": "place",
+     "kind": "municipality",
+     "municipality": "1600600",
+     "district": null,
+     "lat": -0.03071,
+     "lng": -51.17897,
+     "house_number": null,
+     "label": "Santana, 1600600",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.774117647
+    }
+   ],
+   "compare": {
+    "order_exact": 1,
+    "same_set": 1,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "santana ap",
+    "corrected": "santana ap",
+    "forced": null,
+    "words": [
+     "santana",
+     "ap"
+    ],
+    "text": [
+     "santana",
+     "ap"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": null,
+    "house_number": null
+   }
+  },
+  {
+   "id": "DF-rua",
+   "uf": "DF",
+   "type": "rua",
+   "query": "av central brasilia",
+   "origin": "receita",
+   "db": "DF",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=primary",
+     "municipality": "Brasília",
+     "district": "QR 202",
+     "lat": -15.88026,
+     "lng": -48.08725,
+     "house_number": null,
+     "label": "Avenida Central, QR 202, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.938039216
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=primary",
+     "municipality": "Brasília",
+     "district": "QR 202",
+     "lat": -15.88016,
+     "lng": -48.08694,
+     "house_number": null,
+     "label": "Avenida Central, QR 202, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.938039216
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=primary",
+     "municipality": "Brasília",
+     "district": "QR 202",
+     "lat": -15.87381,
+     "lng": -48.0892,
+     "house_number": null,
+     "label": "Avenida Central, QR 202, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.938039216
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=primary",
+     "municipality": "Brasília",
+     "district": "QR 202",
+     "lat": -15.87277,
+     "lng": -48.08966,
+     "house_number": null,
+     "label": "Avenida Central, QR 202, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.938039216
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=secondary",
+     "municipality": "Brasília",
+     "district": "Setor A Sul",
+     "lat": -15.83316,
+     "lng": -48.05577,
+     "house_number": null,
+     "label": "Avenida Central, Setor A Sul, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.898823529
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=tertiary",
+     "municipality": "Brasília",
+     "district": "Bairro Sao Jose",
+     "lat": -15.9102,
+     "lng": -47.75966,
+     "house_number": null,
+     "label": "Avenida Central, Bairro Sao Jose, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.859607843
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=tertiary",
+     "municipality": "Brasília",
+     "district": "Areal",
+     "lat": -15.87136,
+     "lng": -48.01794,
+     "house_number": null,
+     "label": "Avenida Central, Areal, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.859607843
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=tertiary",
+     "municipality": "Brasília",
+     "district": "Setor de Indústrias Bernardo Sayão",
+     "lat": -15.87119,
+     "lng": -47.97023,
+     "house_number": null,
+     "label": "Avenida Central, Setor de Indústrias Bernardo Sayão, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.859607843
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=tertiary",
+     "municipality": "Brasília",
+     "district": "Santa Luzia",
+     "lat": -15.78341,
+     "lng": -47.9983,
+     "house_number": null,
+     "label": "Avenida Central, Santa Luzia, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.859607843
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=residential",
+     "municipality": "Brasília",
+     "district": "Vila Planalto",
+     "lat": -15.79245,
+     "lng": -47.84679,
+     "house_number": null,
+     "label": "Avenida Central, Vila Planalto, Brasília",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.800784314
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "av central brasilia",
+    "corrected": "av central brasilia",
+    "forced": null,
+    "words": [
+     "av",
+     "central",
+     "brasilia"
+    ],
+    "text": [
+     "av",
+     "central",
+     "brasilia"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Brasília",
+    "house_number": null
+   }
+  },
+  {
+   "id": "DF-frase_categoria",
+   "uf": "DF",
+   "type": "frase_categoria",
+   "query": "posto de saude",
+   "near": [
+    -15.79399,
+    -47.8828
+   ],
+   "origin": "receita",
+   "db": "DF",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Nova Medicina e Segurança do Trabalho",
+     "cls": "poi",
+     "kind": "amenity=clinic",
+     "municipality": "Brasília",
+     "district": "SQS 102",
+     "lat": -15.79596,
+     "lng": -47.8844,
+     "house_number": null,
+     "label": "Nova Medicina e Segurança do Trabalho, SQS 102, Brasília",
+     "distance_m": 278.33,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.69154464
+    },
+    {
+     "name": "Laboratório Pasteur",
+     "cls": "poi",
+     "kind": "amenity=clinic",
+     "municipality": "Brasília",
+     "district": "Setor Médico Hospitalar Norte",
+     "lat": -15.78522,
+     "lng": -47.88482,
+     "house_number": null,
+     "label": "Laboratório Pasteur, Setor Médico Hospitalar Norte, Brasília",
+     "distance_m": 999.97,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.603223001
+    },
+    {
+     "name": "Centro de psiquiatria e psicologia Van Gogh",
+     "cls": "poi",
+     "kind": "amenity=doctors",
+     "municipality": "Brasília",
+     "district": "Setor Comercial Norte",
+     "lat": -15.78738,
+     "lng": -47.88271,
+     "house_number": null,
+     "label": "Centro de psiquiatria e psicologia Van Gogh, Setor Comercial Norte, Brasília",
+     "distance_m": 735.89,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.591951902
+    },
+    {
+     "name": "Derma Star",
+     "cls": "poi",
+     "kind": "amenity=doctors",
+     "municipality": "Brasília",
+     "district": "Setor Comercial Norte",
+     "lat": -15.78671,
+     "lng": -47.88883,
+     "house_number": null,
+     "label": "Derma Star, Setor Comercial Norte, Brasília",
+     "distance_m": 1036.33,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.560451449
+    },
+    {
+     "name": "Galli",
+     "cls": "poi",
+     "kind": "amenity=doctors",
+     "municipality": "Brasília",
+     "district": "Setor Médico Hospitalar Norte",
+     "lat": -15.78466,
+     "lng": -47.88499,
+     "house_number": null,
+     "label": "Galli, Setor Médico Hospitalar Norte, Brasília",
+     "distance_m": 1064.78,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.557713958
+    },
+    {
+     "name": "Espaço Saúde",
+     "cls": "poi",
+     "kind": "amenity=clinic",
+     "municipality": "Brasília",
+     "district": "SQN 304",
+     "lat": -15.77478,
+     "lng": -47.88629,
+     "house_number": null,
+     "label": "Espaço Saúde, SQN 304, Brasília",
+     "distance_m": 2170.89,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.512276362
+    },
+    {
+     "name": "SIASS-DF",
+     "cls": "poi",
+     "kind": "amenity=doctors",
+     "municipality": "Brasília",
+     "district": "SQS 402",
+     "lat": -15.8014,
+     "lng": -47.86999,
+     "house_number": null,
+     "label": "SIASS-DF, SQS 402, Brasília",
+     "distance_m": 1601.01,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.512155052
+    },
+    {
+     "name": "Unidade Básica de Saúde 1 da Asa Norte",
+     "cls": "poi",
+     "kind": "amenity=clinic",
+     "municipality": "Brasília",
+     "district": "SQN 305",
+     "lat": -15.77339,
+     "lng": -47.89255,
+     "house_number": null,
+     "label": "Unidade Básica de Saúde 1 da Asa Norte, SQN 305, Brasília",
+     "distance_m": 2519.84,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.491674281
+    },
+    {
+     "name": "Centro Clínico Metrópolis",
+     "cls": "poi",
+     "kind": "amenity=clinic",
+     "municipality": "Brasília",
+     "district": "SQS 407",
+     "lat": -15.82103,
+     "lng": -47.89397,
+     "house_number": null,
+     "label": "Centro Clínico Metrópolis, SQS 407, Brasília",
+     "distance_m": 3239.15,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.454981082
+    },
+    {
+     "name": "Brasília Medical Center",
+     "cls": "poi",
+     "kind": "amenity=clinic",
+     "municipality": "Brasília",
+     "district": "SQN 407",
+     "lat": -15.76499,
+     "lng": -47.8754,
+     "house_number": null,
+     "label": "Brasília Medical Center, SQN 407, Brasília",
+     "distance_m": 3324.18,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.45106181
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "posto de saude",
+    "corrected": "posto de saude",
+    "forced": null,
+    "words": [
+     "posto",
+     "saude"
+    ],
+    "text": [],
+    "kinds": [
+     "amenity=clinic",
+     "healthcare=clinic",
+     "healthcare=centre",
+     "amenity=doctors"
+    ],
+    "category_words": [
+     "posto",
+     "saude"
+    ],
+    "municipality": null,
+    "house_number": null
+   }
+  },
+  {
+   "id": "GO-municipio",
+   "uf": "GO",
+   "type": "municipio",
+   "query": "Goiânia",
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Goiânia",
+     "cls": "place",
+     "kind": "municipality",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.68088,
+     "lng": -49.25327,
+     "house_number": null,
+     "label": "Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 1.501176471
+    },
+    {
+     "name": "Goiânia Shopping",
+     "cls": "poi",
+     "kind": "shop=mall",
+     "municipality": "Goiânia",
+     "district": "Nova Suiça",
+     "lat": -16.70764,
+     "lng": -49.27313,
+     "house_number": null,
+     "label": "Goiânia Shopping, Nova Suiça, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.83254902
+    },
+    {
+     "name": "Terminal Goiânia Viva",
+     "cls": "poi",
+     "kind": "amenity=bus_station",
+     "municipality": "Goiânia",
+     "district": "Condomínio Dakota",
+     "lat": -16.69641,
+     "lng": -49.35149,
+     "house_number": null,
+     "label": "Terminal Goiânia Viva, Condomínio Dakota, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Terminal Rodoviário de Goiânia",
+     "cls": "poi",
+     "kind": "amenity=bus_station",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.65933,
+     "lng": -49.26012,
+     "house_number": null,
+     "label": "Terminal Rodoviário de Goiânia, Setor Central, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Aeroporto Internacional de Goiânia",
+     "cls": "poi",
+     "kind": "aeroway=aerodrome",
+     "municipality": "Goiânia",
+     "district": "Jardim Guanabara",
+     "lat": -16.6321,
+     "lng": -49.21974,
+     "house_number": null,
+     "label": "Aeroporto Internacional de Goiânia, Jardim Guanabara, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Saúde Goiânia",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": "Setor dos Funcionários",
+     "lat": -16.671,
+     "lng": -49.28024,
+     "house_number": null,
+     "label": "Saúde Goiânia, Setor dos Funcionários, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Febracis Goiânia",
+     "cls": "poi",
+     "kind": "amenity=university",
+     "municipality": "Goiânia",
+     "district": "Setor Marista",
+     "lat": -16.70448,
+     "lng": -49.27088,
+     "house_number": null,
+     "label": "Febracis Goiânia, Setor Marista, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Neurocentro Goiânia",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.64717,
+     "lng": -49.38678,
+     "house_number": null,
+     "label": "Neurocentro Goiânia, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Setor Goiânia 2",
+     "cls": "place",
+     "kind": "place=suburb",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.62714,
+     "lng": -49.24913,
+     "house_number": null,
+     "label": "Setor Goiânia 2, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.599215686
+    },
+    {
+     "name": "Hospital Goiania Leste",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": "Setor Coimbra",
+     "lat": -16.67816,
+     "lng": -49.28326,
+     "house_number": null,
+     "label": "Hospital Goiania Leste, Setor Coimbra, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.599215686
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "goiania",
+    "corrected": "goiania",
+    "forced": null,
+    "words": [
+     "goiania"
+    ],
+    "text": [
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiânia",
+    "house_number": null
+   }
+  },
+  {
+   "id": "GO-normalizacao",
+   "uf": "GO",
+   "type": "normalizacao",
+   "query": "GOIÂNIA",
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Goiânia",
+     "cls": "place",
+     "kind": "municipality",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.68088,
+     "lng": -49.25327,
+     "house_number": null,
+     "label": "Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 1.501176471
+    },
+    {
+     "name": "Goiânia Shopping",
+     "cls": "poi",
+     "kind": "shop=mall",
+     "municipality": "Goiânia",
+     "district": "Nova Suiça",
+     "lat": -16.70764,
+     "lng": -49.27313,
+     "house_number": null,
+     "label": "Goiânia Shopping, Nova Suiça, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.83254902
+    },
+    {
+     "name": "Terminal Goiânia Viva",
+     "cls": "poi",
+     "kind": "amenity=bus_station",
+     "municipality": "Goiânia",
+     "district": "Condomínio Dakota",
+     "lat": -16.69641,
+     "lng": -49.35149,
+     "house_number": null,
+     "label": "Terminal Goiânia Viva, Condomínio Dakota, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Terminal Rodoviário de Goiânia",
+     "cls": "poi",
+     "kind": "amenity=bus_station",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.65933,
+     "lng": -49.26012,
+     "house_number": null,
+     "label": "Terminal Rodoviário de Goiânia, Setor Central, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Aeroporto Internacional de Goiânia",
+     "cls": "poi",
+     "kind": "aeroway=aerodrome",
+     "municipality": "Goiânia",
+     "district": "Jardim Guanabara",
+     "lat": -16.6321,
+     "lng": -49.21974,
+     "house_number": null,
+     "label": "Aeroporto Internacional de Goiânia, Jardim Guanabara, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Saúde Goiânia",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": "Setor dos Funcionários",
+     "lat": -16.671,
+     "lng": -49.28024,
+     "house_number": null,
+     "label": "Saúde Goiânia, Setor dos Funcionários, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Febracis Goiânia",
+     "cls": "poi",
+     "kind": "amenity=university",
+     "municipality": "Goiânia",
+     "district": "Setor Marista",
+     "lat": -16.70448,
+     "lng": -49.27088,
+     "house_number": null,
+     "label": "Febracis Goiânia, Setor Marista, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Neurocentro Goiânia",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.64717,
+     "lng": -49.38678,
+     "house_number": null,
+     "label": "Neurocentro Goiânia, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Setor Goiânia 2",
+     "cls": "place",
+     "kind": "place=suburb",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.62714,
+     "lng": -49.24913,
+     "house_number": null,
+     "label": "Setor Goiânia 2, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.599215686
+    },
+    {
+     "name": "Hospital Goiania Leste",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": "Setor Coimbra",
+     "lat": -16.67816,
+     "lng": -49.28326,
+     "house_number": null,
+     "label": "Hospital Goiania Leste, Setor Coimbra, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.599215686
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "goiania",
+    "corrected": "goiania",
+    "forced": null,
+    "words": [
+     "goiania"
+    ],
+    "text": [
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiânia",
+    "house_number": null
+   }
+  },
+  {
+   "id": "GO-erro_digitacao",
+   "uf": "GO",
+   "type": "erro_digitacao",
+   "query": "goainia",
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Goiânia",
+     "cls": "place",
+     "kind": "municipality",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.68088,
+     "lng": -49.25327,
+     "house_number": null,
+     "label": "Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 1.501176471
+    },
+    {
+     "name": "Goiânia Shopping",
+     "cls": "poi",
+     "kind": "shop=mall",
+     "municipality": "Goiânia",
+     "district": "Nova Suiça",
+     "lat": -16.70764,
+     "lng": -49.27313,
+     "house_number": null,
+     "label": "Goiânia Shopping, Nova Suiça, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.83254902
+    },
+    {
+     "name": "Terminal Goiânia Viva",
+     "cls": "poi",
+     "kind": "amenity=bus_station",
+     "municipality": "Goiânia",
+     "district": "Condomínio Dakota",
+     "lat": -16.69641,
+     "lng": -49.35149,
+     "house_number": null,
+     "label": "Terminal Goiânia Viva, Condomínio Dakota, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Terminal Rodoviário de Goiânia",
+     "cls": "poi",
+     "kind": "amenity=bus_station",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.65933,
+     "lng": -49.26012,
+     "house_number": null,
+     "label": "Terminal Rodoviário de Goiânia, Setor Central, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Aeroporto Internacional de Goiânia",
+     "cls": "poi",
+     "kind": "aeroway=aerodrome",
+     "municipality": "Goiânia",
+     "district": "Jardim Guanabara",
+     "lat": -16.6321,
+     "lng": -49.21974,
+     "house_number": null,
+     "label": "Aeroporto Internacional de Goiânia, Jardim Guanabara, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.618823529
+    },
+    {
+     "name": "Saúde Goiânia",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": "Setor dos Funcionários",
+     "lat": -16.671,
+     "lng": -49.28024,
+     "house_number": null,
+     "label": "Saúde Goiânia, Setor dos Funcionários, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Febracis Goiânia",
+     "cls": "poi",
+     "kind": "amenity=university",
+     "municipality": "Goiânia",
+     "district": "Setor Marista",
+     "lat": -16.70448,
+     "lng": -49.27088,
+     "house_number": null,
+     "label": "Febracis Goiânia, Setor Marista, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Neurocentro Goiânia",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.64717,
+     "lng": -49.38678,
+     "house_number": null,
+     "label": "Neurocentro Goiânia, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.601176471
+    },
+    {
+     "name": "Setor Goiânia 2",
+     "cls": "place",
+     "kind": "place=suburb",
+     "municipality": "Goiânia",
+     "district": null,
+     "lat": -16.62714,
+     "lng": -49.24913,
+     "house_number": null,
+     "label": "Setor Goiânia 2, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.599215686
+    },
+    {
+     "name": "Hospital Goiania Leste",
+     "cls": "poi",
+     "kind": "amenity=hospital",
+     "municipality": "Goiânia",
+     "district": "Setor Coimbra",
+     "lat": -16.67816,
+     "lng": -49.28326,
+     "house_number": null,
+     "label": "Hospital Goiania Leste, Setor Coimbra, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.599215686
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "goainia",
+    "corrected": "goiania",
+    "forced": null,
+    "words": [
+     "goiania"
+    ],
+    "text": [
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiânia",
+    "house_number": null
+   }
+  },
+  {
+   "id": "GO-prefixo",
+   "uf": "GO",
+   "type": "prefixo",
+   "query": "av anhan",
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=trunk",
+     "municipality": "Goiânia",
+     "district": "Capuava",
+     "lat": -16.65611,
+     "lng": -49.32943,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Capuava, Goiânia",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.971764706
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=trunk",
+     "municipality": "Goianira",
+     "district": "Solar das Paineiras",
+     "lat": -16.57682,
+     "lng": -49.3906,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Solar das Paineiras, Goianira",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.946666667
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=primary",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.67481,
+     "lng": -49.25815,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Setor Central, Goiânia",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.93254902
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=primary",
+     "municipality": "Goiânia",
+     "district": "Setor Morais",
+     "lat": -16.67027,
+     "lng": -49.22883,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Setor Morais, Goiânia",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.93254902
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=secondary",
+     "municipality": "Goiânia",
+     "district": "Jardim Novo Mundo",
+     "lat": -16.66797,
+     "lng": -49.21433,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Jardim Novo Mundo, Goiânia",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.893333333
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=secondary",
+     "municipality": "Itumbiara",
+     "district": "Setor Oeste",
+     "lat": -18.41854,
+     "lng": -49.23118,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Setor Oeste, Itumbiara",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.872156863
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=secondary",
+     "municipality": "Itapuranga",
+     "district": "Centro",
+     "lat": -15.56404,
+     "lng": -49.94844,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Centro, Itapuranga",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.860392157
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=tertiary",
+     "municipality": "Formosa",
+     "district": "Centro",
+     "lat": -15.53861,
+     "lng": -47.33355,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Centro, Formosa",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.832941176
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=residential",
+     "municipality": "Goiânia",
+     "district": "Setor Leste Universitário",
+     "lat": -16.67358,
+     "lng": -49.24807,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Setor Leste Universitário, Goiânia",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.795294118
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=residential",
+     "municipality": "Senador Canedo",
+     "district": "Setor Monte Azul",
+     "lat": -16.73464,
+     "lng": -49.08585,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Setor Monte Azul, Senador Canedo",
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.776470588
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "av anhan",
+    "corrected": "av anhan",
+    "forced": null,
+    "words": [
+     "av",
+     "anhan"
+    ],
+    "text": [
+     "av",
+     "anhan"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": null,
+    "house_number": null
+   }
+  },
+  {
+   "id": "GO-categoria_perto",
+   "uf": "GO",
+   "type": "categoria_perto",
+   "query": "posto",
+   "near": [
+    -16.68088,
+    -49.25327
+   ],
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Posto Petrobras",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Sul",
+     "lat": -16.6827,
+     "lng": -49.25598,
+     "house_number": null,
+     "label": "Posto Petrobras, Setor Sul, Goiânia",
+     "distance_m": 352.93,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.674862151
+    },
+    {
+     "name": "Posto 3m Araguaia",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.67864,
+     "lng": -49.25569,
+     "house_number": null,
+     "label": "Posto 3m Araguaia, Setor Central, Goiânia",
+     "distance_m": 358.85,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.674000139
+    },
+    {
+     "name": "Posto Central",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Sul",
+     "lat": -16.68404,
+     "lng": -49.25013,
+     "house_number": null,
+     "label": "Posto Central, Setor Sul, Goiânia",
+     "distance_m": 485.65,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.656395467
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.68088,
+     "lng": -49.25834,
+     "house_number": null,
+     "label": "Ipiranga, Setor Central, Goiânia",
+     "distance_m": 540.64,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.649223087
+    },
+    {
+     "name": "Auto Posto Terra",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Leste Universitário",
+     "lat": -16.67808,
+     "lng": -49.24876,
+     "house_number": null,
+     "label": "Auto Posto Terra, Setor Leste Universitário, Goiânia",
+     "distance_m": 573.1,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.64510846
+    },
+    {
+     "name": "Al Posto 84",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Sul",
+     "lat": -16.68675,
+     "lng": -49.25422,
+     "house_number": null,
+     "label": "Al Posto 84, Setor Sul, Goiânia",
+     "distance_m": 661.25,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.634349448
+    },
+    {
+     "name": "Shell",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.68084,
+     "lng": -49.25844,
+     "house_number": null,
+     "label": "Shell, Setor Central, Goiânia",
+     "distance_m": 551.32,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.616487115
+    },
+    {
+     "name": "Auto Posto Alameda",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.67286,
+     "lng": -49.25057,
+     "house_number": null,
+     "label": "Auto Posto Alameda, Setor Central, Goiânia",
+     "distance_m": 938.07,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.603937145
+    },
+    {
+     "name": "Posto Shell",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Leste Universitário",
+     "lat": -16.68213,
+     "lng": -49.24377,
+     "house_number": null,
+     "label": "Posto Shell, Setor Leste Universitário, Goiânia",
+     "distance_m": 1022.55,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.59551762
+    },
+    {
+     "name": "Auto Posto Real Sul Ltda - Me",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Sul",
+     "lat": -16.6854,
+     "lng": -49.24741,
+     "house_number": null,
+     "label": "Auto Posto Real Sul Ltda - Me, Setor Sul, Goiânia",
+     "distance_m": 802.28,
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.586898757
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "posto",
+    "corrected": "posto",
+    "forced": null,
+    "words": [
+     "posto"
+    ],
+    "text": [],
+    "kinds": [
+     "amenity=fuel"
+    ],
+    "category_words": [
+     "posto"
+    ],
+    "municipality": null,
+    "house_number": null
+   }
+  },
+  {
+   "id": "GO-marca",
+   "uf": "GO",
+   "type": "marca",
+   "query": "ipiranga",
+   "near": [
+    -16.68088,
+    -49.25327
+   ],
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Central",
+     "lat": -16.68088,
+     "lng": -49.25834,
+     "house_number": null,
+     "label": "Ipiranga, Setor Central, Goiânia",
+     "distance_m": 540.64,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.449223087
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Oeste",
+     "lat": -16.6851,
+     "lng": -49.26407,
+     "house_number": null,
+     "label": "Ipiranga, Setor Oeste, Goiânia",
+     "distance_m": 1243.78,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.375033792
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Aeroporto",
+     "lat": -16.6722,
+     "lng": -49.26906,
+     "house_number": null,
+     "label": "Ipiranga, Setor Aeroporto, Goiânia",
+     "distance_m": 1941.36,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.321613832
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Oeste",
+     "lat": -16.68726,
+     "lng": -49.27219,
+     "house_number": null,
+     "label": "Ipiranga, Setor Oeste, Goiânia",
+     "distance_m": 2138.87,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.308789133
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Setor Bueno",
+     "lat": -16.70115,
+     "lng": -49.27074,
+     "house_number": null,
+     "label": "Ipiranga, Setor Bueno, Goiânia",
+     "distance_m": 2926.04,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.264632422
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Conjunto Anhanguera",
+     "lat": -16.72819,
+     "lng": -49.24529,
+     "house_number": null,
+     "label": "Ipiranga, Conjunto Anhanguera, Goiânia",
+     "distance_m": 5334.84,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.170222288
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Jardim Diamantina",
+     "lat": -16.63372,
+     "lng": -49.28184,
+     "house_number": null,
+     "label": "Ipiranga, Jardim Diamantina, Goiânia",
+     "distance_m": 6070.0,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.148556047
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Ipiranga",
+     "lat": -16.66938,
+     "lng": -49.3248,
+     "house_number": null,
+     "label": "Ipiranga, Goiânia",
+     "distance_m": 7734.54,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.106834945
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Goiânia",
+     "district": "Loteamento Mansões Goianas",
+     "lat": -16.62847,
+     "lng": -49.28474,
+     "house_number": null,
+     "label": "Ipiranga, Loteamento Mansões Goianas, Goiânia",
+     "distance_m": 6730.78,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 2.099551829
+    },
+    {
+     "name": "Ipiranga",
+     "cls": "poi",
+     "kind": "amenity=fuel",
+     "municipality": "Nerópolis",
+     "district": null,
+     "lat": -16.39594,
+     "lng": -49.22106,
+     "house_number": null,
+     "label": "Ipiranga, Nerópolis",
+     "distance_m": 31905.22,
+     "hits": 2,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": true,
+     "score": 1.813731985
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 10,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "ipiranga",
+    "corrected": "ipiranga",
+    "forced": null,
+    "words": [
+     "ipiranga"
+    ],
+    "text": [
+     "ipiranga"
+    ],
+    "kinds": [
+     "amenity=fuel"
+    ],
+    "category_words": [],
+    "municipality": null,
+    "house_number": null
+   }
+  },
+  {
+   "id": "GO-numero_casa",
+   "uf": "GO",
+   "type": "numero_casa",
+   "query": "avenida castelo branco 202 goiania",
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [
+    {
+     "name": "Avenida Castelo Branco",
+     "cls": "street",
+     "kind": "highway=trunk",
+     "municipality": "Goiânia",
+     "district": "Aeroviário",
+     "lat": -16.672378,
+     "lng": -49.302206,
+     "house_number": 202,
+     "label": "Avenida Castelo Branco, 202, Aeroviário, Goiânia",
+     "hits": 3,
+     "house": true,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.971764706
+    },
+    {
+     "name": "Avenida Anhanguera",
+     "cls": "street",
+     "kind": "highway=trunk",
+     "municipality": "Goiânia",
+     "district": "Capuava",
+     "lat": -16.65611,
+     "lng": -49.32943,
+     "house_number": null,
+     "label": "Avenida Anhanguera, Capuava, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.471764706
+    },
+    {
+     "name": "Avenida Padre Feijó",
+     "cls": "street",
+     "kind": "highway=trunk",
+     "municipality": "Goiânia",
+     "district": "Ipiranga",
+     "lat": -16.65793,
+     "lng": -49.32959,
+     "house_number": null,
+     "label": "Avenida Padre Feijó, Ipiranga, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.438431373
+    },
+    {
+     "name": "Avenida Mutirão",
+     "cls": "street",
+     "kind": "highway=primary",
+     "municipality": "Goiânia",
+     "district": "Setor Marista",
+     "lat": -16.6991,
+     "lng": -49.26849,
+     "house_number": null,
+     "label": "Avenida Mutirão, Setor Marista, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.43254902
+    },
+    {
+     "name": "Avenida Cascavel",
+     "cls": "street",
+     "kind": "highway=tertiary",
+     "municipality": "Goiânia",
+     "district": "Setor Castelo Branco",
+     "lat": -16.68058,
+     "lng": -49.29402,
+     "house_number": null,
+     "label": "Avenida Cascavel, Setor Castelo Branco, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.354117647
+    },
+    {
+     "name": "Avenida Central",
+     "cls": "street",
+     "kind": "highway=residential",
+     "municipality": "Goiânia",
+     "district": "Setor Castelo Branco",
+     "lat": -16.68044,
+     "lng": -49.29676,
+     "house_number": null,
+     "label": "Avenida Central, Setor Castelo Branco, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.295294118
+    },
+    {
+     "name": "Avenida Niemeyer",
+     "cls": "street",
+     "kind": "highway=residential",
+     "municipality": "Goiânia",
+     "district": "Setor Castelo Branco",
+     "lat": -16.68502,
+     "lng": -49.29863,
+     "house_number": null,
+     "label": "Avenida Niemeyer, Setor Castelo Branco, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.295294118
+    },
+    {
+     "name": "Avenida C-9",
+     "cls": "street",
+     "kind": "highway=residential",
+     "municipality": "Goiânia",
+     "district": "Setor Castelo Branco",
+     "lat": -16.68345,
+     "lng": -49.29777,
+     "house_number": null,
+     "label": "Avenida C-9, Setor Castelo Branco, Goiânia",
+     "hits": 1,
+     "house": false,
+     "elsewhere": false,
+     "kind_match": false,
+     "score": 0.261960784
+    }
+   ],
+   "compare": {
+    "order_exact": 3,
+    "same_set": 8,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "avenida castelo branco 202 goiania",
+    "corrected": "avenida castelo branco 202 goiania",
+    "forced": null,
+    "words": [
+     "avenida",
+     "castelo",
+     "branco",
+     "202",
+     "goiania"
+    ],
+    "text": [
+     "avenida",
+     "castelo",
+     "branco",
+     "202",
+     "goiania"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": "Goiânia",
+    "house_number": 202
+   }
+  },
+  {
+   "id": "GO-lacuna",
+   "uf": "GO",
+   "type": "lacuna",
+   "query": "-16.68, -49.25",
+   "known_gap": true,
+   "origin": "receita",
+   "db": "GO",
+   "limit": 10,
+   "expected": [],
+   "compare": {
+    "order_exact": 0,
+    "same_set": 0,
+    "score_tol": 1e-06,
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   },
+   "trace": {
+    "folded": "16 68 49 25",
+    "corrected": "16 68 49 25",
+    "forced": null,
+    "words": [
+     "16",
+     "68",
+     "49",
+     "25"
+    ],
+    "text": [
+     "16",
+     "68",
+     "49",
+     "25"
+    ],
+    "kinds": [],
+    "category_words": [],
+    "municipality": null,
+    "house_number": 25
+   }
+  }
+ ],
+ "which_street": [
+  {
+   "id": "GO-que_rua-rua",
+   "uf": "GO",
+   "db": "GO",
+   "type": "rua",
+   "lat": -16.660233,
+   "lng": -49.329062,
+   "expected": {
+    "name": "Avenida Anhanguera",
+    "cls": "street",
+    "kind": "highway=trunk",
+    "municipality": "Goiânia",
+    "district": "Capuava",
+    "lat": -16.65611,
+    "lng": -49.32943,
+    "distance_m": 8.02
+   },
+   "compare": {
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   }
+  },
+  {
+   "id": "GO-que_rua-sem_rua",
+   "uf": "GO",
+   "db": "GO",
+   "type": "sem_rua",
+   "lat": -16.68088,
+   "lng": -49.27327,
+   "expected": null,
+   "compare": {
+    "coord_tol_m": 1.5,
+    "distance_tol_m": 0.5
+   }
+  }
+ ]
+}
