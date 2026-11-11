@@ -151,7 +151,7 @@ ganho. A ordem fica e passa a estar escrita em [FORMATO.md](FORMATO.md#coordenad
 
 Só a geração corrente precisa ser reproduzível: as entradas de cada geração (o extrato "latest" do OpenStreetMap e as
 fontes baixadas na hora, sem versão fixa) não são arquivadas, e isso está declarado no README. Arquivar as entradas de
-cada `build_id` fica para quando houver necessidade de auditar uma geração antiga. Obrigatório desde já: as
+cada `build_id` fica para quando houver necessidade de conferir uma geração antiga. Obrigatório desde já: as
 dependências do Python travadas, transitivas incluídas, com hash (`gerador/requirements.in` → `requirements.txt`,
 instaladas com `--require-hashes`) e as actions fixadas pelo SHA do commit; os testes de
 `gerador/tests/test_workflows.py` conferem as duas regras. Registrar o sha256 das entradas no `catalogo.json` mudaria
