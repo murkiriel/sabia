@@ -1,7 +1,8 @@
 # Decisões
 
-Registro do que foi decidido em 2026-10-05, depois das medições resumidas no fim deste documento. Todas as propostas
-abaixo foram aceitas como estão.
+Registro do que foi decidido em 2026-10-05 (D1 a D12), depois das medições resumidas no fim deste documento, e em
+2026-11-11 (D13 e D14). Todas as propostas abaixo foram aceitas como estão; onde o que foi feito saiu diferente do
+decidido (D1, D9, D10), a seção da decisão diz como ficou.
 
 ## Resumo
 
@@ -20,6 +21,7 @@ abaixo foram aceitas como estão.
 | D11 | Ciclo | A cada 29 dias, dois disparos diários, geração extra por data, 3 gerações guardadas |
 | D12 | Nome | Sabiá (`sabia`) é o nome definitivo |
 | D13 | Coordenadas (2026-11-11) | WGS84; latitude primeiro no banco e no `bbox` do catálogo, mantida (não migra para a ordem do GeoJSON) |
+| D14 | Reprodutibilidade (2026-11-11) | Só a geração corrente; dependências travadas com hash e actions fixadas pelo SHA |
 
 ## D1: repositório público
 
@@ -144,6 +146,16 @@ As coordenadas são WGS84 e vêm sempre com a latitude primeiro: `lat, lng` no b
 ordem dos catálogos dos outros geradores do mesmo molde, e o app consumidor já a lê: migrar mexeria em todos sem
 ganho. A ordem fica e passa a estar escrita em [FORMATO.md](FORMATO.md#coordenadas) e no
 [CONSUMO.md](CONSUMO.md); o formato do catálogo não muda.
+
+## D14: reprodutibilidade (2026-11-11)
+
+Só a geração corrente precisa ser reproduzível: as entradas de cada geração (o extrato "latest" do OpenStreetMap e as
+fontes baixadas na hora, sem versão fixa) não são arquivadas, e isso está declarado no README. Arquivar as entradas de
+cada `build_id` fica para quando houver necessidade de auditar uma geração antiga. Obrigatório desde já: as
+dependências do Python travadas, transitivas incluídas, com hash (`gerador/requirements.in` → `requirements.txt`,
+instaladas com `--require-hashes`) e as actions fixadas pelo SHA do commit; os testes de
+`gerador/tests/test_workflows.py` conferem as duas regras. Registrar o sha256 das entradas no `catalogo.json` mudaria
+o formato do catálogo e ficou para depois.
 
 ## Medições (2026-10-01 a 2026-10-05)
 

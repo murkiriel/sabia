@@ -160,8 +160,11 @@ todas as fontes):
 
 O banco de Goiás inclui 142.877 pedaços de traçado, 3.365 bairros e a escada de números de 27.737 ruas. Em
 2026-10-05, só com o OpenStreetMap, o extrato do Centro-Oeste (`--states DF,GO`, 51 s ao todo, 25 s de leitura) dava
-30.934 registros no DF (7,4 MB, 1,5 MB compactado) e 92.760 em GO (23,8 MB, 6,2 MB). Os pacotes são reproduzíveis:
-o mesmo extrato dá o mesmo arquivo, byte a byte (ordem fixa, compactação sem threads).
+30.934 registros no DF (7,4 MB, 1,5 MB compactado) e 92.760 em GO (23,8 MB, 6,2 MB).
+
+Os pacotes são determinísticos: as mesmas entradas dão o mesmo arquivo, byte a byte (ordem fixa, compactação sem
+threads). As entradas, porém, não são arquivadas: só a geração corrente é reproduzível (seção "Reprodutibilidade" do
+README da raiz).
 
 Conferido com o extrato do Centro-Oeste de 2026-09-29: Goiás dá 92.131 registros (3.426 lugares, 74.809 ruas, 963
 rodovias, 12.933 pontos de interesse), os 246 municípios, e os casos medidos da regra de juntar ruas (Av. Anhanguera

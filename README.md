@@ -119,6 +119,24 @@ Uma geração só é publicada se passar nas travas: 168 buscas de verdade (nas 
 IBGE presentes, nenhuma queda grande de registros em relação à geração anterior, e o banco abrindo e respondendo igual
 no SQLite 3.22 (o do Android 10). Como é gerado: [`gerador/README.md`](gerador/README.md).
 
+## Reprodutibilidade
+
+**Só a geração corrente é reproduzível**, e só enquanto as fontes ainda servem os mesmos dados; gerações antigas não
+podem ser refeitas. O que fica no git: o código (`generator_commit` do `catalogo.json`), as dependências do Python
+travadas com versão e hash ([`gerador/requirements.txt`](gerador/requirements.txt), gerado do `requirements.in`; as
+versões são as que a geração 2026-11-10-c17dff60 instalou), as actions fixadas pelo SHA do commit e as cópias
+versionadas do IBGE (malha e municípios), do SNV, da ANAC e da PRF, conferidas pelo sha256.
+
+O que **não é arquivado**:
+
+- o extrato do OpenStreetMap "latest" do openstreetmap.fr, trocado todo dia (em 2026-11-11 o endereço já servia
+  outro extrato que o da geração 2026-11-10-c17dff60); o `catalogo.json` guarda só a data e o md5 dele;
+- as fontes baixadas na hora, sem versão fixa: Overture (a versão mais nova da listagem), CNES (refeito todo dia),
+  GeoNames, Wikidata (consulta SPARQL), ANP (API), CNEFE e a Base de Localidades do IBGE. A data de cada uma vai no
+  `geracao.json` do artefato da geração no Actions (guardado por 14 dias), não o conteúdo.
+
+Com as mesmas entradas, o gerador dá os mesmos pacotes, byte a byte.
+
 ## Licença
 
 Os **pacotes** são uma base derivada do OpenStreetMap, distribuída sob a **Open Database License (ODbL) 1.0** (texto
@@ -161,4 +179,7 @@ O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
 **Sabiá** builds offline place search packs for Brazil from OpenStreetMap and Brazilian open data (published, rebuilt
 every 29 days): one small SQLite database per state with an FTS4 index (readable by Android's built-in SQLite), with
 cities, neighbourhoods, streets, highways, points of interest and house numbers, plus simplified street lines for
-reverse lookup. Data under the ODbL 1.0 (© OpenStreetMap contributors); generator code under MIT.
+reverse lookup. Coordinates are WGS84, latitude first (also in the catalogue `bbox`: `[lat_min, lon_min, lat_max,
+lon_max]`). Only the current generation is reproducible: dependencies are locked with hashes and actions pinned by
+commit SHA, but the inputs (the "latest" OpenStreetMap extract and the other live sources) are not archived. Data under
+the ODbL 1.0 (© OpenStreetMap contributors); generator code under MIT.
