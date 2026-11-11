@@ -141,17 +141,20 @@ simplificado a 10 m e cortado em pedaços de até 2 km, cada um com o quadrado d
 142.696 pedaços, 7,2 MB no SQLite, e a medição de 4.000 pontos (meio de trechos de rua, até 12 m para o lado) refeita
 com este código acerta a rua de 99,0% deles, procurando só nos 9 quadrados em volta.
 
-**Pacotes** (`sabia/database.py`, G6), gerados aqui com o extrato do Centro-Oeste em 2026-10-05 (`--states DF,GO`,
-51 s ao todo, 25 s de leitura):
+**Pacotes** (`sabia/database.py`, G6), na geração publicada 2026-11-10-c17dff60 (o Brasil inteiro, no Actions, com
+todas as fontes):
 
 | Pacote | Registros | Banco | Compactado (zstd 19) |
 |---|---:|---:|---:|
-| DF | 30.934 | 7,4 MB | 1,5 MB |
-| GO | 92.760 | 23,8 MB | 6,2 MB |
-| Base (5.570 municípios, 23 rodovias federais de DF e GO) | 5.593 | 1,1 MB | 0,3 MB |
+| DF | 46.307 | 11,1 MB | 2,6 MB |
+| GO | 138.188 | 40,7 MB | 10,9 MB |
+| Base (5.571 municípios, 172 rodovias federais) | 5.743 | 1,3 MB | 0,4 MB |
+| O Brasil inteiro (a base e as 27 UFs) | 4.007.858 | 1.354,9 MB | 376,4 MB |
 
-O banco de Goiás inclui 142.696 pedaços de traçado e 3.323 bairros. Os pacotes são reproduzíveis: o mesmo extrato dá
-o mesmo arquivo, byte a byte (ordem fixa, compactação sem threads).
+O banco de Goiás inclui 142.877 pedaços de traçado, 3.365 bairros e a escada de números de 27.737 ruas. Em
+2026-10-05, só com o OpenStreetMap, o extrato do Centro-Oeste (`--states DF,GO`, 51 s ao todo, 25 s de leitura) dava
+30.934 registros no DF (7,4 MB, 1,5 MB compactado) e 92.760 em GO (23,8 MB, 6,2 MB). Os pacotes são reproduzíveis:
+o mesmo extrato dá o mesmo arquivo, byte a byte (ordem fixa, compactação sem threads).
 
 Conferido com o extrato do Centro-Oeste de 2026-09-29: Goiás dá 92.131 registros (3.426 lugares, 74.809 ruas, 963
 rodovias, 12.933 pontos de interesse), os 246 municípios, e os casos medidos da regra de juntar ruas (Av. Anhanguera
@@ -226,11 +229,14 @@ agendamento não gera** (`github.repository == 'Murkiriel/sabia'`).
 Para uma geração fora do intervalo sem disparar à mão, a variável `GENERATE_FROM` do job `interval` marca um dia
 (`AAAA-MM-DD`, UTC): a partir dele, o agendamento gera se a geração publicada for de antes desse dia.
 
-O job da geração liga 8 GB de swap, instala as dependências e o SQLite 3.22 (compilado), gera o Brasil inteiro (sem
-`--osm-file` nem `--states`), guarda como artefato os logs, o `relatorio.json` das travas, o `geracao.json` e as
-medições de memória, swap e disco a cada 30 s, e publica pelo `scripts/publish.py --release --commit --push`. O
-repositório das releases é o do próprio Actions (`GITHUB_REPOSITORY`). **Ainda não rodou no Actions** (fase V1, que
-precisa do repositório no GitHub).
+O job da geração liga 12 GB de swap (`SWAP_GB`), instala as dependências e o SQLite 3.22 (compilado), gera o Brasil
+inteiro (sem `--osm-file` nem `--states`), guarda como artefato os logs, o `relatorio.json` das travas, o
+`geracao.json` e as medições de memória, swap e disco a cada 30 s, e publica pelo
+`scripts/publish.py --release --commit --push`. O repositório das releases é o do próprio Actions
+(`GITHUB_REPOSITORY`). Medido no Actions (executor de 2 CPUs e 7,7 GiB de RAM): a geração publicada
+2026-11-10-c17dff60 levou 90 min, com pico de 7,1 GiB de RSS e até 7,5 GiB de swap; depois da redução de memória
+(`sabia/memory.py`, leitura do extrato em duas passadas), 75 min e 6,9 GiB, com até 2,2 GiB de swap. Os números de
+cada run estão no comentário do começo do workflow e no artefato `relatorio-da-geracao`.
 
 ## Convenções
 

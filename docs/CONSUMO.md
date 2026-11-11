@@ -104,9 +104,11 @@ o estado da cidade não está instalado (e diz, pela `uf`, qual pacote baixar).
 10. **Rótulo:** nome, o número da casa se houver, bairro e município, sem repetir ("Rua 10, 152, Setor Oeste,
     Goiânia"). Ponto de interesse sem nome (posto sem nome no OpenStreetMap) mostra o tipo ("Posto de combustível").
 
-Com essas regras, das 50 buscas de Goiás medidas antes do gerador (comparadas com um geocodificador online feito do
-mesmo OpenStreetMap), o primeiro resultado é o certo em 46 (eram 37 antes das regras), pelo critério das travas; das
-outras, 3 têm o certo nos 5 primeiros e uma não existe no OpenStreetMap com o nome escrito certo.
+Com essas regras, as 168 buscas de verdade de [`gerador/buscas.json`](../gerador/buscas.json) (nas 27 UFs: em Goiás,
+as 50 da medição de antes do gerador, número da casa, erro de digitação e buscas com a posição; 21 do DF; a capital,
+uma segunda cidade e uma avenida da capital em cada uma das outras) passam todas na geração 2026-11-10-c17dff60, pelo
+critério das travas: o resultado certo é o primeiro em 165, o segundo em 2 e o quarto em 1, um MRR (a média de
+1/posição do resultado certo) de 0,990. Antes das regras, só 37 das 50 de Goiás traziam o certo em primeiro.
 
 ## Que rua é esta?
 

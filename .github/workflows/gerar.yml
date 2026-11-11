@@ -10,9 +10,12 @@
 # Também pode ser disparado à mão (Actions -> gerar -> Run workflow), a qualquer momento; à mão, só publica se
 # "publish" for marcado; sem isso, gera e confere (os logs, o relatório das travas e as medições ficam nos artefatos).
 #
-# Ainda não medido no Actions (fase V1). Os números de referência são de um extrato regional: Goiás e DF em menos de
-# 1 min, 0,3 GB em data/. Para o Brasil inteiro, o extrato tem ~2,3 GB e a leitura guarda as coordenadas dos nós na
-# memória (SABIA_NODE_STORAGE muda); por isso o job tem swap e registra memória, swap e disco a cada 30 s.
+# Medido no Actions (executor de 2 CPUs e 7,7 GiB de RAM; `/usr/bin/time -v` em data/tempo.txt, no artefato): a
+# geração publicada 2026-11-10-c17dff60 (run 42796975627) levou 90 min, com pico de RSS de 7.487.172 kB (7,1 GiB) e
+# até 7,5 GiB de swap; depois da redução de memória (commits 59c5176, f958a96 e ae20f4f; run 42882573549, sem
+# publicar), 75 min e 7.194.332 kB (6,9 GiB, o "pico" do log do build), com até 2,2 GiB de swap. O extrato do Brasil
+# tem ~2,3 GB e o pyosmium guarda as coordenadas dos nós na memória (SABIA_NODE_STORAGE muda); por isso o job tem
+# swap e registra memória, swap e disco a cada 30 s.
 # O executor de repositório privado é pequeno (2 CPUs, 7,8 GiB de RAM, ~13 GB livres em /): o job libera espaço
 # apagando ferramentas pré-instaladas e põe os dados e o swap no disco com mais espaço livre (/ ou o disco temporário
 # em /mnt, quando a máquina tem um), como os outros geradores do mesmo molde.
@@ -67,7 +70,7 @@ jobs:
     if: needs.interval.outputs.run == 'true'
     # Imagem fixa, não ubuntu-latest: o passo que compila o SQLite 3.22 só foi pensado para a imagem testada.
     runs-on: ubuntu-24.04
-    # O máximo de um executor do GitHub: no de 2 CPUs, a geração do Brasil inteiro ainda não foi medida.
+    # O máximo de um executor do GitHub, com folga: a geração do Brasil inteiro leva 75 a 90 min (medido acima).
     timeout-minutes: 360
     env:
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish == true }}

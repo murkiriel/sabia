@@ -12,10 +12,12 @@
       "base": {"file", "bytes", "sha256", "bytes_db", "bbox", "counts": {"municipality", "road"}},
       "states": {"GO": {"name", "file", "bytes", "sha256", "bytes_db", "bbox",
                         "counts": {"items", "place", "street", "road", "poi", "district", "street_line",
-                                   "municipality"}}, ...}
+                                   "municipality", "house_number", "house_number_rungs"}}, ...}
     }
 
 `bytes` é o tamanho do .sqlite.zst (o que se baixa); `bytes_db`, o do banco descompactado (o espaço no aparelho).
+`counts` do estado: os registros (`items`) e por classe, os bairros, os pedaços de traçado, os municípios, as ruas com
+número das casas (`house_number`, as linhas da tabela) e os degraus das escadas delas (`house_number_rungs`).
 `bbox` = [lat mín, lng mín, lat máx, lng máx] dos municípios do estado (na base, o Brasil), arredondado para fora.
 """
 from __future__ import annotations

@@ -1,8 +1,9 @@
 # Endereço com número: o CNEFE do IBGE (medição em Goiás, 2026-10-09)
 
-O pacote de hoje acha a rua, não o número ("Rua 9, 1200"). Para o número, a fonte é o **CNEFE do Censo 2022** do IBGE
-(Cadastro Nacional de Endereços para Fins Estatísticos), baixado direto do IBGE, com o crédito; não a Overture
-Addresses, que no Brasil é o mesmo CNEFE marcado como proprietário.
+O pacote de então achava a rua, não o número ("Rua 9, 1200"). O número entrou como descrito em "O que entrou" e
+está em todas as UFs desde a geração 2026-11-10-c17dff60 (tabela `house_number`, [FORMATO.md](FORMATO.md)). Para o
+número, a fonte é o **CNEFE do Censo 2022** do IBGE (Cadastro Nacional de Endereços para Fins Estatísticos), baixado
+direto do IBGE, com o crédito; não a Overture Addresses, que no Brasil é o mesmo CNEFE marcado como proprietário.
 
 ## A fonte
 
@@ -38,7 +39,7 @@ a mais de 300 m: sem a quebra, o p90 do erro era de 1,5 km.
 | **20 números** | **498.378** | **~5,0 MB** | **12 m** | **92 m** | **82%** |
 | 40 números | 429.898 | ~4,3 MB | 13 m | 103 m | 79% |
 
-Proposta: degrau a cada 20 números, quebra a 300 m. O pacote de GO hoje tem 6,2 MB em zstd; os degraus, com números e
+Proposta: degrau a cada 20 números, quebra a 300 m. O pacote de GO tinha então 6,2 MB em zstd; os degraus, com números e
 coordenadas em inteiros como o resto do pacote, devem somar uns 2 a 3 MB comprimidos.
 
 ## O que entrou (2026-10-09)

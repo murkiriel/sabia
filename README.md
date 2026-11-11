@@ -57,7 +57,7 @@ Geração **2026-11-10-c17dff60**: OpenStreetMap de 2026-11-09, formato 1. Baixe
 ## O pacote
 
 ```
-sabia-base.sqlite.zst    os 5.570 municípios (nome, UF, ponto da sede, código do IBGE) e as rodovias federais
+sabia-base.sqlite.zst    os 5.571 municípios (nome, UF, ponto da sede, código do IBGE) e as rodovias federais
 sabia-<UF>.sqlite.zst    o estado: registros, índice de busca, traçados das ruas, bairros, números das casas,
                          tabelas de busca
 catalogo.json            o índice: tamanho, sha256, retângulo e contagens de cada pacote, e a versão do formato
@@ -67,8 +67,18 @@ Cada pacote é um banco **SQLite com índice FTS4**, que o SQLite do Android (de
 compactado em **zstd** e descompactado uma vez, na instalação. Um estado não depende do vizinho: cada um pode ser
 instalado e atualizado sozinho. Tabelas, colunas e codificações: [`docs/FORMATO.md`](docs/FORMATO.md).
 
-Tamanhos medidos (extrato de 2026-09-29): Goiás 23,8 MB (6,2 MB compactado), DF 7,4 MB (1,5 MB), a base 1,1 MB
-(0,3 MB).
+Tamanhos da geração 2026-11-10-c17dff60 (banco aberto, o espaço no aparelho, e compactado, o download):
+
+| Pacote | Registros | Banco | Compactado (zstd 19) |
+|---|---:|---:|---:|
+| Base (5.571 municípios, 172 rodovias federais) | 5.743 | 1,3 MB | 0,4 MB |
+| Amapá (AP), o menor | 12.176 | 4,7 MB | 1,3 MB |
+| Distrito Federal (DF) | 46.307 | 11,1 MB | 2,6 MB |
+| Goiás (GO) | 138.188 | 40,7 MB | 10,9 MB |
+| São Paulo (SP), o maior | 976.272 | 323,7 MB | 90,2 MB |
+| **Brasil inteiro** (a base e as 27 UFs) | 4.007.858 | 1.354,9 MB | 376,4 MB |
+
+Os de cada estado estão no `catalogo.json` (`bytes_db` e `bytes`).
 
 Como instalar, buscar, achar a rua de um ponto e o mais perto: [`docs/CONSUMO.md`](docs/CONSUMO.md).
 
@@ -93,7 +103,8 @@ states             {UF: pacote}, um por estado
   bbox             [lat mín, lon mín, lat máx, lon máx] dos municípios do estado (na base, o Brasil), arredondado
                    para fora; use para escolher o que baixar
   counts           registros por classe (place, street, road, poi), bairros (district), pedaços de traçado
-                   (street_line), municípios e o total (items)
+                   (street_line), municípios, o total (items), as ruas com número das casas (house_number) e os
+                   degraus da escada de números delas (house_number_rungs); na base, só municipality e road
 ```
 
 ## Atualização
