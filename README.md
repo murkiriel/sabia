@@ -1,16 +1,30 @@
 # Sabiá — busca de lugares sem internet, por estado
 
-**Busca offline de lugares no Brasil**, a partir do OpenStreetMap: cidades, bairros, ruas, rodovias e pontos de
-interesse (postos, borracharias, hospitais, pedágios…) num banco SQLite pequeno por estado, pronto para buscar no
-celular sem sinal. O nome vem do trocadilho: o Sabiá **sabia** onde fica.
+**Busca offline de lugares no Brasil**, a partir do OpenStreetMap e de dados abertos: cidades, bairros, ruas,
+endereços com número, rodovias e pontos de interesse (postos, borracharias, hospitais, pedágios…) num banco SQLite
+pequeno por estado, pronto para buscar no celular sem sinal. O nome vem do trocadilho: o Sabiá **sabia** onde fica.
 
-> **Situação (2026-11-10): publicado.** Uma geração nova a cada 29 dias, com todas as fontes abaixo. O formato está
-> em [`docs/FORMATO.md`](docs/FORMATO.md) (tabelas novas são acrescentadas sem mudar a versão); as decisões e as
-> medições que levaram a ele, em [`docs/DECISOES.md`](docs/DECISOES.md).
+> **Aviso.** Os dados vêm do OpenStreetMap e de cadastros públicos e podem estar incompletos ou errados.
 
-> **Aviso.** Os dados vêm do OpenStreetMap e podem estar incompletos ou errados.
+**Índice:** [`catalogo.json`](catalogo.json) · **Pacotes:** [releases](https://github.com/Murkiriel/sabia/releases)
+(a etiqueta de cada uma é o `build_id` da geração)
 
-## Baixar por estado
+## Situação
+
+Em 2026-11-11:
+
+| Item | Como está |
+|---|---|
+| Geração publicada | `2026-11-10-c17dff60`: OpenStreetMap de 2026-11-09, formato 1, com todas as fontes da seção [Licença e atribuição](#licença-e-atribuição). A mais recente está sempre em [Baixar e usar](#baixar-e-usar) e no `built_at` do [`catalogo.json`](catalogo.json) |
+| Próxima geração | Por volta de 2026-12-09: uma a cada 29 dias ([Geração e reprodutibilidade](#geração-e-reprodutibilidade)) |
+| Pacotes | 28 arquivos por geração (a base e os 27 estados): 376 MB para baixar, 1,35 GB descompactados |
+| Gerações no ar | As 3 mais recentes; hoje são 2 |
+| Formato | SQLite com FTS4, compactado em zstd: [`docs/FORMATO.md`](docs/FORMATO.md) (tabelas novas são acrescentadas sem mudar a versão); catálogo no `schema` 1 |
+| Repositório | Público desde 2026-11-11; as decisões e as medições que levaram ao formato estão em [`docs/DECISOES.md`](docs/DECISOES.md) |
+
+## Baixar e usar
+
+### Baixar por estado
 
 <!-- downloads:start -->
 Geração **2026-11-10-c17dff60**: OpenStreetMap de 2026-11-09, formato 1. Baixe a base e os estados que quiser; confira o sha256 pelo [`catalogo.json`](catalogo.json).
@@ -47,14 +61,29 @@ Geração **2026-11-10-c17dff60**: OpenStreetMap de 2026-11-09, formato 1. Baixe
 | Tocantins (TO) | [sabia-TO.sqlite.zst](https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-TO.sqlite.zst) | 3,0 MB |
 <!-- downloads:end -->
 
-## O que resolve
+### Usar
+
+Com os pacotes instalados, dá para:
 
 1. **Buscar sem internet:** "Rua 10, Setor Oeste", "Avenida Brasil, 1500, Anápolis", "posto ipiranga anápolis",
    "br-153 anápolis", "BR-060 km 120".
 2. **Dizer "que rua é esta?"** a partir de uma coordenada (o traçado simplificado de cada rua vai no pacote).
 3. **Achar o mais perto** por categoria: "posto", "borracharia", "hospital".
 
-## O pacote
+Para instalar:
+
+1. Leia o `catalogo.json` e escolha os pacotes: a **base** (todos os municípios do país) e os estados que interessam,
+   pelo `bbox`.
+2. Baixe cada arquivo de `release_url` + `file` e confira o `sha256`. Use sempre o `release_url` do catálogo, não um
+   link fixo de release.
+3. Descompacte (zstd) uma vez e abra o `.sqlite` no lugar, só leitura.
+4. Confira `meta.format_version` e **recuse uma versão maior** que a que o seu código conhece.
+
+Como buscar (as regras que quem consome aplica sobre o pacote), achar a rua de um ponto e o mais perto:
+[`docs/CONSUMO.md`](docs/CONSUMO.md). A busca de referência, a mesma que as travas usam, está em
+[`gerador/sabia/search.py`](gerador/sabia/search.py).
+
+## Formato
 
 ```
 sabia-base.sqlite.zst    os 5.571 municípios (nome, UF, ponto da sede, código do IBGE) e as rodovias federais
@@ -80,9 +109,7 @@ Tamanhos da geração 2026-11-10-c17dff60 (banco aberto, o espaço no aparelho, 
 
 Os de cada estado estão no `catalogo.json` (`bytes_db` e `bytes`).
 
-Como instalar, buscar, achar a rua de um ponto e o mais perto: [`docs/CONSUMO.md`](docs/CONSUMO.md).
-
-## `catalogo.json`
+### `catalogo.json`
 
 ```
 schema             versão deste formato de catálogo (1)
@@ -108,24 +135,44 @@ states             {UF: pacote}, um por estado
                    degraus da escada de números delas (house_number_rungs); na base, só municipality e road
 ```
 
-## Atualização
+**Coordenadas e ordem do `bbox`.** Tudo em WGS84 (EPSG:4326) e com a **latitude primeiro**: `lat` e `lng` no banco
+(inteiros, graus × 100.000) e `[lat_min, lon_min, lat_max, lon_max]` no `bbox` do catálogo (no DF,
+`[-16.05, -48.29, -15.5, -47.3]`). É o contrário do GeoJSON: não passe o `bbox` direto para uma biblioteca de
+GeoJSON. A ordem fica assim no formato 1 ([`docs/DECISOES.md`](docs/DECISOES.md), D13).
 
-O conjunto é gerado de novo a cada 29 dias, com o extrato do Brasil mais recente do OpenStreetMap, pelo GitHub
-Actions (workflow [`gerar`](.github/workflows/gerar.yml)). Cada geração é uma release nova; o `catalogo.json` da raiz
-sempre aponta para a mais recente. Ficam no ar as **3 gerações mais recentes**: use sempre o `release_url` do
-`catalogo.json`, não um link fixo de release. Cada estado é independente: dá para atualizar um sem mexer nos outros.
+## Cobertura e limitações
+
+- **As 27 UFs e todos os municípios do IBGE**; um registro fica no estado do município que o contém, pela malha
+  municipal do IBGE.
+- **O número da casa só existe onde o CNEFE casa com uma rua do mapa**: a posição é interpolada entre os números
+  conhecidos (em Goiás, erro de 12 m na mediana e 92 m no p90), e o endereço "SN" com quadra e lote, quase dois terços
+  dos de Goiás, fica sem número ([`docs/ENDERECOS.md`](docs/ENDERECOS.md)).
+- **A ordem dos resultados é de quem consome:** o FTS4 não ordena por relevância, e as regras (correção de erros de
+  digitação, município citado, categorias, nota) estão em [`docs/CONSUMO.md`](docs/CONSUMO.md).
+- **"Que rua é esta?"** responde só até ~75 m de uma via com nome.
+- **Posição sem conferência no mapa:** os postos que só a ANP tem entram no ponto declarado à ANP, marcados na tabela
+  `item_source`.
+- **Os dados são os das fontes no dia da geração**, com as lacunas delas; a cada 29 dias o pacote fica mais velho que
+  o mapa e as rotas, que saem toda semana.
+
+## Geração e reprodutibilidade
+
+O conjunto é gerado de novo **a cada 29 dias**, com o extrato do Brasil mais recente do OpenStreetMap, pelo GitHub
+Actions (workflow [`gerar`](.github/workflows/gerar.yml), com disparos às 03:47 e 09:47 de Brasília). Cada geração é
+uma release nova; o `catalogo.json` da raiz sempre aponta para a mais recente. Ficam no ar as **3 gerações mais
+recentes**: use sempre o `release_url` do `catalogo.json`, não um link fixo de release. Cada estado é independente:
+dá para atualizar um sem mexer nos outros.
 
 Uma geração só é publicada se passar nas travas: 168 buscas de verdade (nas 27 UFs) com o resultado esperado, todos os municípios do
 IBGE presentes, nenhuma queda grande de registros em relação à geração anterior, e o banco abrindo e respondendo igual
 no SQLite 3.22 (o do Android 10). Como é gerado: [`gerador/README.md`](gerador/README.md).
 
-## Reprodutibilidade
-
 **Só a geração corrente é reproduzível**, e só enquanto as fontes ainda servem os mesmos dados; gerações antigas não
-podem ser refeitas. O que fica no git: o código (`generator_commit` do `catalogo.json`), as dependências do Python
-travadas com versão e hash ([`gerador/requirements.txt`](gerador/requirements.txt), gerado do `requirements.in`; as
-versões são as que a geração 2026-11-10-c17dff60 instalou), as actions fixadas pelo SHA do commit e as cópias
-versionadas do IBGE (malha e municípios), do SNV, da ANAC e da PRF, conferidas pelo sha256.
+podem ser refeitas. O que fica no git: o código (`generator_commit` do `catalogo.json`), o Python 3.12, as
+dependências travadas com versão e hash ([`gerador/requirements.txt`](gerador/requirements.txt), gerado do
+`requirements.in` e instalado com `pip install --require-hashes`; as versões são as que a geração
+2026-11-10-c17dff60 instalou), as actions fixadas pelo SHA do commit e as cópias versionadas do IBGE (malha e
+municípios), do SNV, da ANAC e da PRF, conferidas pelo sha256.
 
 O que **não é arquivado**:
 
@@ -137,7 +184,7 @@ O que **não é arquivado**:
 
 Com as mesmas entradas, o gerador dá os mesmos pacotes, byte a byte.
 
-## Licença
+## Licença e atribuição
 
 Os **pacotes** são uma base derivada do OpenStreetMap, distribuída sob a **Open Database License (ODbL) 1.0** (texto
 em [`LICENSE`](LICENSE)).
@@ -160,7 +207,7 @@ Outras fontes, citadas no `attribution` do `catalogo.json` e na tabela `meta` de
 - os postos de combustível em operação: ANP, cadastro de revendedores;
 - o número das casas: IBGE, Cadastro Nacional de Endereços para Fins Estatísticos (CNEFE) do Censo 2022.
 
-O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
+O **código** (pasta `gerador/`) é **MIT** ([`gerador/LICENSE`](gerador/LICENSE)).
 
 ## Convenções
 
@@ -172,14 +219,40 @@ O **código** (pasta `gerador/`) é MIT ([`gerador/LICENSE`](gerador/LICENSE)).
 - Formato dos dados: tabelas e colunas do banco, chaves do `catalogo.json` e valores com significado em inglês.
 - Comentários, docstrings, documentação, mensagens de log e de erro, notas das releases, nomes dos passos do workflow e
   mensagens de commit: português.
+- Datas em `AAAA-MM-DD`; horários do catálogo em UTC.
 - Commits só com a identidade anônima do GitHub (`…@users.noreply.github.com`).
+
+## Projetos irmãos
+
+Quatro geradores independentes de dados abertos do Brasil para uso offline, um pacote por UF:
+
+- [**Carcará**](https://github.com/Murkiriel/carcara): o mapa base, em PMTiles.
+- [**Andorinha**](https://github.com/Murkiriel/andorinha): as rotas, em tiles do Valhalla.
+- **Sabiá** (este): a busca de lugares e endereços, em SQLite.
+- [**Pardal**](https://github.com/Murkiriel/pardal): os radares e os limites de velocidade, em CSV, GeoJSON, KML, GPX
+  e SQLite.
+
+Os quatro dividem o país nas mesmas 27 UFs, pelos limites do IBGE, e publicam um `catalogo.json` com o `sha256` de
+cada arquivo e o `bbox` de cada UF em `[lat_min, lon_min, lat_max, lon_max]`, no WGS84. Carcará, Andorinha e Sabiá
+seguem o mesmo molde de catálogo e de release (`schema` 1, `build_id` como etiqueta da release, `release_url`,
+`base` e `states`) e dão o mesmo `bbox` para cada UF; o catálogo do Pardal tem formato próprio (`ufs`). O Sabiá e o
+Andorinha leem o mesmo extrato do OpenStreetMap, e com o mesmo extrato o `build_id` dos dois termina com os mesmos 8
+caracteres do md5 (`c17dff60` nas gerações publicadas em 2026-11-11). O banco SQLite do Pardal segue as mesmas
+convenções do Sabiá: coordenadas em inteiros × 100.000, latitude primeiro, e a mesma célula do zoom 13.
 
 ## English
 
-**Sabiá** builds offline place search packs for Brazil from OpenStreetMap and Brazilian open data (published, rebuilt
-every 29 days): one small SQLite database per state with an FTS4 index (readable by Android's built-in SQLite), with
-cities, neighbourhoods, streets, highways, points of interest and house numbers, plus simplified street lines for
-reverse lookup. Coordinates are WGS84, latitude first (also in the catalogue `bbox`: `[lat_min, lon_min, lat_max,
-lon_max]`). Only the current generation is reproducible: dependencies are locked with hashes and actions pinned by
-commit SHA, but the inputs (the "latest" OpenStreetMap extract and the other live sources) are not archived. Data under
-the ODbL 1.0 (© OpenStreetMap contributors); generator code under MIT.
+**Sabiá** builds offline place search packs for Brazil from OpenStreetMap and Brazilian open data (rebuilt every 29
+days): one small SQLite database per state with an FTS4 index (readable by Android's built-in SQLite), with cities,
+neighbourhoods, streets, highways, points of interest and house numbers, plus simplified street lines for reverse
+lookup, and a national base pack with every municipality. Packs are GitHub release assets indexed by
+[`catalogo.json`](catalogo.json). Coordinates are WGS84, latitude first (also in the catalogue `bbox`:
+`[lat_min, lon_min, lat_max, lon_max]`, unlike GeoJSON). Only the current generation is reproducible: dependencies are
+locked with hashes and actions pinned by commit SHA, but the inputs (the "latest" OpenStreetMap extract and the other
+live sources) are not archived. Data under the ODbL 1.0 (© OpenStreetMap contributors); generator code under MIT.
+Sister projects: basemap ([Carcará](https://github.com/Murkiriel/carcara)), routing
+([Andorinha](https://github.com/Murkiriel/andorinha)) and speed cameras and limits
+([Pardal](https://github.com/Murkiriel/pardal)).
+
+<sub>Palavras-chave: busca offline Brasil, geocodificação offline, geocoding Brasil, endereços Brasil, SQLite FTS4,
+OpenStreetMap Brasil, CNEFE, pontos de interesse, busca sem internet.</sub>
