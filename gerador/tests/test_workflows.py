@@ -25,6 +25,30 @@ class RunnerTest(unittest.TestCase):
                 self.assertRegex(image, r"^ubuntu-\d+\.\d+$", f"{name}: runs-on {image}")
 
 
+class ActionsPinTest(unittest.TestCase):
+    """Toda action fixada pelo SHA do commit (40 caracteres), com a tag exata em comentário: uma tag (`@v7`) pode ser
+    movida para outro código sem que nada mude aqui."""
+
+    USES = re.compile(r"^\s*(?:- )?uses:\s*(\S+)(.*)$", flags=re.MULTILINE)
+
+    def uses(self):
+        return [(name, m.group(1), m.group(2)) for name, text in workflows().items() for m in self.USES.finditer(text)]
+
+    def test_there_are_actions(self):
+        self.assertGreaterEqual(len(self.uses()), 6)
+
+    def test_every_action_is_pinned_by_commit_sha(self):
+        for name, ref, comment in self.uses():
+            self.assertRegex(ref, r"^[\w.-]+/[\w./-]+@[0-9a-f]{40}$", f"{name}: {ref}")
+            self.assertRegex(comment, r"^  # v\d+\.\d+\.\d+$", f"{name}: {ref}{comment}")
+
+    def test_same_action_same_commit_and_tag(self):
+        seen = {}
+        for name, ref, comment in self.uses():
+            action, sha = ref.split("@")
+            self.assertEqual((sha, comment), seen.setdefault(action, (sha, comment)), f"{name}: {action}")
+
+
 class TestsWorkflowTest(unittest.TestCase):
     def setUp(self):
         self.text = workflows().get("testes.yml", "")
@@ -87,7 +111,8 @@ class ScheduledGenerationTest(unittest.TestCase):
 
     def test_published_date_is_the_one_on_the_branch_now(self):
         """Um run que esperou na fila atrás de outro que publicou lê o catálogo de agora, não o do disparo."""
-        self.assertRegex(self.interval, r"- uses: actions/checkout@v\d+\n\s+with:\n\s+ref: \$\{\{ github\.ref \}\}\n")
+        self.assertRegex(self.interval, r"- uses: actions/checkout@[0-9a-f]{40}  # v[\d.]+\n"
+                                        r"\s+with:\n\s+ref: \$\{\{ github\.ref \}\}\n")
 
     def test_can_still_be_started_by_hand_without_publishing(self):
         self.assertIn("  workflow_dispatch:\n", self.text)

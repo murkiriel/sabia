@@ -1,5 +1,9 @@
 # Testes do gerador a cada push e pull request. Só os testes: nada de baixar o extrato do Brasil nem de publicar
 # aqui (isso é o workflow de geração). Os testes usam extratos pequenos escritos por eles mesmos.
+#
+# As actions vão fixadas pelo SHA do commit, com a tag em comentário só para ler: uma tag pode ser movida para outro
+# código. Para trocar de versão, resolva a tag nova até o commit (gh api repos/<dono>/<ação>/git/ref/tags/<tag>; se
+# for tag anotada, siga o objeto até o commit) e troque o SHA e o comentário juntos.
 name: testes
 
 on:
@@ -16,8 +20,8 @@ jobs:
       run:
         working-directory: gerador
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.12"
       # As mesmas da geração, travadas com hash (requirements.txt, gerado do requirements.in).
