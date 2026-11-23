@@ -147,6 +147,49 @@ def identity_problem(email: str) -> Optional[str]:
     return None
 
 
+class GitError(RuntimeError):
+    """Um comando do git falhou; a mensagem traz o comando e o que o git disse."""
+
+
+Git = Callable[..., "subprocess.CompletedProcess[str]"]
+
+
+def _said(r: "subprocess.CompletedProcess[str]") -> str:
+    return (r.stderr or r.stdout).strip()
+
+
+def _git_run(git: Git, *args: str) -> None:
+    r = git(*args)
+    if r.returncode != 0:
+        raise GitError(f"git {' '.join(args[:2])} falhou: {_said(r)}")
+
+
+def commit_and_push(git: Git, message: str, files: Sequence[str], push: bool, attempts: int = 2) -> None:
+    """Commit só de `files` e, com `push`, o push com `git pull --rebase` antes. O job de geração dura ~90 min sobre o
+    commit do disparo: se alguém deu push no ramo nesse intervalo, o push direto seria recusado (não é fast-forward),
+    com a release já publicada e o catálogo sem mudar. Por isso o commit é refeito sobre o ramo de agora; se o push
+    ainda for recusado (alguém empurrou entre o pull e o push), puxa e empurra de novo, até `attempts` vezes.
+
+    Conflito no rebase (alguém mexeu no catalogo.json ou na tabela do README) não se resolve sozinho: o rebase é
+    desfeito, o commit local fica e o erro diz isso. `git` é `git(*args) -> CompletedProcess` (texto, no repositório);
+    os testes passam um repositório temporário."""
+    _git_run(git, "add", *files)
+    _git_run(git, "commit", "-m", message, "--", *files)
+    if not push:
+        return
+    for attempt in range(1, attempts + 1):
+        pulled = git("pull", "--rebase")
+        if pulled.returncode != 0:
+            git("rebase", "--abort")  # sem rebase em andamento falha sem mexer em nada
+            raise GitError("git pull --rebase falhou, o commit ficou só aqui (a release já subiu; o catalogo.json "
+                           f"e o README precisam ser refeitos sobre o ramo): {_said(pulled)}")
+        pushed = git("push")
+        if pushed.returncode == 0:
+            return
+        print(f"[publicar] push recusado na tentativa {attempt} de {attempts}: {_said(pushed)}")
+    raise GitError(f"git push falhou nas {attempts} tentativas: {_said(pushed)}")
+
+
 def older_generation(published: Optional[dict], updated: dict) -> List[str]:
     """Barra publicar por cima uma geração feita de um extrato do OpenStreetMap mais antigo que o publicado."""
     if published and updated["osm"]["timestamp"] < published["osm"]["timestamp"]:

@@ -230,7 +230,9 @@ A release sobe como rascunho, sem arquivos; cada pacote (e, depois deles, o conj
 dele) que ainda não está lá (ou está com outro tamanho) sobe; só
 com todos presentes e do tamanho certo ela é publicada. Se a subida cair no meio, rodar o mesmo comando retoma do que
 falta. Só depois o `catalogo.json` e a tabela "Baixar por estado" do README da raiz mudam, no mesmo commit; com
-`--push`, as releases antigas são apagadas no fim (ficam 3 gerações, `SABIA_KEEP_GENERATIONS` muda;
+`--push`, o commit é refeito sobre o ramo de agora (`git pull --rebase`) e o push é tentado duas vezes (a geração
+dura ~90 min e alguém pode ter empurrado nesse intervalo; um conflito no `catalogo.json` ou no README para com
+aviso, com a release já publicada), e as releases antigas são apagadas no fim (ficam 3 gerações, `SABIA_KEEP_GENERATIONS` muda;
 `python scripts/publish.py --prune --dry-run` mostra o que seria apagado). O repositório das releases é `SABIA_REPO`,
 senão o do Actions (`GITHUB_REPOSITORY`), senão `Murkiriel/sabia`.
 

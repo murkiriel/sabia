@@ -1,5 +1,8 @@
 """As travas da publicação (publishing.check) e a tabela "Baixar por estado" do README."""
 import json
+import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import unicodedata
@@ -107,6 +110,129 @@ class CheckTest(unittest.TestCase):
         self.assertIn("não bate", self.check()[0])
         (self.dist / conformance.SHA_FILE).unlink()
         self.assertIn("falta", self.check()[0])
+
+
+@unittest.skipUnless(shutil.which("git"), "sem git")
+class CommitAndPushTest(unittest.TestCase):
+    """O commit e o push do catálogo (publishing.commit_and_push) em repositórios git de verdade: um remoto vazio
+    (bare) e dois clones, o do job de geração (`job`) e o de quem empurra no meio (`other`). Nada sai da pasta
+    temporária."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        root = Path(self._tmp.name)
+        self.env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_SYSTEM": os.devnull,
+                    "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@users.noreply.github.com",
+                    "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@users.noreply.github.com"}
+        self.remote = root / "remoto.git"
+        self.sh("init", "--bare", "-b", "main", str(self.remote), cwd=root)
+        self.job, self.other = root / "job", root / "outro"
+        self.sh("clone", str(self.remote), str(self.job), cwd=root)
+        (self.job / "catalogo.json").write_text('{"build_id": "antigo"}\n', encoding="utf-8")
+        (self.job / "README.md").write_text("tabela antiga\n", encoding="utf-8")
+        self.sh("add", ".", cwd=self.job)
+        self.sh("commit", "-m", "base", cwd=self.job)
+        self.sh("push", "origin", "HEAD:main", cwd=self.job)
+        self.sh("clone", str(self.remote), str(self.other), cwd=root)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def sh(self, *args, cwd):
+        r = subprocess.run(["git", *args], cwd=cwd, env=self.env, capture_output=True, text=True)
+        self.assertEqual(0, r.returncode, r.stderr)
+        return r.stdout
+
+    def git(self, repo):
+        return lambda *args: subprocess.run(["git", "-C", str(repo), *args], env=self.env, capture_output=True,
+                                            text=True)
+
+    def push_from_other(self, name, text):
+        (self.other / name).write_text(text, encoding="utf-8")
+        self.sh("add", ".", cwd=self.other)
+        self.sh("commit", "-m", f"outro {name}", cwd=self.other)
+        self.sh("pull", "--rebase", cwd=self.other)
+        self.sh("push", cwd=self.other)
+
+    def publish(self, git=None, push=True):
+        (self.job / "catalogo.json").write_text('{"build_id": "novo"}\n', encoding="utf-8")
+        (self.job / "README.md").write_text("tabela nova\n", encoding="utf-8")
+        publishing.commit_and_push(git or self.git(self.job), "Geração novo", ["catalogo.json", "README.md"], push)
+
+    def remote_file(self, name):
+        return self.sh("show", f"main:{name}", cwd=self.remote)
+
+    def remote_log(self):
+        return self.sh("log", "--format=%s", "main", cwd=self.remote).splitlines()
+
+    def test_push_with_nobody_in_the_way(self):
+        self.publish()
+        self.assertEqual(["Geração novo", "base"], self.remote_log())
+        self.assertIn("novo", self.remote_file("catalogo.json"))
+
+    def test_without_push_only_commits(self):
+        self.publish(push=False)
+        self.assertEqual(["base"], self.remote_log())
+        self.assertEqual("Geração novo", self.sh("log", "-1", "--format=%s", cwd=self.job).strip())
+
+    def test_commit_has_only_the_catalog_and_the_readme(self):
+        (self.job / "lixo.txt").write_text("não vai", encoding="utf-8")
+        self.publish()
+        self.assertEqual(["README.md", "catalogo.json"],
+                         sorted(self.sh("show", "--name-only", "--format=", "main", cwd=self.remote).split()))
+
+    def test_push_by_someone_else_in_the_meantime_is_rebased(self):
+        """O caso real: o job começou no commit do disparo e, 90 min depois, o ramo já andou."""
+        self.push_from_other("NOTAS.md", "uma nota\n")
+        self.publish()
+        self.assertEqual(["Geração novo", "outro NOTAS.md", "base"], self.remote_log())
+        self.assertIn("novo", self.remote_file("catalogo.json"))
+        self.assertEqual("uma nota\n", self.remote_file("NOTAS.md"))
+
+    def test_push_refused_once_is_tried_again(self):
+        """Alguém empurra entre o pull e o push: a primeira tentativa é recusada e a segunda passa."""
+        real, pushes = self.git(self.job), []
+
+        def git(*args):
+            if args[0] == "push":
+                pushes.append(args)
+                if len(pushes) == 1:
+                    self.push_from_other("NOTAS.md", "entre o pull e o push\n")
+            return real(*args)
+        self.publish(git)
+        self.assertEqual(2, len(pushes))
+        self.assertEqual(["Geração novo", "outro NOTAS.md", "base"], self.remote_log())
+
+    def test_gives_up_after_two_tries(self):
+        real, calls = self.git(self.job), []
+
+        def git(*args):
+            calls.append(args[0])
+            if args[0] == "push":
+                return subprocess.CompletedProcess(args, 1, "", "remote: recusado")
+            return real(*args)
+        with self.assertRaises(publishing.GitError) as cm:
+            self.publish(git)
+        self.assertIn("2 tentativas", str(cm.exception))
+        self.assertIn("recusado", str(cm.exception))
+        self.assertEqual(2, calls.count("push"))
+        self.assertEqual(2, calls.count("pull"))
+
+    def test_conflict_aborts_the_rebase_and_keeps_the_commit(self):
+        """Alguém mexeu no catalogo.json: não dá para resolver sozinho. O rebase é desfeito, nada fica pela metade."""
+        self.push_from_other("catalogo.json", '{"build_id": "de outro"}\n')
+        with self.assertRaises(publishing.GitError) as cm:
+            self.publish()
+        self.assertIn("pull --rebase", str(cm.exception))
+        self.assertIn("release já subiu", str(cm.exception))
+        git_dir = self.job / ".git"
+        self.assertFalse((git_dir / "rebase-merge").exists() or (git_dir / "rebase-apply").exists())
+        self.assertEqual("Geração novo", self.sh("log", "-1", "--format=%s", cwd=self.job).strip())
+        self.assertIn("de outro", self.remote_file("catalogo.json"))
+
+    def test_commit_failure_is_an_error(self):
+        with self.assertRaises(publishing.GitError):
+            publishing.commit_and_push(self.git(self.job), "x", ["nao-existe.json"], False)
 
 
 def sample_catalog():

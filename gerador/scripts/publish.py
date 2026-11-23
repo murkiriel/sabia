@@ -8,6 +8,9 @@
     python scripts/publish.py --prune --dry-run   # só lista as releases antigas que a limpeza apagaria
     python scripts/publish.py --prune          # apaga as releases antigas (a publicação com --push já faz isso)
 
+Com --push, o commit é refeito sobre o ramo de agora (`git pull --rebase`) antes do push, e o push é tentado duas vezes:
+a geração dura ~90 min e alguém pode ter empurrado nesse intervalo.
+
 A ordem importa: primeiro os pacotes sobem para a release, só depois o catalogo.json e a tabela "Baixar por estado"
 do README mudam (os dois no mesmo commit). Assim ninguém
 lê um catálogo que aponta para arquivos que ainda não existem. A release sobe como rascunho e só é publicada
@@ -136,12 +139,10 @@ def main() -> None:
                       encoding="utf-8")
     print(f"catalogo.json e a tabela de downloads do README gravados ({config.REPO})")
     if args.commit:
-        commit_files = ["catalogo.json", "README.md"]
-        for command in (["add", *commit_files], ["commit", "-m", f"Geração {tag}", "--", *commit_files]) + \
-                       ((["push"],) if args.push else ()):
-            r = _git(*command)
-            if r.returncode != 0:
-                sys.exit(f"git {' '.join(command)} falhou: {r.stderr.strip() or r.stdout.strip()}")
+        try:
+            publishing.commit_and_push(_git, f"Geração {tag}", ["catalogo.json", "README.md"], args.push)
+        except publishing.GitError as e:
+            sys.exit(str(e))
     if args.push:  # só agora o catálogo publicado aponta para a geração nova
         deleted, warning = publishing.prune_after_publish(publishing.gh_real, tag, config.KEEP_GENERATIONS)
         if deleted:
