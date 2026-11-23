@@ -108,7 +108,8 @@ class ContractFilesTest(ContractTestCase):
     def test_sha256_and_sizes_are_the_legacy_ones(self):
         for file_id, f in self.files.items():
             old = self.legacy(file_id)
-            self.assertEqual((old["sha256"], old["bytes"], old["bytes_db"]), (f["sha256"], f["bytes"], f["bytes_unpacked"]))
+            self.assertEqual((old["sha256"], old["bytes"], old["bytes_db"]),
+                             (f["sha256"], f["bytes"], f["bytes_unpacked"]))
 
     def test_bbox_is_the_legacy_one_latitude_first(self):
         for file_id, f in self.files.items():

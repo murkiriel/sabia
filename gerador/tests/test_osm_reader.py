@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Set
 from unittest import mock
 
 import osmium
@@ -32,7 +33,9 @@ def sample() -> OsmBuilder:
 
 
 def contents(path: Path):
-    nodes, ways, relations = set(), set(), set()
+    nodes: Set[int] = set()
+    ways: Set[int] = set()
+    relations: Set[int] = set()
     for obj in osmium.FileProcessor(str(path)):
         {"n": nodes, "w": ways, "r": relations}[obj.type_str()].add(obj.id)
     return nodes, ways, relations

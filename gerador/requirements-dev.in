@@ -1,0 +1,5 @@
+# As ferramentas de conferência do código (ruff e mypy), com a versão fixa; rodam no CI (testes.yml), não na geração.
+# O requirements-dev.txt (o que se instala) sai deste arquivo, com as transitivas e os hashes; depois de mudar aqui,
+# regenere-o com o comando do topo dele.
+ruff==0.17.6   # estilo e erros simples (configurado no pyproject.toml)
+mypy==2.4.1    # tipos (configurado no pyproject.toml)

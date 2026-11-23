@@ -1,5 +1,5 @@
-# Testes do gerador a cada push e pull request. Só os testes: nada de baixar o extrato do Brasil nem de publicar
-# aqui (isso é o workflow de geração). Os testes usam extratos pequenos escritos por eles mesmos.
+# Testes do gerador, mais ruff e mypy, a cada push e pull request. Só a conferência: nada de baixar o extrato do
+# Brasil nem de publicar aqui (isso é o workflow de geração). Os testes usam extratos pequenos escritos por eles mesmos.
 #
 # As actions vão fixadas pelo SHA do commit, com a tag em comentário só para ler: uma tag pode ser movida para outro
 # código. Para trocar de versão, resolva a tag nova até o commit (gh api repos/<dono>/<ação>/git/ref/tags/<tag>; se
@@ -27,7 +27,14 @@ jobs:
       # As mesmas da geração, travadas com hash (requirements.txt, gerado do requirements.in).
       - name: Dependências
         run: pip install --require-hashes -r requirements.txt
+      # ruff e mypy, também travados com hash (requirements-dev.txt, gerado do requirements-dev.in).
+      - name: Dependências de conferência
+        run: pip install --require-hashes -r requirements-dev.txt
       - name: SQLite 3.22, o do Android 10 (compilado só com FTS3 e FTS4, sha256 conferido)
         run: python scripts/install_sqlite.py
       - name: Testes
         run: python -m unittest discover -s tests -t . -v
+      - name: Estilo (ruff)
+        run: python -m ruff check .
+      - name: Tipos (mypy)
+        run: python -m mypy .

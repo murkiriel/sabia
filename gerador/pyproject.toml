@@ -1,11 +1,16 @@
-# Só a configuração das ferramentas de conferência (ruff e mypy), rodadas à mão: python -m ruff check . e
-# python -m mypy . (ver README.md). O gerador não é um pacote instalável.
+# Só a configuração das ferramentas de conferência (ruff e mypy): python -m ruff check . e python -m mypy .
+# (ver README.md). Rodam no CI (testes.yml), com as versões travadas em requirements-dev.txt. O gerador não é um
+# pacote instalável.
 [tool.ruff]
 line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# O conferidor do contrato de catálogo é o mesmo arquivo nos quatro geradores: não se reformata só aqui.
+"tests/contract_check.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

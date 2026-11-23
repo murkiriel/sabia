@@ -92,7 +92,7 @@ class Pack:
         found = districts.build(data, MUNICIPALITIES, ["GO"])
         districts.assign(items, found)
         street = next(i for i in items["GO"] if i.name == "Rua 10" and i.district == "Setor Oeste")
-        street.numbers = list(LADDER)
+        street.numbers = records.Ladder(LADDER)
         self.path = folder / "sabia-GO.sqlite"
         database.write_state(self.path, "GO", items["GO"], found["GO"], street_lines.build(items["GO"], data),
                              MUNICIPALITIES, {"build_id": "x", "osm_timestamp": "y"})

@@ -67,6 +67,19 @@ class TestsWorkflowTest(unittest.TestCase):
     def test_runs_the_whole_suite(self):
         self.assertIn("python -m unittest discover -s tests -t . -v", self.text)
 
+    def test_runs_ruff_and_mypy_after_the_tests(self):
+        """Estilo e tipos no CI: antes eram "rodados à mão" e ninguém os rodava."""
+        tests = self.text.find("python -m unittest discover")
+        ruff = self.text.find("run: python -m ruff check .\n")
+        mypy = self.text.find("run: python -m mypy .\n")
+        self.assertGreater(ruff, tests)
+        self.assertGreater(mypy, ruff)
+
+    def test_checkers_are_installed_from_their_own_lock_before_use(self):
+        install = self.text.find("pip install --require-hashes -r requirements-dev.txt")
+        self.assertGreater(install, self.text.find("pip install --require-hashes -r requirements.txt"))
+        self.assertLess(install, self.text.find("python -m ruff check ."))
+
     def test_old_sqlite_is_installed_before_the_tests(self):
         """Sem o SQLite 3.22, o teste que abre o pacote nele seria pulado em silêncio."""
         install = self.text.find("python scripts/install_sqlite.py")
@@ -296,12 +309,37 @@ class RequirementsTest(unittest.TestCase):
         self.assertIn(f"#    {COMPILE}", head)
 
     def test_workflows_install_only_with_hashes(self):
-        """Todo `pip install` dos workflows é do lock, em modo de hash: nada entra sem versão e hash."""
+        """Todo `pip install` dos workflows é de um lock, em modo de hash: nada entra sem versão e hash."""
         installs = [line.strip() for text in workflows().values() for line in text.splitlines()
                     if "pip install" in line and not line.lstrip().startswith("#")]
-        self.assertEqual(2, len(installs), installs)
+        self.assertEqual(3, len(installs), installs)
         for line in installs:
-            self.assertRegex(line, r"^run: pip install --require-hashes -r (gerador/)?requirements\.txt$", line)
+            self.assertRegex(line, r"^run: pip install --require-hashes -r (gerador/)?requirements(-dev)?\.txt$", line)
+
+
+class DevRequirementsTest(unittest.TestCase):
+    """Ruff e mypy do CI: versão fixa no requirements-dev.in, tudo travado com hash no requirements-dev.txt."""
+
+    def test_direct_checkers_are_pinned(self):
+        lines = requirements("requirements-dev.in")
+        for line in lines:
+            self.assertRegex(line, r"^[A-Za-z0-9_.-]+==[0-9][0-9A-Za-z.]*$", line)
+        self.assertEqual({"ruff", "mypy"}, set(pins(lines)))
+
+    def test_lock_pins_everything_with_hashes(self):
+        lines = requirements("requirements-dev.txt")
+        self.assertTrue(lines)
+        for line in lines:
+            self.assertRegex(line, r"^[A-Za-z0-9_.-]+==[0-9][0-9A-Za-z.]*( --hash=sha256:[0-9a-f]{64})+$", line[:80])
+        direct, locked = pins(requirements("requirements-dev.in")), pins(lines)
+        for name, version in direct.items():
+            self.assertEqual(version, locked.get(name), name)
+
+    def test_lock_says_how_to_regenerate(self):
+        head = (GENERATOR / "requirements-dev.txt").read_text(encoding="utf-8").splitlines()[:3]
+        command = COMPILE.replace("requirements.in", "requirements-dev.in").replace("requirements.txt",
+                                                                                      "requirements-dev.txt")
+        self.assertIn(f"#    {command}", head)
 
 
 if __name__ == "__main__":

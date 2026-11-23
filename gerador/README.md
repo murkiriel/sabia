@@ -17,7 +17,9 @@ OpenStreetMap e dos municípios do IBGE.
   subir uma versão, mude o `.in` e rode o comando; os dois arquivos vão juntos no commit. Os testes
   (`tests/test_workflows.py`) conferem que o lock tem versão e hash em tudo e as versões do `.in`, e que os workflows
   só instalam com `--require-hashes`.
-- Para conferir o código: `ruff` e `mypy` (configurados no `pyproject.toml`).
+- Para conferir o código: `ruff` e `mypy` (configurados no `pyproject.toml`), que também rodam no CI. As versões ficam
+  no `requirements-dev.in` e travadas, com hash, no `requirements-dev.txt` (mesmo comando do `uv`, com os nomes
+  trocados); instalam-se com `pip install --require-hashes -r requirements-dev.txt`.
 
 ## Como rodar
 
