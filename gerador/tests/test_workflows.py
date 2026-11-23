@@ -1,9 +1,11 @@
 """Os workflows do GitHub Actions: o que precisa continuar valendo neles, lido do texto dos arquivos (sem YAML)."""
 import re
+import sys
 import unittest
 from pathlib import Path
 from typing import Dict, List
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 WORKFLOWS = Path(__file__).resolve().parent.parent.parent / ".github" / "workflows"
 
 
@@ -200,6 +202,48 @@ class ScheduledGenerationTest(unittest.TestCase):
 
     def test_one_generation_at_a_time(self):
         self.assertRegex(self.text, r"(?m)^concurrency:\n  group: generate\n  cancel-in-progress: false")
+
+
+class NotifyJobTest(unittest.TestCase):
+    """O aviso por issue quando a geração agendada falha ou a publicada fica velha (as 12 falhas de 2026-11-04 a
+    2026-11-10 passaram sem ninguém saber)."""
+
+    def setUp(self):
+        self.text = workflows().get("gerar.yml", "")
+        self.notify = job(self.text, "notify")
+
+    def test_runs_last_with_the_result_of_the_other_jobs(self):
+        self.assertIn("needs: [interval, generate]\n", self.notify)
+        self.assertIn("if: always() && github.event_name == 'schedule' && github.repository == 'Murkiriel/sabia'\n",
+                      self.notify)
+        for name in ("INTERVAL_RESULT: ${{ needs.interval.result }}", "GENERATE_RESULT: ${{ needs.generate.result }}"):
+            self.assertIn(name, self.notify)
+        self.assertIn('python3 gerador/scripts/alert.py --interval "$INTERVAL_RESULT" --generate "$GENERATE_RESULT" '
+                      '--run-url "$RUN_URL"', self.notify)
+
+    def test_only_this_job_writes_issues(self):
+        self.assertRegex(self.notify, r"(?m)^    permissions:\n      contents: read\n      issues: write\n")
+        self.assertNotIn("issues:", self.text.replace(self.notify, ""), "issues: write só no job notify")
+        self.assertRegex(self.text, r"(?m)^permissions:\n  contents: write\n\nconcurrency:")
+
+    def test_reads_the_catalog_of_the_branch_now(self):
+        """Se este disparo publicou, a idade tem de ser a da geração nova, ou a issue de parada ficaria aberta."""
+        self.assertRegex(self.notify, r"- uses: actions/checkout@[0-9a-f]{40}  # v[\d.]+\n"
+                                      r"\s+with:\n\s+ref: \$\{\{ github\.ref \}\}\n")
+
+    def test_needs_no_dependency_install(self):
+        """Só a stdlib: o job não instala nada."""
+        self.assertNotIn("pip install", self.notify)
+        self.assertNotIn("setup-python", self.notify)
+
+    def test_the_generate_job_does_not_depend_on_it(self):
+        self.assertNotIn("notify", job(self.text, "generate"))
+        self.assertNotIn("notify", job(self.text, "interval"))
+
+    def test_stale_limit_is_cycle_plus_six_days(self):
+        from sabia import alert, config
+        self.assertEqual(config.GENERATION_INTERVAL_DAYS + 6, alert.STALE_DAYS)
+        self.assertIn("35 dias", self.text)
 
 
 GENERATOR = Path(__file__).resolve().parent.parent

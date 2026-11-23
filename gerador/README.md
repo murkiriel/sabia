@@ -243,6 +243,11 @@ e publica. Se falhar, o disparo seguinte tenta de novo. Dois horários, fora da 
 pula disparos agendados sem avisar. Disparado à mão, gera na hora e só publica com `publish` marcado. **Num fork, o
 agendamento não gera** (`github.repository == 'Murkiriel/sabia'`).
 
+No fim de todo disparo agendado, o job `notify` (`scripts/alert.py`, lógica em `sabia/alert.py`) mexe em duas issues
+fixas, com o rótulo `alerta-geracao`: "Geração falhando" (abre ou comenta quando o `interval` ou o `generate` falha, e
+fecha quando uma geração publica) e "Publicação parada" (abre quando a geração publicada tem mais de 35 dias: os 29 do
+ciclo e 6 de folga). A permissão `issues: write` é só desse job.
+
 Para uma geração fora do intervalo sem disparar à mão, a variável `GENERATE_FROM` do job `interval` marca um dia
 (`AAAA-MM-DD`, UTC): a partir dele, o agendamento gera se a geração publicada for de antes desse dia.
 
