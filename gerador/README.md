@@ -32,6 +32,7 @@ python scripts/build_conformance.py     # o conjunto de conformidade da busca (a
 python scripts/check_conformance.py data/dist/sabia-conformidade.json.zst --dbs data/build   # a referência contra ele
 python scripts/publish.py               # confere a geração (não publica nada)
 python scripts/publish.py --release     # sobe os pacotes numa release e grava o catalogo.json na raiz
+python scripts/preflight.py             # as fontes baixadas na hora respondem? (GET de 1 byte em cada, ~1 min)
 python scripts/due.py                   # está na hora de gerar de novo? (só responde; não gera)
 python scripts/update_copies.py         # renova as cópias do IBGE, do SNV, da ANAC e da PRF (de uma conexão no Brasil)
 python -m unittest discover -s tests -t .
@@ -72,7 +73,8 @@ algumas vezes por ano), então 2 a 4 renovações por ano bastam; uma cópia com
 mas vira aviso no log do Actions e no `relatorio.json` (`old_copies`).
 
 As outras fontes são conferidas no cache e no download: uma API pode responder 200 com uma página de erro. Com
-resposta ruim (status de erro ou conteúdo que não passa), são até 3 tentativas, com 60 s e depois 120 s de espera;
+resposta ruim (status de erro ou conteúdo que não passa), são até 3 tentativas, com 30 s e depois 60 s de espera, e
+cada tentativa faz até 3 conexões de 45 s sem resposta (~10 min no pior caso por arquivo, antes ~40);
 cada uma vai para o log com o status, o `Content-Type`, o tamanho e o começo do corpo, e o corpo fica em
 `data/raw/<arquivo>.<tentativa>.invalido` (o workflow leva esses arquivos para o artefato).
 
@@ -244,6 +246,12 @@ dispara todo dia às 03:47 e às 09:47 de Brasília, o job `interval` pergunta a
 e publica. Se falhar, o disparo seguinte tenta de novo. Dois horários, fora da hora cheia, porque o GitHub atrasa ou
 pula disparos agendados sem avisar. Disparado à mão, gera na hora e só publica com `publish` marcado. **Num fork, o
 agendamento não gera** (`github.repository == 'Murkiriel/sabia'`).
+
+Antes de instalar as dependências, o passo "Fontes respondem?" roda `scripts/preflight.py` (lógica em
+`sabia/preflight.py`): um GET de 1 byte (`Range: bytes=0-0`), com 3 tentativas de 20 s, em cada fonte baixada na hora
+(OpenStreetMap, localidades e CNEFE do IBGE, CNES, Overture, GeoNames, Wikidata, ANP). Se alguma não responde ao
+executor, a geração falha ali, em ~1 min, e o erro lista o que não respondeu e por quê; as de cópia versionada não
+entram.
 
 No fim de todo disparo agendado, o job `notify` (`scripts/alert.py`, lógica em `sabia/alert.py`) mexe em duas issues
 fixas, com o rótulo `alerta-geracao`: "Geração falhando" (abre ou comenta quando o `interval` ou o `generate` falha, e

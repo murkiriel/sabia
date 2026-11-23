@@ -182,6 +182,14 @@ class ScheduledGenerationTest(unittest.TestCase):
                         self.generate.find("python scripts/install_sqlite.py"))
         self.assertNotIn("/swap-sabia\n", self.generate.replace('"$base/swap-sabia"', ""))
 
+    def test_sources_are_probed_before_the_long_work(self):
+        """A sonda de pré-voo falha em ~1 min se uma fonte ao vivo não responde ao executor; antes, a geração só
+        descobria depois de dezenas de minutos de tentativas. Só a stdlib: roda antes de instalar as dependências."""
+        probe = self.step("Fontes respondem?")
+        self.assertIn("python3 gerador/scripts/preflight.py", probe)
+        self.assertLess(self.generate.find("- name: Fontes respondem?"), self.generate.find("- name: Dependências"))
+        self.assertLess(self.generate.find("- name: Fontes respondem?"), self.generate.find("- name: Gerar"))
+
     def test_generation_log_is_live(self):
         """Sem buffer: num run de horas, o log do passo mostra o progresso enquanto roda, não tudo no fim."""
         self.assertIn('PYTHONUNBUFFERED: "1"', self.step("Gerar"))

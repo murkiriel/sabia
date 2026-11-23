@@ -39,10 +39,16 @@ from .util import file_hash
 # Espera base entre tentativas, em segundos (multiplicada pelo número da tentativa). Os testes zeram.
 RETRY_DELAY = 10
 
-# Arquivos do IBGE: quantas vezes baixar quando a resposta vem ruim, e a espera base entre elas (multiplicada pelo
-# número da tentativa: 60 s, depois 120 s). Os testes zeram a espera.
+# Arquivos conferidos (IBGE, CNES, GeoNames, Wikidata): quantas vezes baixar quando a resposta vem ruim, e a espera
+# base entre elas (multiplicada pelo número da tentativa: 30 s, depois 60 s). Os testes zeram a espera.
+# Cada uma dessas tentativas faz DOWNLOAD_ATTEMPTS conexões de até DOWNLOAD_TIMEOUT s sem receber nada (o tempo é de
+# cada leitura, não do arquivo: um download lento mas vivo não cai). Antes eram 5 conexões de 120 s e esperas de
+# 60 e 120 s: uma fonte que não responde custava ~40 min por geração (2026-11-04 a 2026-11-10, 12 vezes); agora, ~10.
+# A sonda de pré-voo (sabia/preflight.py) pega o servidor fora do ar em ~1 min, antes de tudo isso.
 IBGE_ATTEMPTS = 3
-IBGE_RETRY_DELAY = 60
+IBGE_RETRY_DELAY = 30
+DOWNLOAD_ATTEMPTS = 3
+DOWNLOAD_TIMEOUT = 45
 
 MESH_FILE = "ibge_malha_municipios.json"
 NAMES_FILE = "ibge_municipios.json"
@@ -214,7 +220,8 @@ def _checked_download(url: str, name: str, problem: Callable[[Path], Optional[st
     for attempt in range(1, IBGE_ATTEMPTS + 1):
         print(f"[{tag}] baixando {label} (tentativa {attempt} de {IBGE_ATTEMPTS})...")
         try:
-            answer = net.download(url, updated, delay=RETRY_DELAY)
+            answer = net.download(url, updated, attempts=DOWNLOAD_ATTEMPTS, delay=RETRY_DELAY,
+                                  timeout=DOWNLOAD_TIMEOUT)
         except net.DownloadError as e:
             failure = str(e)
         else:

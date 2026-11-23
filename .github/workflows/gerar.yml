@@ -117,6 +117,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Sonda de pré-voo (scripts/preflight.py, só a stdlib): um GET de 1 byte em cada fonte baixada na hora (o OSM,
+      # as localidades e o CNEFE do IBGE, o CNES, a Overture, o GeoNames, o Wikidata e a ANP), todas ao mesmo tempo. Se
+      # alguma não responde ao executor, a geração falha aqui, em ~1 min e com a lista do que não respondeu, e não
+      # depois de dezenas de minutos de tentativas (12 gerações perderam ~40 min cada de 2026-11-04 a 2026-11-10).
+      - name: Fontes respondem?
+        run: python3 gerador/scripts/preflight.py
+
       # Todas as dependências, as transitivas também, com versão e hash (gerado do requirements.in, ver o topo do
       # requirements.txt): um pacote trocado no PyPI ou uma versão nova não entram sem passar pelo git.
       - name: Dependências
