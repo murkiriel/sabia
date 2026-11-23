@@ -703,5 +703,748 @@
         "poi": 12045
       }
     }
+  },
+  "contract": {
+    "name": "catalogo-comum",
+    "version": 1,
+    "min_reader_version": 1,
+    "dataset": "sabia",
+    "build_id": "2026-11-10-c17dff60",
+    "built_at": "2026-11-10T11:44:39Z",
+    "release_url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/",
+    "generator": {
+      "repository": "https://github.com/Murkiriel/sabia",
+      "commit": "365e750faa57a57de85de2b5ef62f2b3f120bb9a"
+    },
+    "license": {
+      "data": "ODbL-1.0",
+      "code": "MIT",
+      "attribution": "© colaboradores do OpenStreetMap (ODbL 1.0); municípios, limites municipais e localidades: IBGE; postos da PRF: ANTT; hospitais, UPAs e prontos-socorros: CNES (Ministério da Saúde); lugares: Overture Maps Foundation (CDLA Permissive 2.0); quilômetros das rodovias federais: DNIT (SNV); aeródromos: ANAC; nomes alternativos e pontos turísticos: GeoNames (CC BY 4.0) e Wikidata (CC0); postos de combustível: ANP; números das casas: IBGE (CNEFE, Censo 2022)"
+    },
+    "coordinates": {
+      "crs": "EPSG:4326",
+      "bbox_order": "lat_min,lon_min,lat_max,lon_max"
+    },
+    "osm_snapshot": {
+      "date": "2026-11-09T00:31:19Z",
+      "md5": "c17dff60347f269911ccba4491071a64"
+    },
+    "sources": [
+      {
+        "id": "openstreetmap",
+        "name": "OpenStreetMap (extrato do Brasil)",
+        "url": "https://download.openstreetmap.fr/extracts/south-america/brazil-latest.osm.pbf",
+        "date": "2026-11-09T00:31:19Z",
+        "license": "ODbL-1.0",
+        "checksums": {
+          "md5": "c17dff60347f269911ccba4491071a64"
+        }
+      },
+      {
+        "id": "ibge-malha-municipios",
+        "name": "IBGE, malha municipal (cópia versionada no repositório)",
+        "url": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?formato=application/vnd.geo%2Bjson&intrarregiao=municipio&qualidade=intermediaria",
+        "date": "2026-11-10",
+        "license": null,
+        "checksums": {
+          "sha256": "4bae3d8d9c8dd5ec520c94a35dadf0d273f5f661a63cf0b5e95e9efdb3047588"
+        },
+        "note": "sha256 do conteúdo descompactado da cópia gzip versionada em gerador/"
+      },
+      {
+        "id": "ibge-municipios",
+        "name": "IBGE, lista de municípios (cópia versionada no repositório)",
+        "url": "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado",
+        "date": "2026-11-10",
+        "license": null,
+        "checksums": {
+          "sha256": "77bf68d9f5b1237522bcd28c39b8857725ebb25e913a5b13aa4a740ce67041b4"
+        },
+        "note": "sha256 do conteúdo descompactado da cópia gzip versionada em gerador/"
+      },
+      {
+        "id": "dnit-snv-marcos",
+        "name": "DNIT, marcos de quilômetro do SNV (cópia versionada no repositório)",
+        "url": "https://servicos.dnit.gov.br/dnitgeo/geoserver/ows",
+        "date": null,
+        "license": null,
+        "checksums": {
+          "sha256": "7f7ba1819f706d6991376308d3a4685d95c1e6ec8ed2d744bda95e98ac8fb468"
+        },
+        "note": "sha256 do conteúdo descompactado da cópia gzip versionada em gerador/"
+      },
+      {
+        "id": "anac-aerodromos-publicos",
+        "name": "ANAC, aeródromos públicos (cópia versionada no repositório)",
+        "url": "https://sistemas.anac.gov.br/dadosabertos/Aerodromos/Aer%C3%B3dromos%20P%C3%BAblicos/Lista%20de%20aer%C3%B3dromos%20p%C3%BAblicos/AerodromosPublicos.json",
+        "date": "2026-11-10",
+        "license": null,
+        "checksums": {
+          "sha256": "76ac00e3dddc0e813e769b287127a589e4aaba2b918e9c41c91bc916615bd1bd"
+        },
+        "note": "sha256 do conteúdo descompactado da cópia gzip versionada em gerador/"
+      },
+      {
+        "id": "anac-aerodromos-privados",
+        "name": "ANAC, aeródromos privados (cópia versionada no repositório)",
+        "url": "https://sistemas.anac.gov.br/dadosabertos/Aerodromos/Aer%C3%B3dromos%20Privados/Lista%20de%20aer%C3%B3dromos%20privados/Aerodromos%20Privados/AerodromosPrivados.json",
+        "date": "2026-11-10",
+        "license": null,
+        "checksums": {
+          "sha256": "dc2babf91b43794ace1bdbd1d2f9c8537d606b77469979ac7c5ae49d2a0d7957"
+        },
+        "note": "sha256 do conteúdo descompactado da cópia gzip versionada em gerador/"
+      },
+      {
+        "id": "antt-postos-prf",
+        "name": "ANTT, postos da PRF (cópia versionada no repositório)",
+        "url": "https://dados.antt.gov.br/dataset/87c613a5-af73-445f-bc35-5fe816e70935/resource/1e409dae-301a-4b54-a873-0becba08050f/download/informaes-sobre-os-postos-da-prfs.json",
+        "date": "2026-11-10",
+        "license": null,
+        "checksums": {
+          "sha256": "26af25105c79348e16b84c33d464aaad84d8756348b41a88cf0600a0f7338d65"
+        },
+        "note": "sha256 do conteúdo descompactado da cópia gzip versionada em gerador/"
+      }
+    ],
+    "compatibility": {
+      "mix_generations": true,
+      "data_format": {
+        "name": "sabia-sqlite",
+        "version": "1"
+      },
+      "sabia": {
+        "format_version": 1,
+        "sqlite_min_version": "3.22.0",
+        "sqlite_modules": [
+          "fts4"
+        ],
+        "sqlite_not_used": [
+          "fts5",
+          "rtree"
+        ],
+        "format_spec": "https://github.com/Murkiriel/sabia/blob/365e750faa57a57de85de2b5ef62f2b3f120bb9a/docs/FORMATO.md",
+        "search_spec": "https://github.com/Murkiriel/sabia/blob/365e750faa57a57de85de2b5ef62f2b3f120bb9a/docs/CONSUMO.md#buscar",
+        "search_reference": "https://github.com/Murkiriel/sabia/blob/365e750faa57a57de85de2b5ef62f2b3f120bb9a/gerador/sabia/search.py"
+      }
+    },
+    "files": [
+      {
+        "id": "base",
+        "kind": "base",
+        "region": "BR",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-base.sqlite.zst",
+        "sha256": "7a32fae7890970d50305f3c544de9db2b2f0bdd2dbaea74231dfac64de0a20b1",
+        "bytes": 411619,
+        "bytes_unpacked": 1277952,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -33.76,
+          -74.0,
+          5.28,
+          -29.29
+        ],
+        "coverage_level": "BASE_HIGHWAYS_ONLY",
+        "requires": []
+      },
+      {
+        "id": "AC",
+        "kind": "uf",
+        "region": "AC",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-AC.sqlite.zst",
+        "sha256": "03348f1fe2245273ace533bb3613eae48fe67a422a7f6490bebc48c20d6170d7",
+        "bytes": 1539788,
+        "bytes_unpacked": 5681152,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -11.15,
+          -74.0,
+          -7.11,
+          -66.62
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "AL",
+        "kind": "uf",
+        "region": "AL",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-AL.sqlite.zst",
+        "sha256": "b1cc226cf2b117490fc4db8e2eb1969aacd630a0f2c23afd78f34b85b7cf5f57",
+        "bytes": 3650022,
+        "bytes_unpacked": 13422592,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -10.5,
+          -38.24,
+          -8.81,
+          -35.15
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "AM",
+        "kind": "uf",
+        "region": "AM",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-AM.sqlite.zst",
+        "sha256": "d7b85cf50ae124c9c947c540f166df1cb3e7f7fe354a689e49f9e5033f97e876",
+        "bytes": 5472258,
+        "bytes_unpacked": 18923520,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -9.82,
+          -73.81,
+          2.25,
+          -56.09
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "AP",
+        "kind": "uf",
+        "region": "AP",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-AP.sqlite.zst",
+        "sha256": "44109dd08c6965761d1bcbb3806a5025ff54cc214b6826d4d5e46585735aa9f9",
+        "bytes": 1299980,
+        "bytes_unpacked": 4673536,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -1.24,
+          -54.88,
+          4.51,
+          -49.87
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "BA",
+        "kind": "uf",
+        "region": "BA",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-BA.sqlite.zst",
+        "sha256": "3417303d7c3c2f7dd9a63c6f8576c99b26b46f6d8e727cfc0c82706f717b046b",
+        "bytes": 21336432,
+        "bytes_unpacked": 74993664,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -18.34,
+          -46.58,
+          -8.53,
+          -37.34
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "CE",
+        "kind": "uf",
+        "region": "CE",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-CE.sqlite.zst",
+        "sha256": "660a570d48fdc9e5c1674f889a3df0ddeb1f04aa670928bcfcbaf27faa42b56c",
+        "bytes": 11861248,
+        "bytes_unpacked": 42643456,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -7.86,
+          -41.43,
+          -2.78,
+          -37.25
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "DF",
+        "kind": "uf",
+        "region": "DF",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-DF.sqlite.zst",
+        "sha256": "0627476b578ff9774d8848b78b0d25d6dafe9ea997105debdb7b3e00bde9e3b4",
+        "bytes": 2595478,
+        "bytes_unpacked": 11112448,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -16.05,
+          -48.29,
+          -15.5,
+          -47.3
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "ES",
+        "kind": "uf",
+        "region": "ES",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-ES.sqlite.zst",
+        "sha256": "bef5ebbc6dd3307dc5e6dd683db67e68c4f2de9ad0564dfd2fc37f55ff16fe37",
+        "bytes": 7957919,
+        "bytes_unpacked": 28344320,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -21.31,
+          -41.88,
+          -17.89,
+          -29.29
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "GO",
+        "kind": "uf",
+        "region": "GO",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-GO.sqlite.zst",
+        "sha256": "8b5a1e0cc356de745e3276c86d4df1bd6aec521997caf340914a035493af0956",
+        "bytes": 10873225,
+        "bytes_unpacked": 40652800,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -19.5,
+          -53.25,
+          -12.39,
+          -45.9
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "MA",
+        "kind": "uf",
+        "region": "MA",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-MA.sqlite.zst",
+        "sha256": "c320e2db56f67351aa53910f8fb9f41b6d5c2d2534fece75ed3db24082dfdddd",
+        "bytes": 7626188,
+        "bytes_unpacked": 28069888,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -10.26,
+          -48.76,
+          -1.04,
+          -41.79
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "MG",
+        "kind": "uf",
+        "region": "MG",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-MG.sqlite.zst",
+        "sha256": "a1bc9ec2ee296cd9cd5efb4c87c2a3bbc97d4e3b0d4557db7bfa005e09af8c29",
+        "bytes": 45565786,
+        "bytes_unpacked": 162578432,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -22.93,
+          -51.05,
+          -14.23,
+          -39.85
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "MS",
+        "kind": "uf",
+        "region": "MS",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-MS.sqlite.zst",
+        "sha256": "7e0895543f4fff97d64ab86457eedd13e6d70a8389bd74ece5012d7bc8146c79",
+        "bytes": 7291765,
+        "bytes_unpacked": 26738688,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -24.07,
+          -58.17,
+          -17.16,
+          -50.92
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "MT",
+        "kind": "uf",
+        "region": "MT",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-MT.sqlite.zst",
+        "sha256": "a2a2f72f9631f99e35820d77ada5fed32260b343635098730ae35f59b071f8e7",
+        "bytes": 7769860,
+        "bytes_unpacked": 28119040,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -18.05,
+          -61.64,
+          -7.34,
+          -50.22
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "PA",
+        "kind": "uf",
+        "region": "PA",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-PA.sqlite.zst",
+        "sha256": "0fb87a6c6e6e47a6efeb1f0268f98b91f59d3821686953b9b54f40a8e3591cb8",
+        "bytes": 9010390,
+        "bytes_unpacked": 32284672,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -9.85,
+          -58.9,
+          2.6,
+          -46.06
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "PB",
+        "kind": "uf",
+        "region": "PB",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-PB.sqlite.zst",
+        "sha256": "7324ea3871e9ad264b9e045129a330c0a65586ab65263b04143f6024b06e45c9",
+        "bytes": 6521246,
+        "bytes_unpacked": 23810048,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -8.31,
+          -38.77,
+          -6.02,
+          -34.79
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "PE",
+        "kind": "uf",
+        "region": "PE",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-PE.sqlite.zst",
+        "sha256": "dea3de0b1e0f596a75fe74fd91735af23cb22b11fcc01e8f7bd28e75ed9967cf",
+        "bytes": 12406043,
+        "bytes_unpacked": 45228032,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -9.49,
+          -41.36,
+          -3.83,
+          -32.39
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "PI",
+        "kind": "uf",
+        "region": "PI",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-PI.sqlite.zst",
+        "sha256": "c1e8423718259b837a8e04aa6b1493e62eec8f6f986f0c1d5dd28084bf25d414",
+        "bytes": 5517354,
+        "bytes_unpacked": 20054016,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -10.93,
+          -46.03,
+          -2.74,
+          -40.37
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "PR",
+        "kind": "uf",
+        "region": "PR",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-PR.sqlite.zst",
+        "sha256": "72a48796a2b8b29bdb65364b4a65c6162156030a12352c62729958a1fb1e2808",
+        "bytes": 25640678,
+        "bytes_unpacked": 93593600,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -26.72,
+          -54.62,
+          -22.51,
+          -48.02
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "RJ",
+        "kind": "uf",
+        "region": "RJ",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-RJ.sqlite.zst",
+        "sha256": "76604ef43f9fcc7a31602232fd624457a935c86eecf40d9748f479b9321120fc",
+        "bytes": 22101495,
+        "bytes_unpacked": 80367616,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -23.37,
+          -44.89,
+          -20.76,
+          -40.95
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "RN",
+        "kind": "uf",
+        "region": "RN",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-RN.sqlite.zst",
+        "sha256": "64d8275b19dc616a651e986628267955e131d55030bbf3746f156a7072a9f3c7",
+        "bytes": 6005972,
+        "bytes_unpacked": 21520384,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -6.99,
+          -38.59,
+          -4.83,
+          -34.96
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "RO",
+        "kind": "uf",
+        "region": "RO",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-RO.sqlite.zst",
+        "sha256": "5013a330098cdba25fac9c48664a3a0f6e08dd1263f18b3447f1ea3858c1c332",
+        "bytes": 3573231,
+        "bytes_unpacked": 13324288,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -13.7,
+          -66.82,
+          -7.97,
+          -59.77
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "RR",
+        "kind": "uf",
+        "region": "RR",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-RR.sqlite.zst",
+        "sha256": "7ed85b88a5bf8c3918aa53e9875137e76fa07fd15f1386b7f3aee7620a177f06",
+        "bytes": 1460535,
+        "bytes_unpacked": 5222400,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -1.59,
+          -64.83,
+          5.28,
+          -58.88
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "RS",
+        "kind": "uf",
+        "region": "RS",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-RS.sqlite.zst",
+        "sha256": "e6c0e3afaf1c365159f75f1c64f2b8bede136c67266ca9f54aaec85a265fb268",
+        "bytes": 30213862,
+        "bytes_unpacked": 107360256,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -33.76,
+          -57.65,
+          -27.08,
+          -49.69
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "SC",
+        "kind": "uf",
+        "region": "SC",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-SC.sqlite.zst",
+        "sha256": "70fcfd13bd5a02c443f59d9afa4bf6c481d80b466c5b132ec5b76813089f552f",
+        "bytes": 21842341,
+        "bytes_unpacked": 76750848,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -29.36,
+          -53.84,
+          -25.95,
+          -48.35
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "SE",
+        "kind": "uf",
+        "region": "SE",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-SE.sqlite.zst",
+        "sha256": "0b9e4f7f2af31f46eb13f80cecb044229b34f771ac81ae832b3be63d4b14586b",
+        "bytes": 3692386,
+        "bytes_unpacked": 13602816,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -11.57,
+          -38.25,
+          -9.51,
+          -36.39
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "SP",
+        "kind": "uf",
+        "region": "SP",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-SP.sqlite.zst",
+        "sha256": "07220ef81b8ddf185c76c49f6b4fae95bceb975d002edeb9bfc8fbd127f84aec",
+        "bytes": 90168565,
+        "bytes_unpacked": 323661824,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -25.31,
+          -53.12,
+          -19.77,
+          -44.16
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      },
+      {
+        "id": "TO",
+        "kind": "uf",
+        "region": "TO",
+        "url": "https://github.com/murkiriel/sabia/releases/download/2026-11-10-c17dff60/sabia-TO.sqlite.zst",
+        "sha256": "e9471d2897f09f1882aac5357e7bf563edff367199bc0c4bcdef39a6b76e4173",
+        "bytes": 3027215,
+        "bytes_unpacked": 10895360,
+        "media_type": "application/zstd",
+        "unpack": [
+          "zstd"
+        ],
+        "format": "sqlite",
+        "bbox": [
+          -13.47,
+          -50.75,
+          -5.16,
+          -45.69
+        ],
+        "coverage_level": "DETAILED",
+        "requires": []
+      }
+    ]
   }
 }
